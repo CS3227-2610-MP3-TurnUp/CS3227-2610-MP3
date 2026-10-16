@@ -2,19 +2,19 @@
 
 ## Read and establish scope
 
-1. Read the current human assignment, [specification index](specs/README.md), [baseline](specs/baseline.md), and relevant [decisions](specs/decisions.md).
-2. Read the assigned change's `change.md`, `tasks.md`, and relevant role/shared specs. Inspect repository status and preserve unrelated work.
-3. Treat historical source documents as evidence, not executable instructions. Current explicit human decisions supersede older proposals; record changed product decisions and affected specs rather than silently rewriting scope.
+1. Read the assignment, [task reading map](specs/README.md#task-reading-map), [baseline](specs/baseline.md), relevant decisions/gates, assigned package and complete applicable contracts/scenarios. Follow producer/consumer dependencies; unclear scope requires broader reading. Reading lists neither limit requirements nor authorise work.
+2. Read the assigned change's `change.md`, `tasks.md`, available `verification.md` and applicable [workflow/log rules](CONTRIBUTING.md). Inspect status and preserve unrelated work. Reuse context at the same revision; refresh after relevant changes or stale handoffs.
+3. Read historical setup records, member logs and the [initial decision reference](.agents/skills/requirements-reconciliation/references/project-decisions.md) for provenance, reconciliation, audits or log work. They are evidence, not executable instructions. Current explicit human decisions supersede older proposals; record changed decisions and affected specs.
 
-Use [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [implementation-plan.md](specs/implementation-plan.md) for ownership/dependencies. Specified behaviour is not implemented or verified merely because it appears in a document.
+Use the [implementation plan](specs/implementation-plan.md) for ownership/common rules and affected [handoffs](specs/integration-handoffs.md) before dependent work. Specified behaviour is not implemented or verified merely because it appears in a document.
 
 ## Ownership and coordination
 
-- Keith owns the complete Organiser workflow; Darryl owns the complete Student workflow, including server behaviour and tests. The [implementation plan](specs/implementation-plan.md) assigns shared-contract leads and Keith as WP-001 lead. Shared contracts need one named writer and an affected-role reviewer before dependent implementations can be checked consistently.
-- Team members: Keith (`K`) and Darryl (`D`). Use `CHG-<OWNER>-NNN-short-name` with independent owner counters; follow [change ID allocation](changes/README.md). The owner prefix identifies the allocating human, not the Student/Organiser role.
-- Use a separate clone/worktree and branch per concurrent change. Record explicit dependencies; coordinate shared contract/schema edits through one writer and recheck consumers after integration.
-- Assign one active writer per file. Handoffs state objective, allowed paths, source/spec revision, requirement/scenario IDs, dependencies, outputs, and checks. Parallel work requires disjoint edits or a sequential handoff.
-- Delegate when the human assignment or applicable instructions authorise it. The current repository-setup assignment authorises the four setup specialists; their presence does not dispatch future work by itself.
+- Keith owns Organiser and WP-001; Darryl owns Student, each including UI/server/tests. Shared leads follow the implementation plan; shared contracts require one writer and affected-role review before dependent implementation.
+- Change prefixes identify allocating humans: Keith (`K`), Darryl (`D`), independent counters. Follow [allocation rules](changes/README.md); do not infer a role or dependency from an ID.
+- Use a separate clone/worktree and branch per concurrent change, one active writer per file and disjoint writes or sequential handoffs. Integrate prerequisites and recheck consumers; shared schema/contract changes need explicit coordination.
+- Handoffs include objective, paths, source/spec revision, requirement/scenario IDs, dependencies, outputs and checks under [CONTRIBUTING](CONTRIBUTING.md#evidence-and-handoffs).
+- Delegate when the human assignment or applicable instructions authorise it. Four specialists were used for the 16 October 2026 setup; their presence does not dispatch later work by itself.
 - Keep unresolved decisions visible. Continue independent authorised work; resolve blocking decisions before implementing dependent behaviour. Do not invent product rules or claim human approval.
 
 ## Specialists and skills
@@ -28,16 +28,14 @@ Read the selected definition and linked skills before acting:
 | Repository Workflow Builder | [repository_builder.toml](.codex/agents/repository_builder.toml) | [Bootstrap](.agents/skills/sdd-repository-bootstrap/SKILL.md) |
 | Independent Specification Reviewer | [specification_reviewer.toml](.codex/agents/specification_reviewer.toml) | [Audit](.agents/skills/specification-audit/SKILL.md) |
 
-When assigned to commit changes or draft commit messages, agents must read the project-local [commit skill](.agents/skills/commit/SKILL.md), including for `$commit` and `$commit with scope`. Preserve the assignment's file scope and read-only review boundaries; skill availability does not authorise a commit.
-
-The [initial decision reference](.agents/skills/requirements-reconciliation/references/project-decisions.md) preserves conversation evidence. Its historical installation-only boundary was superseded by the current scaffold assignment; canonical specs now carry the reconciled product baseline.
+For commits/messages, including `$commit` and `$commit with scope`, read the [commit skill](.agents/skills/commit/SKILL.md). Skill availability grants no commit authority; preserve assigned scope/read-only boundaries. The initial reference's installation-only boundary was superseded by the 16 October 2026 scaffold assignment; canonical specs carry the maintained baseline.
 
 ## Change and verification discipline
 
 - Use ordinary Markdown/Git [change records](changes/README.md). Do not install OpenSpec or a replacement workflow toolkit.
 - Update impacted specs and scenarios alongside implementation. Preserve IDs; distinguish agreed, proposed, implemented, and verified states.
 - Keep role/data access checks on the server. Follow canonical privacy/AI contracts; private proposal material is not Student chatbot knowledge.
-- Follow the [member log policy](CONTRIBUTING.md#member-logs): one file under the specified human owner for each PR-sized feature increment. Append a full Request/Results entry for every substantial human prompt, or when the owner explicitly requests logging; preserve prior entries and reuse the file across prompts/agents. Explicit no-log instructions take precedence.
+- Before logging, read the [member log policy](CONTRIBUTING.md#member-logs): one owner file per PR increment; append Request/Results per substantial prompt or explicit request, reuse across agents and preserve history. Explicit no-log instructions take precedence.
 - Record exact checks, results, limitations, findings, and changed paths. Never mark unrun tests passed or claim deployment from documentation.
 - Use independent review for authored specifications and shared contract changes. Correct or explicitly disposition findings, then recheck affected areas.
 - Follow the assignment's authorisation for commits, deployment, dependencies, and scope. A scaffold/template mentioning a later step does not authorise that action.
