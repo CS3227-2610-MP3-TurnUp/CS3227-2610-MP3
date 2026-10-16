@@ -1,6 +1,6 @@
 # Organiser proposal assistance
 
-Owner: Organiser member, shared AI/privacy review. B1 target; [G04](../decisions.md) gates provider/numeric design, not the accepted temporary workflow.
+Owner: Keith (Organiser), reviewer: Darryl for shared AI/privacy contracts. B1 target; [G04](../decisions.md) gates provider/numeric design, not the accepted temporary workflow.
 
 | ID | Observable requirement |
 | --- | --- |

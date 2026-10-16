@@ -1,6 +1,6 @@
 # Domain and data contracts
 
-Owner: shared contract owner; both role members review. B1 target; logical contracts, not executable schema/migrations.
+Contract leads: Keith for event states/publication; Darryl for forms/submissions/idempotency/capacity, with reciprocal review. Keith coordinates database migrations. Follow the [ownership and single-writer handoffs](../implementation-plan.md#human-ownership) for this shared document and implementation files. B1 target; logical contracts, not executable schema/migrations.
 
 | ID | Observable requirement |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Student discovery and registration
 
-Owner: Student member; reviewer: Organiser member. B1 target, unimplemented. Historical PAR means Student.
+Owner: Darryl (Student); reviewer: Keith (Organiser). B1 target, unimplemented. Historical PAR means Student.
 
 | ID | Observable requirement |
 | --- | --- |

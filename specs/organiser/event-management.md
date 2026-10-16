@@ -1,6 +1,6 @@
 # Organiser event management
 
-Owner: Organiser member; reviewer: Student member. B1 target, unimplemented. Depends on [accounts](../shared/accounts-and-access.md), [contracts](../shared/domain-and-data-contracts.md), [privacy](../shared/ai-and-privacy.md).
+Owner: Keith (Organiser); reviewer: Darryl (Student). B1 target, unimplemented. Depends on [accounts](../shared/accounts-and-access.md), [contracts](../shared/domain-and-data-contracts.md), [privacy](../shared/ai-and-privacy.md).
 
 | ID | Observable requirement |
 | --- | --- |

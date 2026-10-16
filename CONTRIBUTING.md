@@ -4,7 +4,7 @@ The team uses lightweight SDD with ordinary Markdown and Git. Canonical [specs](
 
 ## Ownership
 
-Each human member owns the complete Student or Organiser workflow, including UI, server authorisation, data operations, and tests. This does not create separate applications or duplicate shared rules. Record actual human names in the [implementation plan](specs/implementation-plan.md) when assigned; agent activity does not replace human contribution evidence.
+Each human member owns the complete Student or Organiser workflow, including UI, server authorisation, data operations, and tests. This does not create separate applications or duplicate shared rules. Keith owns Organiser workflows and Darryl owns Student workflows; the [implementation plan](specs/implementation-plan.md) records shared-contract leads and Keith as WP-001 lead. Record exact file writers/reviewers per change; agent activity does not replace human contribution evidence.
 
 Shared contracts have one writer, an affected-role reviewer, and an explicit dependency handoff. Agree contract details before parallel implementations rely on them. Do not let two agents edit the same file concurrently.
 

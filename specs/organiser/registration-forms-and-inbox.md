@@ -1,6 +1,6 @@
 # Organiser forms, registrations and inbox
 
-Owner: Organiser member. B1 target, unimplemented. Depends on [contracts](../shared/domain-and-data-contracts.md), [access](../shared/accounts-and-access.md), [privacy](../shared/ai-and-privacy.md).
+Owner: Keith (Organiser); reviewer: Darryl, who leads shared form and thread contracts. B1 target, unimplemented. Depends on [contracts](../shared/domain-and-data-contracts.md), [access](../shared/accounts-and-access.md), [privacy](../shared/ai-and-privacy.md).
 
 | ID | Observable requirement |
 | --- | --- |

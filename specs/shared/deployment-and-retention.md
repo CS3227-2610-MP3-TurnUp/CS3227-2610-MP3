@@ -1,6 +1,6 @@
 # Deployment, retention and development evidence
 
-Owner: assign shared deployment/privacy owners. B1 target; this scaffold creates no hosted runtime or passing application checks.
+Owner: Keith for database migrations, retention infrastructure, deployment and release checks; reviewer: Darryl. Both humans decide unresolved retention policies and supply role evidence. See [ownership](../implementation-plan.md#human-ownership). B1 target; this scaffold creates no hosted runtime or passing application checks.
 
 | ID | Observable requirement |
 | --- | --- |
