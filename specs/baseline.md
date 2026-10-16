@@ -1,6 +1,6 @@
 # Baseline B1
 
-Recorded 16 October 2026. Behaviour is an agreed target except explicitly labelled recommendations/open decisions. This setup implements documents, not application features; all runtime verification is pending.
+Recorded 16 October 2026; human ownership updated 17 October 2026 under [D12](decisions.md). Behaviour is an agreed target except explicitly labelled recommendations/open decisions. This setup implements documents, not application features; all runtime verification is pending.
 
 ## Purpose and ownership
 
@@ -8,9 +8,11 @@ TurnUp lets Students discover/register for events and ask event questions. Organ
 
 | Work | Human owner | Independent reviewer |
 | --- | --- | --- |
-| ORG01–20 UI, server behaviour and tests | Organiser member — assign name | Student member |
-| PAR01–15 UI, server behaviour and tests | Student member — assign name | Organiser member |
-| SHR/SEC/DEP/DEV contracts/integration | Assign per change before coding | Other member |
+| ORG01–20 UI, server behaviour and tests | Keith | Darryl |
+| PAR01–15 UI, server behaviour and tests | Darryl | Keith |
+| SHR/SEC/DEP/DEV contracts/integration | Named leads in the [implementation plan](implementation-plan.md#human-ownership) | Other member; exact file assignments per change |
+
+Keith leads WP-001 foundation/hosting feasibility; Darryl leads WP-002 accounts; Keith leads WP-003 publication. Shared-contract ownership and dependency handoffs are recorded in the implementation plan.
 
 Development agents assist these humans; they introduce no product roles or authority to approve product changes.
 

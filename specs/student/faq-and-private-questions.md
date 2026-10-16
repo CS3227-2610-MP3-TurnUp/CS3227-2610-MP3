@@ -1,6 +1,6 @@
 # Student FAQ and private questions
 
-Owner: Student member; Organiser member reviews inbox handoff. B1 target, unimplemented. Depends on [privacy](../shared/ai-and-privacy.md) and [inbox](../organiser/registration-forms-and-inbox.md).
+Owner: Darryl (Student); Keith (Organiser) reviews inbox handoff. B1 target, unimplemented. Depends on [privacy](../shared/ai-and-privacy.md) and [inbox](../organiser/registration-forms-and-inbox.md).
 
 | ID | Observable requirement |
 | --- | --- |

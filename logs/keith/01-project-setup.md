@@ -61,3 +61,17 @@ Clarify logging for the project-setup increment (CHG-K-000; PR pending): one fil
 - Updated nine workflow files: root guidance/README, change guidance/templates, and coordination/bootstrap/commit skills. The [logging policy](../../CONTRIBUTING.md#member-logs) now preserves prompt entries, separates file/entry numbering, combines subagent contributions, and respects explicit no-log instructions.
 - Appended this entry to Keith's existing setup log, preserving entries 01–02. Ten existing files modified in total; no new log files or change records.
 - Local link/anchor, TOML, formatting, and all three modified skill validations passed. No application behaviour changed or runtime tests run.
+
+# 04 - Workflow and Shared Contract Ownership - 17 October 2026
+
+## Request
+
+Update the implementation plan and related documentation with the accepted allocation: Keith owns Organiser workflows, event/publication contracts, AI integration and database/migration/retention/deployment work, and leads WP-001; Darryl owns Student workflows, accounts, form/registration contracts and chat/thread contracts. Continue the project-setup documentation increment (CHG-K-000 follow-up; PR pending), using Keith's existing owner log.
+
+## Results
+
+- Updated 15 documentation files: AGENTS.md, CONTRIBUTING.md, the specification index/baseline/decisions/implementation plan, four shared specs, three Organiser specs and two Student specs. Added D12 with conversation provenance and named reciprocal reviewers. This log is the sixteenth changed file; earlier entries are preserved.
+- Recorded Keith → Darryl → Keith leads for WP-001 foundation, WP-002 accounts and WP-003 publication; mapped the later packages to the agreed role/shared owners. Clarified migration coordination, complete role/server/test ownership and single-writer handoffs for shared files.
+- G08 now identifies ownership as settled; technology/provider choices, per-change assignments and unresolved product policies remain pending. No requirement or acceptance-scenario behaviour is changed, and no application work is started by this update.
+- Verification: `git diff --check` passed. `python3 /tmp/turnup_ownership_checks.py` (temporary structural checker) passed: 16 Markdown-only changed paths, 87 local links/anchors, all six shared allocations and WP-001/002/003 leads, eight remaining gates, and preserved prior log entries. Compared with `be1ef27`, all 58 requirement definitions, 32 scenarios, D01–D11, G01–G07 policy text, baseline agreed scope and work-package scope/dependency columns are unchanged.
+- The Independent Specification Reviewer audited the 16-file diff against the accepted conversation allocation and `be1ef27`, finding no actionable issues. Review covered ownership, reciprocal reviewers, shared-file handoffs, remaining gates and scope/claim consistency. Runtime, hosting, provider and application checks were not run because this increment only changes documentation. No commit or deployment was performed.

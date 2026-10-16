@@ -1,6 +1,6 @@
 # AI and privacy
 
-Owner: shared security/AI owner; each member implements their role's entry points. B1 target; implementation/evaluation pending.
+Contract leads: Keith for AI budgets/provider calls/private-public context separation and retention infrastructure; Darryl for chat sources/evidence and private thread delivery, with reciprocal review. Each member implements their role's entry points and access checks. Follow [ownership and single-writer handoffs](../implementation-plan.md#human-ownership); unresolved privacy policies remain open. B1 target; implementation/evaluation pending.
 
 | ID | Observable requirement |
 | --- | --- |

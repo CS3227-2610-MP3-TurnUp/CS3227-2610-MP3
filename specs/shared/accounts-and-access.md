@@ -1,6 +1,6 @@
 # Accounts and access
 
-Owner: shared authentication owner — assign before coding. B1 target; G01/G02 details open; implementation unverified.
+Owner: Darryl; reviewer: Keith. Accounts, fixed-role guards and sessions follow [D12 ownership](../implementation-plan.md#human-ownership). B1 target; G01/G02 details open; implementation unverified.
 
 | ID | Observable requirement |
 | --- | --- |

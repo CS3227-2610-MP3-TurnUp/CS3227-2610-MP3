@@ -10,7 +10,7 @@ Use [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [implementation-plan
 
 ## Ownership and coordination
 
-- Student and Organiser human owners each own their complete workflow, including server behaviour and tests. Shared contracts need one named writer and an affected-role reviewer before dependent implementations can be checked consistently.
+- Keith owns the complete Organiser workflow; Darryl owns the complete Student workflow, including server behaviour and tests. The [implementation plan](specs/implementation-plan.md) assigns shared-contract leads and Keith as WP-001 lead. Shared contracts need one named writer and an affected-role reviewer before dependent implementations can be checked consistently.
 - Team members: Keith (`K`) and Darryl (`D`). Use `CHG-<OWNER>-NNN-short-name` with independent owner counters; follow [change ID allocation](changes/README.md). The owner prefix identifies the allocating human, not the Student/Organiser role.
 - Use a separate clone/worktree and branch per concurrent change. Record explicit dependencies; coordinate shared contract/schema edits through one writer and recheck consumers after integration.
 - Assign one active writer per file. Handoffs state objective, allowed paths, source/spec revision, requirement/scenario IDs, dependencies, outputs, and checks. Parallel work requires disjoint edits or a sequential handoff.
