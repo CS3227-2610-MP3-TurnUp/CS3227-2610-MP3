@@ -1,6 +1,6 @@
 # TurnUp UI guidelines
 
-Shared visual guidelines for TurnUp, authored 17 October 2026. These presentation defaults do not change product requirements, select a UI framework, or indicate implemented screens. Read the relevant [canonical specs](../specs/README.md) alongside this guide, then only the affected [screen patterns](ui-screen-patterns.md) for a task.
+Shared visual guidelines for TurnUp. These presentation defaults do not change product requirements, select a UI framework, or indicate implemented screens. Read the relevant [canonical specs](../specs/README.md) alongside this guide, then only the affected [screen patterns](ui-screen-patterns.md) for a task.
 
 ## Visual direction
 
