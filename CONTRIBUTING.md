@@ -14,8 +14,6 @@ Human review takes place on the GitHub PR, which is the authoritative record of 
 
 Keep independent agent-review assignments, findings, dispositions and rechecks in change verification and member logs. Preserve human product decisions, shared-contract agreement and runtime/release evidence where required; the PR-review convention does not replace those records.
 
-This convention follows Keith's 17 October 2026 instruction to remove separate human-review sign-off from repository change records and future templates.
-
 ## Concurrent work and change IDs
 
 Keith uses prefix `K`; Darryl uses prefix `D`. Each human allocates an independent sequence using the [change naming rules](changes/README.md). Keep the allocated ID stable across branches, review, and archive. Each agent receives its human owner and change ID in its assignment; agents for the same human must coordinate allocation before dispatch.
