@@ -7,6 +7,7 @@ Status: proposed / in progress / complete (select one; completion needs evidence
 - Requested outcome and concrete user behaviour:
 - Human assignment/provenance and date:
 - Source/spec revision: commit hash, or dated working-copy snapshot and file list.
+- Context to read: authoritative document sections, complete requirement/scenario IDs and producer/consumer contracts from the [task reading map](../../specs/README.md#task-reading-map); expand when dependencies require it. Reference source content rather than copying it.
 - Allocated change ID: `CHG-K-NNN` or `CHG-D-NNN`; allocating human Keith (`K`) or Darryl (`D`), following [allocation rules](../README.md).
 - Human owner: Keith or Darryl (primary accountable member; prefix stays stable if ownership transfers).
 - Writers, with one active writer per file:

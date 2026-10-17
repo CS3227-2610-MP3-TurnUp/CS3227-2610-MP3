@@ -2,7 +2,7 @@
 
 Status: planned application work; repository setup is recorded separately in [CHG-K-000](../changes/CHG-K-000-sdd-repository-setup/change.md). Source/spec snapshot: B1, 16 October 2026, with the human-approved ownership allocation recorded on 17 October 2026 as [D12](decisions.md). The 58 canonical requirements and 32 planned scenarios are unchanged. No application behaviour is implemented or runtime-verified by these documents.
 
-Read [baseline.md](baseline.md), [decisions.md](decisions.md), and [acceptance scenarios](verification/acceptance-scenarios.md) before assigning work. Roadmap labels `WP-001`–`WP-007` describe work packages and reserve no change IDs or directories. When assigned, map each scoped slice to an allocated `CHG-K-NNN` or `CHG-D-NNN` record under the [change naming rules](../changes/README.md). A work package may span multiple changes. The roadmap authorises no implementation by itself.
+Before assigning work, read [baseline.md](baseline.md), relevant [decisions](decisions.md), and complete applicable [acceptance scenarios](verification/acceptance-scenarios.md), following the [task reading map](README.md#task-reading-map). Roadmap labels `WP-001`–`WP-007` describe work packages and reserve no change IDs or directories. When assigned, map each scoped slice to an allocated `CHG-K-NNN` or `CHG-D-NNN` record under the [change naming rules](../changes/README.md). A work package may span multiple changes. The roadmap authorises no implementation by itself.
 
 ## Human ownership
 
@@ -31,33 +31,42 @@ Keith coordinates migration files and database integration. Darryl supplies acco
 
 ## Dependency-ordered work packages
 
-IDs are existing baseline families; `PAR` denotes Student requirements for historical traceability. Link exact requirements and scenario IDs in each future change rather than assigning an entire role as one unbounded agent task.
+Read only the assigned package's full plan plus the shared contracts and applicable scenarios selected by the [task reading map](README.md#task-reading-map). Expand to affected producers/consumers whenever scope crosses packages; the map is a starting point, not a permission or requirement boundary.
 
-| Order / roadmap work package | Human ownership | Scope and requirement package | Depends on / observable completion |
-| --- | --- | --- | --- |
-| WP-001: application foundation and hosting feasibility | Keith leads; Darryl reviews | Initialise the selected Next.js/TypeScript stack, database/migration approach, isolated configuration, hosted execution and server-side SoC connectivity. DEP01–DEP04, SEC06; DEV01–DEV03 throughout. | Resolve only required library/provider choices first. Record actual hosted connectivity and free-tier constraints; no secrets in browser/repository. A feasibility check does not demonstrate the complete application. |
-| WP-002: fixed-role accounts and optional profile | Darryl leads, including profile integration; Keith reviews | Signup/login/logout, stable identity, credential changes, role guards and optional Student Name/Phone. SHR01–SHR05, SHR08–SHR09, SEC06–SEC07. | WP-001; decide session/credential rules before coding them. Direct API tests enforce fixed roles and ownership; empty optional profile does not block registration. |
-| WP-003: manual event preparation and publication | Keith leads; Darryl reviews public contract | Own-event dashboard/search/sort, save incomplete drafts, manual completion, exact preview/approval, replacement revisions, withdrawal, cancellation, draft deletion and cancel-editing. ORG01–ORG02, ORG08–ORG13, ORG18; SHR05–SHR08, SEC01–SEC03. | WP-002 and publication contract. Begin with a valid zero-question form; WP-004 adds configurable questions. A complete manual event publishes with zero AI calls; stale approval fails and private edits do not change the live revision. |
-| WP-004: Student discovery and transactional registration | Darryl owns Student flow and registration contract; Keith owns Organiser form/roster flow; cross-review affected contracts | Approved event discovery/details, versioned custom forms, atomic join/cancel/rejoin, submission correction, My Events, capacity updates and owner roster. PAR01–PAR05, PAR13–PAR15; ORG14, ORG19–ORG20; SHR06–SHR08, SEC07. | WP-003 public contract; agree form limits and relevant schedule rules. Last-place race has one winner; retries use no extra seats; private snapshots and historical form wording remain intact. |
-| WP-005: temporary proposal assistance | Keith leads; Darryl reviews exclusion boundary | Temporary server-side PDF extraction, partial fields, bounded clarification, supported Other suggestions, private drafts/evidence and stale-result protection. ORG03–ORG08, ORG18; SEC01–SEC06. | WP-003 manual path and verified PDF/model budgets. No original PDF/full raw extraction persists; malformed inputs fail safely and manual publishing remains available. |
-| WP-006: grounded FAQ and private organiser replies | Darryl owns FAQ/escalation/reply viewing and thread contract; Keith owns inbox/replying and AI-provider contract; cross-review affected contracts | Current-public-source answers, evidence checks, ambiguity/partial/unanswered handling, committed forwarding, idempotent private threads, failure fallback and explicit public reuse of replies. PAR06–PAR12; ORG15–ORG17; SEC01–SEC03, SEC05–SEC07. | WP-002 and WP-003 publication contract; agree source/thread contracts and provider budgets. Private material never enters Student model context; sent status follows commit; source withdrawal/replacement invalidates stale output. Does not depend on WP-005. |
-| WP-007: retention, integrated security and release evidence | Keith leads retention/deployment/release integration; Darryl reviews; both provide role evidence and cross-review authored work | Cleanup/anonymisation, derived-copy handling, adversarial/benign fixtures, role integration, hosted demonstration, migration/rollback and contribution evidence. SEC01–SEC07, DEP01–DEP04, DEV01–DEV03; affected role requirements. | Relevant feature packages and final cleanup decisions. Record deterministic and controlled live-model evidence separately; verify the hosted workflow without a developer laptop. |
+| Package | Detailed scope, slices, dependencies and acceptance targets |
+| --- | --- |
+| [WP-001](work-packages/wp-001-foundation.md) | Application foundation and hosting feasibility |
+| [WP-002](work-packages/wp-002-accounts.md) | Fixed-role accounts and optional profile |
+| [WP-003](work-packages/wp-003-publication.md) | Manual event preparation and publication |
+| [WP-004](work-packages/wp-004-registration.md) | Student discovery and transactional registration |
+| [WP-005](work-packages/wp-005-proposal-assistance.md) | Temporary proposal assistance |
+| [WP-006](work-packages/wp-006-faq-and-inbox.md) | Grounded FAQ and private Organiser replies |
+| [WP-007](work-packages/wp-007-release.md) | Retention, integrated security and release evidence |
 
 Keith leads WP-001 first, then hands the foundation to Darryl for WP-002 accounts; Keith leads WP-003 publication after its account/role-guard dependencies are available. Darryl may resolve account decisions and design Student contracts during WP-001, while dependent implementation waits for the required foundation. Each handoff records actual checks and remaining gates.
 
 After WP-003, WP-004, WP-005 and WP-006 may proceed concurrently where files are disjoint and shared contracts are agreed. Merge schema/service changes sequentially through their named contract owner. Retention design and security fixtures can begin earlier; final feature/release evidence depends on the implemented flows.
 
-| Package | Planned acceptance targets in [acceptance-scenarios.md](verification/acceptance-scenarios.md) |
-| --- | --- |
-| WP-001 | T15/T28 foundations; complete workflow evidence follows feature integration |
-| WP-002 | T01/T02/T16/T32; profile-snapshot integration T20 with WP-004 |
-| WP-003 | T05–07/T22–25/T29; chat/registration-dependent portions with their packages |
-| WP-004 | T08/T17–21/T23/T24/T30; optional-profile integration T16/T20 |
-| WP-005 | T03–05/T13/T14/T22/T26 |
-| WP-006 | T02/T06/T09–14/T18/T27/T31 |
-| WP-007 | T13–15/T26–28 and regression evidence for the other targets |
+All T01-T32 have a planned package; their original package mappings are preserved in the linked plans. Shared scenarios may span packages; partial foundation evidence does not mark the complete scenario passed. Each future change must record exact implemented portions and actual results.
 
-All T01–T32 have a planned package. Shared scenarios may span packages; partial foundation evidence does not mark the complete scenario passed. Each future change must record exact implemented portions and actual results.
+## Integration checkpoints and independent preparation
+
+The complete six handoffs, independent preparation and specialist/evidence responsibilities are in [integration-handoffs.md](integration-handoffs.md). Read the affected handoff before producing or consuming a prerequisite. Coordinators and cross-package reviewers read the full guide.
+
+## Common planning rules
+
+Planning detail added 17 October 2026 against Git revision `f8804f0` and D12. The linked package documents break down the existing packages; they add no requirements, reserve no change IDs and report no implementation progress. Each row is a candidate bounded assignment, not necessarily a separate PR. Allocate changes only when actual work is assigned under [change allocation rules](../changes/README.md).
+
+Paths identify existing responsibility areas for future work, not executable filenames or API definitions. Before dispatch, each change must name exact files, its active writers, reviewer and prerequisite revisions. Shared `src/app/api/`, `src/components/`, schema/migration files, fixtures and multi-contract documents require explicit file-level allocation; directory ownership alone does not permit concurrent edits.
+
+## Start readiness and remaining assignments
+
+- This documentation assignment fills planning detail only; it does not start application implementation, install dependencies or allocate future application changes. This document still reports planned work.
+- Keith's first implementation assignment is a bounded WP-001 foundation slice. Before execution, confirm its allocated change ID, exact files, integration base, reviewer, increment/log and the relevant G08 choices.
+- Darryl can prepare G01/G02 account decisions and the account contract while WP-001 proceeds. Recommendations remain proposed until the required human decisions are recorded; account implementation waits for its required foundation handoff.
+- For every later slice, select only its affected requirements/scenarios, record prerequisite change IDs/revisions and exact writers in `tasks.md`, and preserve checks not yet run in `verification.md`.
+- Physical schemas, endpoint names, function signatures, precise new filenames, library versions, numeric limits and executable commands are not settled by directory placeholders. Record them in the assigned change/design once selected; do not fill them with guessed product policy or claim external validation.
+- D12 identifies human reviewers. The previously discussed review/disposition, ID-allocation-record and change-status suggestions remain unadopted; this reorganisation does not resolve them. Actual review evidence belongs in the member log/change verification.
 
 ## Decision gates
 
@@ -69,16 +78,3 @@ Use [decisions.md](decisions.md) for authority and unresolved questions. An unre
 - G07, before emergency withdrawal behaviour is complete: resolve treatment of sensitive stored private replies and derived caches; preserve the accepted stop on new public reads/chat/joining.
 - G06, before cleanup/release: define draft inactivity and advance notice, deletion/anonymisation relationships, derived copies and backup expiry. Accepted 30-day/90-day retention defaults do not specify those mechanics.
 - G08, before each shared implementation task: use the D12 contract leads above and record the change's primary human owner, reviewer, allowed paths and dependency contract. Ownership is settled; per-change assignments remain necessary. Resolve relevant library/database/deployment choices, provider allowances and authoritative course constraints before dependent work/compliance claims.
-
-## Agent assignments and evidence
-
-| Specialist | When used | Bounded output and handoff |
-| --- | --- | --- |
-| SDD Coordinator / Project Manager | Before work and at dependent handoffs | Assignment plan, single writers/reviewers, source/spec revision, requirement/scenario IDs, paths, dependencies and actual status/evidence. |
-| Requirements Analyst | Before a new or changed behaviour | Reconciled affected specs, explicit open decisions and observable acceptance scenarios. Avoid rewriting unrelated role scope. |
-| Repository Workflow Builder | After the file-level scope is assigned | Agreed repository/process artifacts. The setup definition is not blanket authority to implement application features; future implementation assignments identify the needed implementer and skills. |
-| Independent Specification Reviewer | After authorship and after material corrections | Read-only contradiction/privacy/traceability audit, file/ID-specific findings and rechecks; no claim to independently review own authored work. |
-
-The current setup activated all four specialists. The Builder and Analyst authored disjoint outputs; Coordinator received sequential ownership of this plan and setup tasks/evidence; the parent agent integrates their staged files. Independent review follows authorship. Record actual findings and check results in [setup verification](../changes/CHG-K-000-sdd-repository-setup/verification.md).
-
-For application work, each change records what was specified, implemented and actually verified. Keep deterministic tests, concurrent database checks, browser tests, hosted checks and controlled SoC evaluations distinct. Never mark a scenario passed from a document or placeholder alone.
