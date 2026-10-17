@@ -19,3 +19,5 @@ Read [baseline](baseline.md), [decisions](decisions.md), then the relevant capab
 SHR/ORG/PAR/SEC/DEP/DEV preserve historical IDs. **PAR means Student**, not a third role. Each of the 58 IDs has one canonical definition and a verification target. Agreed does not mean implemented or verified. Shared human leads are assigned in the implementation plan; exact file writers, reviewers and dependencies must be recorded per change before coding.
 
 Update canonical behaviour before implementation; change records link IDs, source/spec revisions, tasks and actual checks. Resolve open gates only for dependent work; record new decisions rather than quietly treating proposals as agreement.
+
+For UI work, also read the [shared visual guidelines](../docs/ui-guidelines.md) and the relevant [screen pattern](../docs/ui-screen-patterns.md). They define TurnUp's presentation while preserving these behavioural contracts; unrelated work need not load them.

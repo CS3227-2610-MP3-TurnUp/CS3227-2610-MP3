@@ -12,6 +12,7 @@ This repository currently contains SDD documentation and a directory scaffold. T
 - [Implementation plan](specs/implementation-plan.md): ownership, sequencing, and dependencies.
 - [Contributing](CONTRIBUTING.md) and [agent guidance](AGENTS.md): shared execution workflow.
 - [Change records](changes/README.md): bounded work and actual verification evidence.
+- [UI guidelines](docs/ui-guidelines.md): shared visual tokens, components and responsive defaults; [screen patterns](docs/ui-screen-patterns.md) apply them to TurnUp workflows.
 
 ## Repository layout
 
