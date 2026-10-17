@@ -6,13 +6,13 @@ Before assigning work, read [baseline.md](baseline.md), relevant [decisions](dec
 
 ## Human ownership
 
-Keith (`K`) owns Organiser workflows; Darryl (`D`) owns Student workflows. The human-approved allocation below also assigns shared-contract leads and Keith as WP-001 lead. Prefixes identify humans. Each change has one primary human owner and an affected-member reviewer.
+Keith (`K`) owns Organiser workflows; Darryl (`D`) owns Student workflows. The human-approved allocation below also assigns shared-contract leads and Keith as WP-001 lead. Prefixes identify humans. Each change has one primary human owner and an affected-member PR reviewer. Human-review evidence and approval live on the GitHub PR under the [review policy](../CONTRIBUTING.md#review-records), without a separate local sign-off or completion gate.
 
 | Area | Primary owner | Scope and reviewer |
 | --- | --- | --- |
 | Organiser workflows | Keith | Own-event interface, server operations, proposal assistance, publication, custom form configuration, roster, private inbox/replies and their tests. Darryl reviews affected shared contracts. |
 | Student workflows | Darryl | Discovery, optional profile, registration/submission, My Events, grounded FAQ, escalation, private reply viewing and their tests. Keith reviews affected shared contracts. |
-| Shared work | Named lead in the contract table below | Both contribute; the other member reviews before dependent implementation. Each change records exact file writers and handoffs. |
+| Shared work | Named lead in the contract table below | Both contribute; agree shared contract details before dependent implementation. The other member reviews on the GitHub PR. Each change records exact file writers and handoffs. |
 
 Fixed roles have distinct permissions in one Next.js/TypeScript application. Complete role ownership includes each role's server behaviour and tests; common identity, publication, registration and question contracts remain authoritative shared services.
 
@@ -66,7 +66,7 @@ Paths identify existing responsibility areas for future work, not executable fil
 - Darryl can prepare G01/G02 account decisions and the account contract while WP-001 proceeds. Recommendations remain proposed until the required human decisions are recorded; account implementation waits for its required foundation handoff.
 - For every later slice, select only its affected requirements/scenarios, record prerequisite change IDs/revisions and exact writers in `tasks.md`, and preserve checks not yet run in `verification.md`.
 - Physical schemas, endpoint names, function signatures, precise new filenames, library versions, numeric limits and executable commands are not settled by directory placeholders. Record them in the assigned change/design once selected; do not fill them with guessed product policy or claim external validation.
-- D12 identifies human reviewers. The previously discussed review/disposition, ID-allocation-record and change-status suggestions remain unadopted; this reorganisation does not resolve them. Actual review evidence belongs in the member log/change verification.
+- D12 identifies the human PR reviewers. Keith's 17 October 2026 workflow instruction places human review on GitHub PRs and removes duplicate repository sign-off/completion gates; independent agent findings and rechecks remain in the member log/change verification. ID-allocation and change-status suggestions beyond this explicit convention remain unadopted.
 
 ## Decision gates
 

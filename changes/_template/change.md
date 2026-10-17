@@ -1,6 +1,6 @@
 # CHG-<OWNER>-NNN — Change title
 
-Status: proposed / in progress / complete (select one; completion needs evidence).
+Status: proposed / in progress / complete (select one; completion needs delivery and verification evidence; human approval and merge status live on the GitHub PR).
 
 ## Intent and source
 
@@ -12,7 +12,7 @@ Status: proposed / in progress / complete (select one; completion needs evidence
 - Human owner: Keith or Darryl (primary accountable member; prefix stays stable if ownership transfers).
 - Writers, with one active writer per file:
 - PR/feature increment and designated owner log: existing owner log path, or planned branch/scope and log owner; follow the [member log policy](../../CONTRIBUTING.md#member-logs) and append a full entry per substantial prompt (or explicit logging request) to that same file.
-- Independent reviewer:
+- Independent agent reviewer:
 - Related overview/implementation issue URLs, if available; otherwise state pending:
 
 ## Scope
@@ -31,6 +31,8 @@ Status: proposed / in progress / complete (select one; completion needs evidence
 - Observable completion conditions:
 - Verification approach and runtime/deployment limits:
 
+Use the GitHub PR as the human-review record under the [review policy](../../CONTRIBUTING.md#review-records). Keep independent agent findings and rechecks in verification; omit separate human-review sign-off fields, tasks and completion gates.
+
 ## Decision-to-issue reconciliation
 
 Follow [the reconciliation procedure](../../CONTRIBUTING.md#decision-to-issue-reconciliation) when a decision is accepted or superseded within this change.
@@ -46,4 +48,4 @@ An accepted decision changes the agreed target or readiness; implementation and 
 
 ## Handoff
 
-Record objective, allowed paths, source/spec revision, IDs, dependencies, outputs, reviewer, and checks in [tasks.md](tasks.md). Record actual evidence and findings in [verification.md](verification.md). Add `design.md` only for a material technical choice.
+Record objective, allowed paths, source/spec revision, IDs, dependencies, outputs, independent agent reviewer, and checks in [tasks.md](tasks.md). Record actual evidence and findings in [verification.md](verification.md). Add `design.md` only for a material technical choice.

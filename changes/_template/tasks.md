@@ -2,7 +2,7 @@
 
 Source/spec revision: identify the same snapshot as [change.md](change.md).
 
-| Order | Task / output files | Writer | Independent reviewer | Preconditions / dependencies | Requirement / scenario IDs | Completion check |
+| Order | Task / output files | Writer | Independent agent reviewer | Preconditions / dependencies | Requirement / scenario IDs | Completion check |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Reconcile scoped behaviour and decisions | Assign | Assign | Assignment and source snapshot | Fill in | Traceable specs and unresolved decisions |
 | 2 | Implement exact assigned slice | Assign | Assign | Required contracts/blockers resolved | Fill in | Observable scoped behaviour and checks |
@@ -15,7 +15,7 @@ Human owner: Keith (`K`) or Darryl (`D`). Confirm the allocated change ID and di
 - [ ] Scope, owners, permitted files, source/spec revision, IDs, and preconditions recorded.
 - [ ] Relevant specs and acceptance scenarios reconciled.
 - [ ] Scoped deliverables handed off without overlapping writers.
-- [ ] Actual checks and independent review recorded in [verification.md](verification.md).
+- [ ] Actual checks and independent agent review recorded in [verification.md](verification.md).
 - [ ] Findings corrected or explicitly dispositioned; dependent blockers visible.
 - [ ] Final scope, task states, evidence, and next bounded work agree.
 
@@ -31,3 +31,5 @@ Human owner: Keith (`K`) or Darryl (`D`). Confirm the allocated change ID and di
 - Findings, limitations, and next bounded task:
 
 Repeat the handoff record per transfer where useful. Check a task only when its evidence exists.
+
+Human-review assignment, findings and approval are tracked on the GitHub PR. Do not add a duplicate sign-off task or make it a local completion gate; follow the [review policy](../../CONTRIBUTING.md#review-records).
