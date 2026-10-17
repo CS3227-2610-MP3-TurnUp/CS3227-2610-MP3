@@ -14,8 +14,13 @@ Agents share the same worktree, must preserve others' work and must not edit out
 
 - [x] Scope, allocation and single writers recorded before dispatch.
 - [x] Implement and integrate bounded tool.
-- [x] Run synthetic/platform checks and local backfill; actual Windows/remote CI remain unrun.
+- [x] Run synthetic/platform checks and local backfill; initial local-only evidence is supplemented by the Windows CI correction below.
 - [x] Independently review; correct/disposition and recheck findings.
 - [x] Finalise evidence, log and operating instructions; local startup permission limitation retained.
 
 Final handoff: all workers released ownership before final integration. Independent verifier reproduced the integrated 55-test suite and F01–F03 corrections. Parent moved the worktree into locally ignored `.worktrees/agent-usage-tracking`; original checkout and all product/specification/agent inputs remain unchanged. Git local exclude adds `/.worktrees/` only. At implementation handoff no Git commit/staging or remote publication had occurred. The later delivery request authorises one logical commit and same-name origin push; log entry02 records that request.
+
+
+## Windows CI correction — 18 October 2026
+
+Continue this change at `2fc8aa0b67dd920434a306ed946ef93bf3f15926`. Parent is the sole writer of `tools/agent_usage/common.py`, new `tests/agent_usage/test_common.py`, and these change/log records. The existing independent Implementation Verifier performs read-only review and relevant regression checks. Preserve earlier outputs and original log entries. Scope: transient Windows replacement errors during concurrent hook association publication; no provider, application or OS-installation changes. The existing same-branch delivery authorisation carries the correction to CI after local validation/review.

@@ -1,6 +1,6 @@
 # CHG-K-003 — Verification
 
-Status: implementation and independent verification complete for development-tool scope. Local ledger/backfill and current-login launchd execution verified. Persistent login installation and Codex hook trust remain incomplete; actual Windows execution and remote CI are unrun. No application scenario, hosted deployment, billing reconciliation, PR approval or merge is implied.
+Status: implementation and independent verification complete for development-tool scope. Local ledger/backfill and current-login launchd execution verified. Persistent login installation and Codex hook trust remain incomplete. Native Windows CI evidence is recorded in the follow-up below; actual Windows hook/scheduler activation is unverified. No application scenario, hosted deployment, billing reconciliation, PR approval or merge is implied.
 
 Source: `bd44c11927e2b7615d18efd9fd2579c26d99e614` plus this working copy, branch `agent-usage-tracking`; final worktree `.worktrees/agent-usage-tracking`. Keith owns records. Implementation review used the working copy before a delivery commit; subsequent commit identity and publication are recorded in Git history.
 
@@ -40,10 +40,21 @@ The accepted local accounting, exchange, report, automation generator, tests and
 
 - Codex requires the human to review/trust new hooks through `/hooks`; none were trusted or bypassed by this task. Cloud-orchestrated sessions may not execute local command hooks; scheduled collection works independently.
 - Administrator assistance is required to repair the personal LaunchAgents directory's ownership; rerun `setup --apply` afterwards for future-login persistence. Current-login automatic updates are verified. Uninstall remains available and preserves data.
-- Darryl's real machine/data and actual Windows scheduler/hook execution are unavailable here. Cross-member synthetic aggregation and Windows artifact/quoting tests pass. CI matrix is authored but has not been published/run. No full Windows success is claimed.
+- Darryl's real machine/data and actual Windows scheduler/hook execution are unavailable here. Cross-member synthetic aggregation and Windows artifact/quoting tests pass. The published CI matrix exposed the Windows concurrency failure documented below; later CI runs are the authority for corrected native test results. No full Windows hook/scheduler activation is claimed.
 - API-equivalent/credit estimates use dated official rates and disclosed tier assumptions, not actual bills. No tool/container/third-party spend or subscription allowance reconciliation.
 - DEV01–03/T28 repository evidence is partial; no application/runtime scenario is marked passed. Human review remains on the eventual GitHub PR.
 
 ## Delivery follow-up — 18 October 2026
 
 The later human prompt authorises committing this increment and pushing to origin under the same branch name. The runtime/test snapshot above was rechecked unchanged, so existing 55-test evidence is reused. Staged-path/diff and whitespace checks precede the commit. Push verification reads back the exact remote branch hash; no force push, PR creation, merge or successful CI run is inferred. See increment log entry02 and Git history for delivery.
+
+
+## Windows concurrency correction — 18 October 2026
+
+Source `2fc8aa0b67dd920434a306ed946ef93bf3f15926` plus bounded follow-up. [Failed CI run39063506005](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39063506005) completed with both Windows Python3.11 and3.14 jobs failing in `test_hook_privacy_and_concurrent_queue`: `automation.hook` → `atomic_json(known, ...)` → `os.replace`, PermissionError/WinError5 on the shared hook_sessions destination. This supersedes the earlier statement that remote CI was unrun for the initial implementation; the original delivery evidence remains historical.
+
+Parent added bounded retries for Windows access/sharing/lock errors without changing atomic publication or bypassing the concurrent test. New deterministic tests first reproduced failure against the old helper (transient5/32/33 subtests errored; persistent-error retry-bound assertion failed), then passed after the fix. They verify a complete reusable temporary document, readable unchanged destination during retries, cleanup, eventual publication, finite exhaustion and immediate propagation of unrelated/non-Windows errors. Existing24-event/8-worker privacy/concurrency test remains enabled.
+
+Local commands: `python3 -m unittest discover -s tests/agent_usage -p test_common.py -v` (3 passed); `python3 -m unittest discover -s tests/agent_usage -v` (58 passed, Python3.14.2/macOS,1.706s); `git diff --check` passed. Actual fixed Windows execution requires the subsequent CI run; no success is claimed before that run. Independent review and delivery results follow in Git history and remote CI.
+
+Independent Implementation Verifier rechecked the two actual changed code/test files and found no defects. It reproduced3 focused tests and58 full tests (1.713s), plus persistent WinError32 using real sleeps:7 attempts,0.655s elapsed, prior destination unchanged and no temporary files left. Reviewed SHA256: common.py `69cbdecfccee4884348bd7eddcac6c698cebaa2abd3cee9d6cf510f92c91ed96`; test_common.py `dca7645d702750136b7b6c015c2b1f3caa6fe367c7343ad548d29e4fdb77b192`. Reviewer wrote no files. This is bounded synthetic evidence; native Windows verification follows publication.

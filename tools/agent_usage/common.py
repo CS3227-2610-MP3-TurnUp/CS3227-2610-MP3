@@ -2,6 +2,7 @@
 import json
 import os
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +23,18 @@ def atomic_json(path, value):
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(value, handle, ensure_ascii=True, indent=2)
             handle.write("\n")
-        os.replace(temporary, path)
+        # Windows can deny replacement briefly while another hook publishes
+        # the same destination or a reader holds it without delete sharing.
+        # Retain the complete temporary document and retry only these errors;
+        # 0.63s total backoff stays below the three-second hook timeout.
+        for attempt in range(7):
+            try:
+                os.replace(temporary, path)
+                break
+            except OSError as error:
+                if getattr(error, "winerror", None) not in (5, 32, 33) or attempt == 6:
+                    raise
+                time.sleep(0.01 * 2 ** attempt)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)

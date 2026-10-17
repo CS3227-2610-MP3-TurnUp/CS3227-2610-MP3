@@ -27,3 +27,19 @@ Commit this change and push it to origin using the same branch name, agent-usage
 - Confirmed the 16-file runtime/test snapshot is unchanged from the independently reviewed 55-test version: `73e1c66d2477124d74231cbc47eb298c6b5f5341730e533a5d8f5bb90669f501`. Reused that validation evidence; no runtime changes justify repeating the suite.
 - Updated delivery authorisation and historical status wording in change records. This prompt authorises the commit and a non-forced push to `origin/agent-usage-tracking`; human review, merge and PR creation remain separate. Actual commit identity and push result are recorded in Git/history and the delivery response, rather than predicting them here.
 - Existing startup-permission, hook-trust, real Windows execution and billing limitations remain unchanged. Publishing the authored CI workflow does not itself establish CI success. Original checkout and other branches are preserved.
+
+
+# 03 - Fix Concurrent Hook Publication on Windows - 18 October 2026
+
+## Request
+
+Fix `test_hook_privacy_and_concurrent_queue` for Windows instances in the existing CHG-K-003 increment and branch. Base `2fc8aa0b67dd920434a306ed946ef93bf3f15926`; retain the existing owner log and earlier entries.
+
+## Results
+
+- Read actual failed GitHub Actions run39063506005: Windows Python3.11 and3.14 both raised WinError5 when concurrent hooks atomically replaced the same session-association file. Earlier initial-delivery Windows/CI limitations remain historical; a real Windows failure is now established.
+- Parent adds finite Windows-specific replacement retries in the shared JSON helper, preserving atomic publication and raising permanent/unrelated failures. New3-test regression module checks transient errors5/32/33, complete-file reuse, unchanged prior data, cleanup, exhaustion and non-Windows propagation. The existing concurrent/privacy test is unchanged; no test is skipped or relaxed.
+- Recorded red-before/green-after evidence. Local58-test suite passes on Python3.14.2/macOS; fixed native Windows success remains pending the subsequent same-branch CI run at this local validation point. Independent review is assigned to the existing verifier; no implementation delegation or changes outside the named paths.
+- Updated task/design/verification records and retained the original startup/hook-trust/billing limitations. No real hook/scheduler installation, production/provider access or unrelated changes are required. Follow-up commit/push will use the existing delivery authorisation without a force push, PR creation or merge.
+
+- Independent Implementation Verifier subsequently returned no defects, reproduced3 focused/58 full tests, and checked real bounded retry timing (persistent simulated WinError32:7 attempts,0.655s, unchanged destination/clean temporary files). The reviewed code/test hashes are in verification.md; no reviewer edits. Final runtime source is unchanged after review. Native fixed Windows CI is checked after the correction is published.
