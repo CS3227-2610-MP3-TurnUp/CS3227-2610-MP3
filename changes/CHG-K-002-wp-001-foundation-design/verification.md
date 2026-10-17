@@ -92,3 +92,9 @@ Next bounded task consumes the selected stack/Neon/CLI design, allocates exact i
 Parent closing check after status/log finalisation: `python3 /private/tmp/turnup-stack-docs-checks.py` passed again with the same 11/12-path scope, 77/76 preserved-input counts, 83 links, 58 requirement/coverage IDs and 32 scenarios, including `git diff --check`. No content or runtime acceptance was added.
 
 Specification Reviewer closing evidence/status consistency recheck passed with no actionable findings. Independently confirmed the unchanged eight-file snapshot, twelve cumulative paths, 77 pre-prompt preserved inputs, 83 links, 58 requirement/coverage IDs, 32 scenarios and preserved prior log/requirement/scenario history. Read-only review adds no runtime, provisioning, account/provider or human-approval claim.
+
+## Local-only SoCLaaS references — 18 October 2026
+
+Keith requested keeping the supplied reference PDFs locally, ignoring them in Git, then committing and pushing to the same origin branch. This supersedes the earlier plan to publish the PDFs. The parent adds the narrowly scoped ignore rule and reference setup note, updates the design's publication guidance, and removes only the two PDFs from the index with `git rm --cached`. Earlier evidence and PDF hashes remain historical and unchanged; no history rewrite is requested.
+
+Python SHA-256 comparison against the pre-change snapshot confirmed both files remain byte-identical on disk. For each PDF, `git ls-files --error-unmatch` confirmed it is absent from the index and `git check-ignore -q` confirmed it is ignored. The reference README is not ignored. `git diff --check` and `git diff --cached --check` passed. This is a tracking/documentation check; no application or runtime tests apply. Prior independent specification reviews do not cover this maintenance follow-up. Earlier commits still contain the PDFs; fresh clones of the updated tip need authorised local copies for the PDF links.

@@ -45,3 +45,15 @@ Settle Keith's choices: accept the recommended foundation stack and use Neon Pos
 - Local pending issue-reconciliation notes identify #4/#6/#12 and dependent #10/#11 without remote changes. Structural checks and `git diff --check` passed: eleven prompt/twelve cumulative paths, 77 pre-prompt/76 original inputs preserved, 83 local links/anchors, 58 requirement/coverage IDs and 32 scenarios; prior log entries, requirement/decision rows and scenario bytes unchanged. Independent Specification Reviewer audited the actual diff and contracts, reran the inspected helper and separate preservation checks, checked focused primary migration/branching sources, and reproduced the eight-file snapshot in verification.md. No actionable findings or corrections were required; no broad version or runtime/provider verification is inferred.
 - No application code, dependencies, account/project provisioning, credentials, production data, model calls, paid upgrades, deployments, commits or remote writes.
 - Final independent evidence/status consistency recheck passed with no actionable findings and reproduced the unchanged eight-file snapshot. Foundation/Neon decision documentation is complete; operational and runtime prerequisites remain as recorded.
+
+# 04 - Keep SoCLaaS References Local - 18 October 2026
+
+## Request
+
+Keep the supplied SoCLaaS reference PDFs as local files, ignore them in Git, then commit and push the change to the same `origin/wp-001-foundation-design` branch. Continue the CHG-K-002 PR increment and preserve previous log entries.
+
+## Results
+
+- Added a narrowly scoped root `.gitignore` rule for `docs/reference/cf_guides_soclaas_*.pdf`; removed the two PDFs from Git's index while preserving their local bytes. Added `docs/reference/README.md` to explain local setup and fresh-clone availability.
+- Updated the design's earlier publication instruction and appended current verification evidence. Product requirements, scenarios, selected stack and prior review evidence remain unchanged. Earlier commits retain the PDFs; history is not rewritten.
+- Python SHA-256 comparisons passed for both local PDFs; Git checks confirmed both are absent from the index and ignored, while the README is not ignored. Working and staged whitespace checks passed. No runtime tests apply to this maintenance change. Commit and push are authorised by this prompt; their final results are reported in the delivery response.
