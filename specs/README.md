@@ -20,6 +20,8 @@ SHR/ORG/PAR/SEC/DEP/DEV preserve historical IDs. **PAR means Student**, not a th
 
 Update canonical behaviour before implementation; change records link IDs, source/spec revisions, tasks and actual checks. Resolve open gates only for dependent work; record new decisions rather than quietly treating proposals as agreement.
 
+For UI work, also read the [shared visual guidelines](../docs/ui-guidelines.md) and the relevant [screen pattern](../docs/ui-screen-patterns.md). They define TurnUp's presentation while preserving these behavioural contracts; unrelated work need not load them.
+
 ## Task reading map
 
 This routes reading to full authoritative content, not replacement summaries. For application work always read **Accounts and access** and **AI and privacy** above, including their permission/data boundaries, plus the following affected documents. The package plans carry unchanged scope, slices and scenario targets; read the complete applicable scenarios and coverage/evaluation guidance. A gate list is a starting point: follow dependencies and any gate cited by the affected requirement. Never treat omitted documents as out of scope when their contracts are consumed or changed.
