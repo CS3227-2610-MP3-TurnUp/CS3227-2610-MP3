@@ -14,8 +14,6 @@ Human review takes place on the GitHub PR, which is the authoritative record of 
 
 Keep independent agent-review assignments, findings, dispositions and rechecks in change verification and member logs. Preserve human product decisions, shared-contract agreement and runtime/release evidence where required; the PR-review convention does not replace those records.
 
-This convention follows Keith's 17 October 2026 instruction to remove separate human-review sign-off from repository change records and future templates.
-
 ## Concurrent work and change IDs
 
 Keith uses prefix `K`; Darryl uses prefix `D`. Each human allocates an independent sequence using the [change naming rules](changes/README.md). Keep the allocated ID stable across branches, review, and archive. Each agent receives its human owner and change ID in its assignment; agents for the same human must coordinate allocation before dispatch.
@@ -49,7 +47,7 @@ A handoff includes objective, owner/reviewer, exact allowed paths, source/spec r
 
 Use the [task reading map](specs/README.md#task-reading-map) to list exact authoritative document sections, requirement/scenario IDs and dependency contracts in the handoff. Load the assigned package and affected integration handoffs; broaden reading when consumers, references or decisions require it. Preserve full requirement/failure outcomes and evidence rather than maintaining copied summaries. Refresh context after relevant revision changes; historical records are read when evidence/provenance or log work needs them.
 
-Checkboxes represent completed work with evidence. Record “not run” or “unavailable” with the reason where applicable. The current scaffold has no executable build/test commands; document them after actual application/tool initialisation.
+Checkboxes represent completed work with evidence. Record “not run” or “unavailable” with the reason where applicable. Development tooling checks are documented in [agent usage tracking](docs/agent-usage.md#verification). The application scaffold still has no executable application build/test commands; document them after application initialisation.
 
 ## Member logs
 

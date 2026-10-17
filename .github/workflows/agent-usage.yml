@@ -1,0 +1,23 @@
+name: Agent usage tooling
+on:
+  push:
+    paths: ['tools/**', 'tests/agent_usage/**', '.github/workflows/agent-usage.yml']
+  pull_request:
+    paths: ['tools/**', 'tests/agent_usage/**', '.github/workflows/agent-usage.yml']
+permissions:
+  contents: read
+jobs:
+  synthetic-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+        python: ['3.11', '3.14']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Synthetic offline tests
+        run: python -m unittest discover -s tests/agent_usage -v
