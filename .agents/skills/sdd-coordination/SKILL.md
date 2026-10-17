@@ -15,11 +15,11 @@ For initial TurnUp reconciliation, consult [the project decision reference](../r
 
 1. Inventory existing guidance and relevant files. Separate confirmed requirements, historical proposals, implementation suggestions, and missing inputs.
 2. Express the assignment as a bounded outcome with an allowed output list. Identify the base specification commit or note that no canonical baseline exists yet.
-3. Confirm the human owner and allocated `CHG-K-NNN` (Keith) or `CHG-D-NNN` (Darryl) ID using [change allocation rules](../../../changes/README.md). Coordinate distinct IDs for agents under one human; roadmap `WP-NNN` labels are not allocated change IDs. Assign one primary writer per file/output and a reviewer. Identify shared-contract consumers and dependencies. Do not assign an entire product role to a vague 'implement everything' task.
+3. Confirm the human owner and allocated `CHG-K-NNN` (Keith) or `CHG-D-NNN` (Darryl) ID using [change allocation rules](../../../changes/README.md). Coordinate distinct IDs for agents under one human; roadmap `WP-NNN` labels are not allocated change IDs. Assign one primary writer per file/output and an independent agent reviewer. Identify shared-contract consumers and dependencies; human-review assignment is tracked on the GitHub PR under the [review policy](../../../CONTRIBUTING.md#review-records). Do not assign an entire product role to a vague 'implement everything' task.
 4. When delegation is authorised, dispatch independent reads or disjoint writes concurrently. Sequence source reconciliation before dependent specification authoring and scaffold creation. If delegation is unavailable, preserve the same handoff stages and report that they were performed sequentially.
 5. Keep intent and behavioural requirements separate from technical design and task checklists. A small change may combine sections; higher-risk changes need explicit scenarios and design reasoning.
 6. Collect file/commit references, actual check results, review findings, and human decisions. Reconcile conflicts against the current shared contract before integration.
-7. Close only when the assignment's acceptance conditions are evidenced. Distinguish ready, in progress, review, verified, and blocked; a requirement can be agreed while its implementation remains planned.
+7. Close when the assignment's delivery and verification conditions are evidenced. Keep human approval and merge status on the GitHub PR; do not create duplicate local human-review sign-off tasks or completion gates. Distinguish ready, in progress, review, verified, and blocked; a requirement can be agreed while its implementation remains planned.
 
 ## Handoff contract
 

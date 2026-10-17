@@ -6,7 +6,15 @@ The team uses lightweight SDD with ordinary Markdown and Git. Canonical [specs](
 
 Each human member owns the complete Student or Organiser workflow, including UI, server authorisation, data operations, and tests. This does not create separate applications or duplicate shared rules. Keith owns Organiser workflows and Darryl owns Student workflows; the [implementation plan](specs/implementation-plan.md) records shared-contract leads and Keith as WP-001 lead. Record exact file writers/reviewers per change; agent activity does not replace human contribution evidence.
 
-Shared contracts have one writer, an affected-role reviewer, and an explicit dependency handoff. Agree contract details before parallel implementations rely on them. Do not let two agents edit the same file concurrently.
+Shared contracts have one writer, an affected-role PR reviewer, and an explicit dependency handoff. Agree contract details before parallel implementations rely on them. Do not let two agents edit the same file concurrently.
+
+## Review records
+
+Human review takes place on the GitHub PR, which is the authoritative record of reviewer assignment, findings and approval. Change records and member logs may link the PR; they do not duplicate human-review sign-off fields, pending-review tasks or completion gates. Change completion describes delivery and verification of its defined scope, independently of PR approval or merge status.
+
+Keep independent agent-review assignments, findings, dispositions and rechecks in change verification and member logs. Preserve human product decisions, shared-contract agreement and runtime/release evidence where required; the PR-review convention does not replace those records.
+
+This convention follows Keith's 17 October 2026 instruction to remove separate human-review sign-off from repository change records and future templates.
 
 ## Concurrent work and change IDs
 
@@ -18,10 +26,10 @@ Each concurrent change uses a separate clone/worktree and branch. Record exact f
 
 1. **Define a bounded change.** Copy [the template](changes/_template/change.md) into a unique `changes/CHG-<OWNER>-NNN-short-name/` directory with `tasks.md` and `verification.md`. Select `K` or `D` and allocate that human's next number before creating the record. State intent, exclusions, owners/reviewer, source/spec revision, impacted IDs, deliverables, and blockers. Add `design.md` only for a material design choice.
 2. **Reconcile the specification.** Update relevant role/shared specs and acceptance scenarios using the baseline and decisions. Preserve provenance and unresolved questions. Old source labels such as “confirmed” do not override later human decisions. When an accepted decision changes or resolves tracked work, follow [decision-to-issue reconciliation](#decision-to-issue-reconciliation).
-3. **Plan dependent work.** Name each deliverable's writer/reviewer, allowed paths, and prerequisites in `tasks.md`. Parallelise independent reads or disjoint writes. Resolve blockers before dependent implementation; continue other authorised work.
+3. **Plan dependent work.** Name each deliverable's writer/independent agent reviewer, allowed paths, and prerequisites in `tasks.md`. Use the GitHub PR for human-review tracking. Parallelise independent reads or disjoint writes. Resolve blockers before dependent implementation; continue other authorised work.
 4. **Implement the scoped slice.** Include complete role behaviour and server checks, sharing rules through defined contracts. Separate implementation choices from user behaviour. Application/dependency initialisation is separate from this documentation scaffold.
-5. **Verify and review.** Record appropriate exact checks in `verification.md`. An independent reviewer checks requirements, privacy, role boundaries, failures, and shared contracts. Correct findings and recheck affected areas. Documentation checks cannot prove runtime correctness.
-6. **Close the change.** Reconcile specs, tasks, evidence, and remaining decisions. Mark complete only when defined scope is satisfied. Archive completed records under `changes/archive/` when useful, updating links. Commit, merge, or deploy within the human-authorised workflow.
+5. **Verify and review.** Record appropriate exact checks in `verification.md`. An independent agent reviewer checks requirements, privacy, role boundaries, failures, and shared contracts. Correct findings and recheck affected areas. Human review is recorded on the GitHub PR. Documentation checks cannot prove runtime correctness.
+6. **Close the change.** Reconcile specs, tasks, evidence, and remaining decisions. Mark complete when defined scope and verification are satisfied; track human approval and merge status on the GitHub PR. Archive completed records under `changes/archive/` when useful, updating links. Commit, merge, or deploy within the human-authorised workflow.
 
 ## Decision-to-issue reconciliation
 

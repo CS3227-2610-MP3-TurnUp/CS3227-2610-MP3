@@ -10,7 +10,7 @@ Use the [implementation plan](specs/implementation-plan.md) for ownership/common
 
 ## Ownership and coordination
 
-- Keith owns Organiser and WP-001; Darryl owns Student, each including UI/server/tests. Shared leads follow the implementation plan; shared contracts require one writer and affected-role review before dependent implementation.
+- Keith owns Organiser and WP-001; Darryl owns Student, each including UI/server/tests. Shared leads follow the implementation plan; shared contracts require one writer, agreed contract details and explicit prerequisite handoffs. Human review is recorded on GitHub PRs under the [review policy](CONTRIBUTING.md#review-records).
 - Change prefixes identify allocating humans: Keith (`K`), Darryl (`D`), independent counters. Follow [allocation rules](changes/README.md); do not infer a role or dependency from an ID.
 - Use a separate clone/worktree and branch per concurrent change, one active writer per file and disjoint writes or sequential handoffs. Integrate prerequisites and recheck consumers; shared schema/contract changes need explicit coordination.
 - Handoffs include objective, paths, source/spec revision, requirement/scenario IDs, dependencies, outputs and checks under [CONTRIBUTING](CONTRIBUTING.md#evidence-and-handoffs).
@@ -38,4 +38,5 @@ For commits/messages, including `$commit` and `$commit with scope`, read the [co
 - Before logging, read the [member log policy](CONTRIBUTING.md#member-logs): one owner file per PR increment; append Request/Results per substantial prompt or explicit request, reuse across agents and preserve history. Explicit no-log instructions take precedence.
 - Record exact checks, results, limitations, findings, and changed paths. Never mark unrun tests passed or claim deployment from documentation.
 - Use independent review for authored specifications and shared contract changes. Correct or explicitly disposition findings, then recheck affected areas.
+- Keep independent agent-review evidence in change verification. Use GitHub PRs for human-review assignment and approval; do not add duplicate sign-off fields, pending-review tasks or human-review completion gates to repository records.
 - Follow the assignment's authorisation for commits, deployment, dependencies, and scope. A scaffold/template mentioning a later step does not authorise that action.

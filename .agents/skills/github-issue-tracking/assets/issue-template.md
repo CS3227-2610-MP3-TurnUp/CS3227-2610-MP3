@@ -7,7 +7,7 @@ State the observable outcome, issue kind (overview, decision/preparation, implem
 ## Ownership and allocation
 
 - Accountable human and allocation status:
-- Reviewer / affected consumers:
+- PR reviewer / affected consumers:
 - Allocation justification:
 - Execution assignment: exact paths, single writers and prerequisite revisions, or what remains to be assigned before work starts.
 
@@ -36,7 +36,7 @@ Use the team's decision-to-issue reconciliation procedure. Retain previous compl
 ## Acceptance and evidence
 
 - [ ] Bounded outcome is demonstrated with evidence appropriate to this issue's scope.
-- [ ] Required review and human decision dispositions are recorded.
+- [ ] Independent agent findings and required product-decision dispositions are recorded; human review is tracked on the linked PR.
 - [ ] Applicable verification results and remaining checks are linked; partial coverage stays explicit.
 
 Replace these checklist items with concrete conditions for the selected slice. Decision/preparation work supplies reviewed decisions, not runtime test passes.

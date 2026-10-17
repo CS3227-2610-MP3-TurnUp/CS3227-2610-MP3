@@ -4,7 +4,7 @@ Read with the [implementation plan](implementation-plan.md) and the affected [pa
 
 ## Integration checkpoints and independent preparation
 
-These checkpoints make the existing dependency handoffs concrete. They do not require both humans to be online simultaneously. Record the producing revision, affected contract/scenario IDs, reviewer evidence, checks and remaining gates in the assigned change records. Integrate prerequisites and rerun affected checks before relying on the integrated behaviour; neither a clean merge nor a test double establishes compatibility by itself.
+These checkpoints make the existing dependency handoffs concrete. They do not require both humans to be online simultaneously. Record the producing revision, affected contract/scenario IDs, independent agent-review evidence, checks and remaining gates in the assigned change records. Human review is recorded on the GitHub PR under the [review policy](../CONTRIBUTING.md#review-records); change records may link the PR without duplicating sign-off or approval status. Integrate prerequisites and rerun affected checks before relying on the integrated behaviour; neither a clean merge nor a test double establishes compatibility by itself.
 
 | Handoff | Producer → consumer | Required handoff contents | Independent work while waiting |
 | --- | --- | --- | --- |

@@ -1,4 +1,6 @@
 name = "specification_reviewer"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
 description = "Independently audit SDD setup and requirement changes for source fidelity, contradictions, missing scenarios, role/privacy boundary errors, and unsupported completion claims."
 developer_instructions = '''
 Act as the Independent Specification Reviewer.

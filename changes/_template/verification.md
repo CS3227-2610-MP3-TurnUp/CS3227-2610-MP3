@@ -1,6 +1,6 @@
 # CHG-<OWNER>-NNN — Verification
 
-Status: not started. Source/spec revision: fill in. Human owner: Keith or Darryl. Writer: fill in. Independent reviewer: fill in.
+Status: not started. Source/spec revision: fill in. Human owner: Keith or Darryl. Writer: fill in. Independent agent reviewer: fill in.
 
 ## Evidence
 
@@ -21,7 +21,9 @@ Distinguish specification review, structural validation, runtime tests, and depl
 - Defined scope satisfied / remaining work:
 - Unresolved decisions and affected dependent tasks:
 - Checks not run and reason:
-- Independent review scope and limitations:
+- Independent agent-review scope and limitations:
 - Final changed paths and next bounded task:
 
 Complete [tasks.md](tasks.md) only to the extent supported here. Runtime implementation, merge, and deployment each need their own evidence.
+
+Record human review only on the GitHub PR under the [review policy](../../CONTRIBUTING.md#review-records); link the PR where available without copying its approval status into a sign-off row or completion gate.

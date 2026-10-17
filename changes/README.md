@@ -24,4 +24,6 @@ Use a `CHG-<OWNER>-NNN-short-name/` directory for each bounded change. Canonical
 
 Change records and member logs have different granularity: record the shared PR/increment and its designated owner log in each change. Several changes in one PR reuse one log under the [member log policy](../CONTRIBUTING.md#member-logs); each substantial human prompt appends its own Request/Results entry, and creating another change record within that PR does not create another log file.
 
+Human-review assignment and approval live on the GitHub PR under the [review policy](../CONTRIBUTING.md#review-records). Keep independent agent-review evidence here; do not duplicate human-review sign-off or use it as a local change-completion gate.
+
 Follow [CONTRIBUTING.md](../CONTRIBUTING.md) and [the implementation plan](../specs/implementation-plan.md). Do not create future application changes or mark their scope complete simply to populate directories.
