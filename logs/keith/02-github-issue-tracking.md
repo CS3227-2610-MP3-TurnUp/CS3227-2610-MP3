@@ -69,3 +69,16 @@ Add decision-to-issue reconciliation to the four proposed files, then create the
 - Before publishing, `python3 /private/tmp/turnup-decision-issue-checks.py` passed YAML/frontmatter/naming, all four agent TOML definitions, local Markdown links/anchors/formatting, prior-log/canonical preservation, the expected seven-file increment and branch checks, and `git diff --check`. A separate local payload check passed all six distinct readable titles, pinned source paths/anchors, decision sections and the absence of allocated change IDs or checked acceptance tasks.
 - Fetched all six published issues independently of their create responses: exact full bodies/titles match the prepared payloads, all are open, assignees match the verified human mappings, and dependency placeholders are resolved. Final local checks passed after this log append. The bundled skill validator remains unavailable because PyYAML is missing; no dependency was installed. Complete published payloads are retained as the session artifact `/private/tmp/turnup-overview-published-payloads.json`; GitHub issue bodies are the remote outputs. No independent specialist review or application/runtime verification is claimed.
 - No canonical product decision/specification, application code or implementation evidence was changed. The local workflow changes remain uncommitted on `github-issue-tracking`; no push, deployment or background automation was performed.
+
+# 05 - Resolve Ownership From Current Accepted Decisions - 17 October 2026
+
+## Request
+
+Verify and address the review finding that issue allocation was permanently tied to D12 despite the shared guidance giving later accepted human decisions precedence. Continue the same issue-tracking increment from `3fc7161`.
+
+## Results
+
+- Confirmed the finding in step 4 of `.agents/skills/github-issue-tracking/SKILL.md`: it said to follow D12 even though step 1 loads current sources. The cited AGENTS.md supersession guidance supports the review; the defective instruction is in the skill.
+- Updated that step to resolve human/shared-contract ownership from the current accepted ownership decision and reconciled implementation plan, apply explicit superseding human decisions, and reconcile stale ownership references before affected assignments. D12 is identified only as the present baseline. Accountable-human/reviewer requirements, verified handle mapping, single writers and affected-role review are retained.
+- Reviewed the rule against three cases: unchanged D12 remains applicable; an explicitly accepted replacement overrides it and triggers reconciliation of stale sources; a proposed replacement does not override the accepted allocation. No actual ownership change was requested or recorded, so canonical allocations, existing issues and historical provenance remain unchanged.
+- Local checks passed: YAML parsing, the skill's local Markdown links/anchors, formatting and `git diff --check`; checked the two-file scope and preservation of all prior log entries against HEAD. No application, live GitHub or independent specialist checks were run. No commit or push was performed.
