@@ -27,6 +27,8 @@ Each concurrent change uses a separate clone/worktree and branch. Record exact f
 
 A handoff includes objective, owner/reviewer, exact allowed paths, source/spec revision, requirement/scenario IDs, dependencies, expected outputs, actual checks, remaining findings, and the next bounded task. Before a Git revision exists, identify a dated working-copy snapshot and files; never invent a commit hash.
 
+Use the [task reading map](specs/README.md#task-reading-map) to list exact authoritative document sections, requirement/scenario IDs and dependency contracts in the handoff. Load the assigned package and affected integration handoffs; broaden reading when consumers, references or decisions require it. Preserve full requirement/failure outcomes and evidence rather than maintaining copied summaries. Refresh context after relevant revision changes; historical records are read when evidence/provenance or log work needs them.
+
 Checkboxes represent completed work with evidence. Record “not run” or “unavailable” with the reason where applicable. The current scaffold has no executable build/test commands; document them after actual application/tool initialisation.
 
 ## Member logs

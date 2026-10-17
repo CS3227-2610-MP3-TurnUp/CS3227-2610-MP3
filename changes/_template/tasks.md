@@ -25,6 +25,7 @@ Human owner: Keith (`K`) or Darryl (`D`). Confirm the allocated change ID and di
 - Objective and allowed files:
 - PR/planned increment, designated log owner, shared log path, and originating prompt entry (append per substantial prompt; reuse file across handoffs):
 - Source/spec revision and affected IDs:
+- Context read set: authoritative sections and complete applicable scenarios, dependency contracts and revisions; refresh after relevant changes and expand beyond this list when needed:
 - Dependencies satisfied / outstanding:
 - Outputs and actual checks:
 - Findings, limitations, and next bounded task:
