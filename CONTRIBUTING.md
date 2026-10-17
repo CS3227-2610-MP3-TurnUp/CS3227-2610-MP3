@@ -17,11 +17,23 @@ Each concurrent change uses a separate clone/worktree and branch. Record exact f
 ## From requirement to evidence
 
 1. **Define a bounded change.** Copy [the template](changes/_template/change.md) into a unique `changes/CHG-<OWNER>-NNN-short-name/` directory with `tasks.md` and `verification.md`. Select `K` or `D` and allocate that human's next number before creating the record. State intent, exclusions, owners/reviewer, source/spec revision, impacted IDs, deliverables, and blockers. Add `design.md` only for a material design choice.
-2. **Reconcile the specification.** Update relevant role/shared specs and acceptance scenarios using the baseline and decisions. Preserve provenance and unresolved questions. Old source labels such as “confirmed” do not override later human decisions.
+2. **Reconcile the specification.** Update relevant role/shared specs and acceptance scenarios using the baseline and decisions. Preserve provenance and unresolved questions. Old source labels such as “confirmed” do not override later human decisions. When an accepted decision changes or resolves tracked work, follow [decision-to-issue reconciliation](#decision-to-issue-reconciliation).
 3. **Plan dependent work.** Name each deliverable's writer/reviewer, allowed paths, and prerequisites in `tasks.md`. Parallelise independent reads or disjoint writes. Resolve blockers before dependent implementation; continue other authorised work.
 4. **Implement the scoped slice.** Include complete role behaviour and server checks, sharing rules through defined contracts. Separate implementation choices from user behaviour. Application/dependency initialisation is separate from this documentation scaffold.
 5. **Verify and review.** Record appropriate exact checks in `verification.md`. An independent reviewer checks requirements, privacy, role boundaries, failures, and shared contracts. Correct findings and recheck affected areas. Documentation checks cannot prove runtime correctness.
 6. **Close the change.** Reconcile specs, tasks, evidence, and remaining decisions. Mark complete only when defined scope is satisfied. Archive completed records under `changes/archive/` when useful, updating links. Commit, merge, or deploy within the human-authorised workflow.
+
+## Decision-to-issue reconciliation
+
+When humans finalise or supersede a product decision, the change owner and Project Manager reconcile its affected tracking artifacts within the assigned scope. This is part of the decision-finalisation work, not a background synchronisation service.
+
+1. Record the accepted decision, deciding humans, date/provenance, affected requirement IDs and any superseded decision in [specs/decisions.md](specs/decisions.md). Preserve stable IDs and unresolved portions. Technology selections belong in the assigned design record unless they change an agreed product constraint.
+2. Update the affected canonical contracts/capabilities and acceptance scenarios. Follow producer/consumer dependencies and obtain the required affected-role/independent review. Approval establishes the agreed target; implementation and verification remain separate states.
+3. Find impacted GitHub issues through decision, requirement, package and change references, including overview issues, implementation issues and dependent consumers. An issue need not cite the gate explicitly to be affected. Check previously closed issues when their scope is affected.
+4. Reconcile issue scope, acceptance criteria, dependencies and readiness against the accepted decision. Explain the decision in plain language alongside its ID and link its authoritative record. Preserve discussion, unrelated checklists and original completion evidence. Keep the original source/implementation base distinct from the latest reconciled spec revision. Add a short dated reconciliation note identifying what changed. For affected closed work, explicitly disposition follow-up work versus reopening; do not silently erase its previous completion state.
+5. Record affected issue URLs, the latest reconciled spec revision (or dated working-copy snapshot), review/results and remaining blockers in the assigned change record. Update GitHub within the task's authorised scope. If access is unavailable, a write is uncertain or remote updates are outside scope, record the specific pending updates and responsible owner; do not mark them synchronised. Read back remote updates before recording success. Append the prompt's results to the existing owner log under [member log policy](#member-logs).
+
+Resolving one decision removes only its own blocker. Start dependent implementation only when all of its required decisions, contracts and assignments are ready. Never check off implementation/tests or close an implementation/overview issue merely because a decision was accepted; a decision-only issue may close when its own acceptance evidence is complete.
 
 ## Evidence and handoffs
 

@@ -13,6 +13,7 @@ Status: proposed / in progress / complete (select one; completion needs evidence
 - Writers, with one active writer per file:
 - PR/feature increment and designated owner log: existing owner log path, or planned branch/scope and log owner; follow the [member log policy](../../CONTRIBUTING.md#member-logs) and append a full entry per substantial prompt (or explicit logging request) to that same file.
 - Independent reviewer:
+- Related overview/implementation issue URLs, if available; otherwise state pending:
 
 ## Scope
 
@@ -29,6 +30,19 @@ Status: proposed / in progress / complete (select one; completion needs evidence
 - Block dependent implementation only where the decision/contract is required.
 - Observable completion conditions:
 - Verification approach and runtime/deployment limits:
+
+## Decision-to-issue reconciliation
+
+Follow [the reconciliation procedure](../../CONTRIBUTING.md#decision-to-issue-reconciliation) when a decision is accepted or superseded within this change.
+
+- Decision IDs, deciding humans/date/provenance and authoritative records:
+- Affected requirement/scenario IDs, canonical files and consumer dependencies:
+- Affected overview/implementation issue URLs, including impacted closed scope:
+- Latest reconciled spec revision or dated working-copy snapshot, distinct from the original source/implementation base:
+- Dated issue updates, review and remote read-back results; follow-up/reopening dispositions where applicable:
+- Remaining blockers or pending updates, responsible owner and reason; state not applicable with a reason if no tracked scope is affected:
+
+An accepted decision changes the agreed target or readiness; implementation and verification need their own evidence. Preserve earlier completion evidence and record pending GitHub updates rather than claiming synchronisation.
 
 ## Handoff
 

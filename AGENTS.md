@@ -23,7 +23,7 @@ Read the selected definition and linked skills before acting:
 
 | Specialist | Definition | Skills |
 | --- | --- | --- |
-| SDD Coordinator / Project Manager | [sdd_coordinator.toml](.codex/agents/sdd_coordinator.toml) | [Coordination](.agents/skills/sdd-coordination/SKILL.md) |
+| SDD Coordinator / Project Manager | [sdd_coordinator.toml](.codex/agents/sdd_coordinator.toml) | [Coordination](.agents/skills/sdd-coordination/SKILL.md), [GitHub issue tracking](.agents/skills/github-issue-tracking/SKILL.md) |
 | Requirements Analyst | [requirements_analyst.toml](.codex/agents/requirements_analyst.toml) | [Reconciliation](.agents/skills/requirements-reconciliation/SKILL.md), [acceptance authoring](.agents/skills/acceptance-spec-authoring/SKILL.md) |
 | Repository Workflow Builder | [repository_builder.toml](.codex/agents/repository_builder.toml) | [Bootstrap](.agents/skills/sdd-repository-bootstrap/SKILL.md) |
 | Independent Specification Reviewer | [specification_reviewer.toml](.codex/agents/specification_reviewer.toml) | [Audit](.agents/skills/specification-audit/SKILL.md) |
