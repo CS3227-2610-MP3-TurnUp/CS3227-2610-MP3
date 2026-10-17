@@ -47,7 +47,7 @@ A handoff includes objective, owner/reviewer, exact allowed paths, source/spec r
 
 Use the [task reading map](specs/README.md#task-reading-map) to list exact authoritative document sections, requirement/scenario IDs and dependency contracts in the handoff. Load the assigned package and affected integration handoffs; broaden reading when consumers, references or decisions require it. Preserve full requirement/failure outcomes and evidence rather than maintaining copied summaries. Refresh context after relevant revision changes; historical records are read when evidence/provenance or log work needs them.
 
-Checkboxes represent completed work with evidence. Record “not run” or “unavailable” with the reason where applicable. The current scaffold has no executable build/test commands; document them after actual application/tool initialisation.
+Checkboxes represent completed work with evidence. Record “not run” or “unavailable” with the reason where applicable. Development tooling checks are documented in [agent usage tracking](docs/agent-usage.md#verification). The application scaffold still has no executable application build/test commands; document them after application initialisation.
 
 ## Member logs
 
