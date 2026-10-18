@@ -2,5 +2,21 @@
 __pycache__/
 *.py[cod]
 .agent-usage/
+
+# Node.js application build output and dependencies
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Local app credentials and deployment metadata
+.env*
+!.env.example
+.vercel/
+
+# Generated Prisma Client is recreated from the versioned schema
+/src/server/db/generated/
+
 # Local SoCLaaS reference exports
 /docs/reference/cf_guides_soclaas_*.pdf
