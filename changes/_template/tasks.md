@@ -2,20 +2,22 @@
 
 Source/spec revision: identify the same snapshot as [change.md](change.md).
 
-| Order | Task / output files | Writer | Independent agent reviewer | Preconditions / dependencies | Requirement / scenario IDs | Completion check |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Reconcile scoped behaviour and decisions | Assign | Assign | Assignment and source snapshot | Fill in | Traceable specs and unresolved decisions |
-| 2 | Implement exact assigned slice | Assign | Assign | Required contracts/blockers resolved | Fill in | Observable scoped behaviour and checks |
-| 3 | Review, correct, and record evidence | Assign | Assign | Outputs available | Fill in | Findings dispositioned and affected checks rerun |
+| Order | Task / output files | Writer / actor | Preconditions / dependencies | Requirement / scenario IDs | Completion check |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Reconcile scoped behaviour and decisions | Assign | Assignment and source snapshot | Fill in | Traceable specs and unresolved decisions |
+| 2 | Implement exact assigned slice | Assign | Required contracts/blockers resolved | Fill in | Observable scoped behaviour and checks |
+| 3 | Agent review of completed change, correction and evidence | Assign reviewer/author | Implementation available | Fill in | Findings dispositioned and material fixes rechecked |
 
 Human owner: Keith (`K`) or Darryl (`D`). Confirm the allocated change ID and disjoint file writers before dispatching concurrent agents.
+
+Completed-change agent reviewer: assign an agent that did not author the implementation, including executable configuration and agent/workflow instructions. Do not require a separate reviewer per file/document. Standalone specification audits occur only when explicitly assigned. Record concise findings/checks/revision/limitations in verification.md. Evidence/log-only updates do not restart review. After an authorised push, GitHub review is the final PR review.
 
 ## Work state
 
 - [ ] Scope, owners, permitted files, source/spec revision, IDs, and preconditions recorded.
 - [ ] Relevant specs and acceptance scenarios reconciled.
 - [ ] Scoped deliverables handed off without overlapping writers.
-- [ ] Actual checks and independent agent review recorded in [verification.md](verification.md).
+- [ ] Actual checks and the implementation's independent agent review (or an explicitly assigned standalone audit) recorded in [verification.md](verification.md); state not applicable for documentation-only work without an assigned audit.
 - [ ] Findings corrected or explicitly dispositioned; dependent blockers visible.
 - [ ] Final scope, task states, evidence, and next bounded work agree.
 
@@ -32,4 +34,4 @@ Human owner: Keith (`K`) or Darryl (`D`). Confirm the allocated change ID and di
 
 Repeat the handoff record per transfer where useful. Check a task only when its evidence exists.
 
-Human-review assignment, findings and approval are tracked on the GitHub PR. Do not add a duplicate sign-off task or make it a local completion gate; follow the [review policy](../../CONTRIBUTING.md#review-records).
+Agents do not assess human reviewer assignment, independence, approval, sign-off or merge readiness from any source; follow the [review policy](../../CONTRIBUTING.md#review-records). Accepted product decisions and application approval/access rules remain separate requirements.

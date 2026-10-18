@@ -1,6 +1,6 @@
 # CHG-<OWNER>-NNN — Verification
 
-Status: not started. Source/spec revision: fill in. Human owner: Keith or Darryl. Writer: fill in. Independent agent reviewer: fill in.
+Source/spec revision: fill in. Human owner: Keith or Darryl. Writer: fill in. Agent reviewer of completed implementation (or explicitly assigned standalone audit): fill in, or state not applicable for documentation-only work without an audit assignment.
 
 ## Evidence
 
@@ -9,6 +9,8 @@ Status: not started. Source/spec revision: fill in. Human owner: Keith or Darryl
 | Fill in | Fill in | Fill in | Not run | Explain prerequisites; placeholders are not passes |
 
 Distinguish specification review, structural validation, runtime tests, and deployed checks. Record actual results and the tested revision. Unavailable application tests have not passed.
+
+Use one concise agent-review result for the assigned change: scope/revision, actionable findings or none, checks and limitations. Recheck material fixes in affected areas; evidence/log-only updates do not restart review. Do not duplicate review-passed declarations in other specs or require a further audit of the final GitHub review.
 
 ## Findings and decisions
 
@@ -26,4 +28,4 @@ Distinguish specification review, structural validation, runtime tests, and depl
 
 Complete [tasks.md](tasks.md) only to the extent supported here. Runtime implementation, merge, and deployment each need their own evidence.
 
-Record human review only on the GitHub PR under the [review policy](../../CONTRIBUTING.md#review-records); link the PR where available without copying its approval status into a sign-off row or completion gate.
+Human development review is outside agent assessment: do not inspect, infer, require or enforce reviewer assignment, independence, approval, sign-off or merge readiness from any source. Missing review-status paperwork alone is not a defect. GitHub owns human review; after an authorised push its review is the final PR review. Follow the [review policy](../../CONTRIBUTING.md#review-records).

@@ -1,6 +1,6 @@
 # CHG-<OWNER>-NNN — Change title
 
-Status: proposed / in progress / complete (select one; completion needs delivery and verification evidence; human approval and merge status live on the GitHub PR).
+Status: proposed / in progress / complete (select one based on scoped delivery and actual verification; see verification.md for agent findings/checks, without duplicating review status here).
 
 ## Intent and source
 
@@ -12,7 +12,7 @@ Status: proposed / in progress / complete (select one; completion needs delivery
 - Human owner: Keith or Darryl (primary accountable member; prefix stays stable if ownership transfers).
 - Writers, with one active writer per file:
 - PR/feature increment and designated owner log: existing owner log path, or planned branch/scope and log owner; follow the [member log policy](../../CONTRIBUTING.md#member-logs) and append a full entry per substantial prompt (or explicit logging request) to that same file.
-- Independent agent reviewer:
+- Completed-change agent-review assignment: identify in tasks.md when implementation is assigned; standalone specification audits only when explicitly requested.
 - Related overview/implementation issue URLs, if available; otherwise state pending:
 
 ## Scope
@@ -31,7 +31,7 @@ Status: proposed / in progress / complete (select one; completion needs delivery
 - Observable completion conditions:
 - Verification approach and runtime/deployment limits:
 
-Use the GitHub PR as the human-review record under the [review policy](../../CONTRIBUTING.md#review-records). Keep independent agent findings and rechecks in verification; omit separate human-review sign-off fields, tasks and completion gates.
+Follow the [review policy](../../CONTRIBUTING.md#review-records): implement the assigned change, obtain independent agent review, correct/disposition findings and recheck material fixes, then push when authorised and use GitHub review as the final PR review. Agents do not assess human reviewer assignment, independence, approval, sign-off or merge readiness. Keep concise agent findings/checks/revision/limitations in verification.md. Evidence/log-only updates do not restart review.
 
 ## Decision-to-issue reconciliation
 
@@ -48,4 +48,4 @@ An accepted decision changes the agreed target or readiness; implementation and 
 
 ## Handoff
 
-Record objective, allowed paths, source/spec revision, IDs, dependencies, outputs, independent agent reviewer, and checks in [tasks.md](tasks.md). Record actual evidence and findings in [verification.md](verification.md). Add `design.md` only for a material technical choice.
+Record objective, allowed paths, source/spec revision, IDs, dependencies, outputs, completed-change agent reviewer and checks in [tasks.md](tasks.md). Record actual evidence and findings in [verification.md](verification.md). Add `design.md` only for a material technical choice.
