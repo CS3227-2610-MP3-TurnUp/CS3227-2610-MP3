@@ -1,6 +1,6 @@
 # CHG-K-002 — WP-001 foundation specification and design
 
-Status: documentation/design delivery including foundation-stack/Neon selection complete; current structural checks and independent content review passed with no outstanding findings. Preceding documentation/CLI deliveries and reviews remain historical evidence for their own snapshots. Keith has selected the recommended foundation stack and Neon for development and production as well as the CLI route. Application implementation and runtime verification remain pending. Human review and merge status live on the eventual GitHub PR.
+Status: documentation/design delivery complete, including the local-only SoCLaaS reference follow-up. Independent final-tip content audit at `d29aa0e` passed with no additional content findings; F02's review-coverage/status gap is corrected by the recheck and evidence in verification.md. Earlier reviews remain historical evidence for their recorded snapshots. Keith has selected the recommended foundation stack and Neon for development and production as well as the CLI route. Application implementation and runtime verification remain pending. Human review and merge status live on the GitHub PR.
 
 ## Intent and source
 
