@@ -1,9 +1,11 @@
 ---
 name: implementation-verification
-description: Independently review assigned application changes and reproduce relevant checks against authoritative contracts, recording defects, partial acceptance evidence and unverified scope.
+description: Independently review a completed application, executable configuration or agent/workflow instruction change and reproduce relevant checks against authoritative contracts, recording actionable defects and verification limits.
 ---
 
 # Independent implementation verification
+
+Review the completed assigned implementation change, including executable configuration and agent/workflow instruction changes. Apply [Code Review Rules](../../../AGENTS.md#code-review-rules); independence means this agent did not author the change. Standalone specification audits require explicit assignment.
 
 Read the [task reading map](../../../specs/README.md#task-reading-map), full applicable contracts/[scenarios](../../../specs/verification/acceptance-scenarios.md), assigned change, actual diff and integrated revision. Inspect authoritative inputs independently of the author's report. Declare prior authorship or other limits to independence.
 
@@ -23,4 +25,6 @@ Read the [task reading map](../../../specs/README.md#task-reading-map), full app
 
 ## Findings and handoff
 
-For each finding give severity, file/line or requirement ID, observed behaviour, reproduction/evidence, consequence and focused correction. Finish with reviewed revision/scope, exact commands/results, limitations, unresolved findings and acceptance portions actually evidenced. Separate optional improvements from defects. Use [specification-audit](../specification-audit/SKILL.md) additionally for assigned specification review. Keep human-review assignment and approval on the GitHub PR under the [review policy](../../../CONTRIBUTING.md#review-records), without adding local sign-off tasks or completion gates. Agent review does not authorise merge/deployment.
+For each finding give severity calibrated to concrete consequence, file/line or requirement ID, observed behaviour, reproduction/evidence and focused correction. Finish with reviewed revision/scope, exact commands/results, limitations, unresolved findings and acceptance portions actually evidenced. Separate optional improvements from defects. Use [specification-audit](../specification-audit/SKILL.md) additionally for explicitly assigned standalone specification review.
+
+Do not inspect, infer, require or enforce human reviewer assignment, independence, approval, sign-off or merge readiness from repository files, GitHub metadata or missing evidence. Human development review is outside scope; accepted product decisions and application approval/access rules remain authoritative. Record concise agent findings/checks/revision/limitations in verification.md, without duplicate review-passed declarations across specs. Missing review-status paperwork alone is not a defect. Evidence/log-only updates do not restart review. After an authorised push, GitHub review is the final PR review, not a request for another audit of itself. Agent review does not authorise merge/deployment.

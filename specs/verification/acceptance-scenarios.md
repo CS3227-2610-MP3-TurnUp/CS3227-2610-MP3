@@ -17,7 +17,7 @@ B1 targets; **all application/runtime evidence pending**. Integration means dete
 | T11 · PAR09/12 | Inbox commit fails or response lost; same-key retry | No false delivery after failed commit; committed result returns one thread. Integration/failure injection. |
 | T12 · ORG16/17, PAR10 | Owner privately answers absent public fact | Only requester/owner read; other Students' FAQ cannot use it until new public review/publication. Integration/context inspection. |
 | T13 · SEC01–03, DEV02 | Injection in PDF/public document/question/development fixture | No unauthorised read/execution/role change/publication/recipient selection. Integration/controlled AI/development review. |
-| T14 · ORG03/18, SEC04/05 | Malformed/oversized PDF or provider 429/timeout/invalid schema | Bounded truthful failure, temp cleanup, saved input/draft preserved, manual path usable. Integration/provider checks. |
+| T14 · ORG03/18, PAR12, SEC03–06, DEP04 | Malformed/oversized PDF; missing server configuration/key; invalid/revoked key, denied model, rate/budget exhaustion, timeout/unavailable provider or invalid/unsupported response | Bounded truthful technical failure, with no false missing-event-information outcome or automatic forwarding; no credentials/raw private payloads in diagnostics. Temp cleanup occurs on every processing exit, saved input/draft is preserved and manual completion remains usable. Deterministic integration/failure injection plus separately authorised bounded provider checks; neither a stub nor documented provider behaviour proves intended-host access. |
 | T15 · DEP01–04 | Second device runs signup → assist/manual publish → join → FAQ/escalate/reply online | HTTPS/persistence/SoC work without developer laptop; isolated config, release checks/migration/recovery evidenced. Hosted browser walkthrough. |
 | T16 · SHR01/09 | Signup omits name/phone; Student later removes optional values | Valid signup/profile succeeds; no hidden contact requirement. Replaces mandatory-profile rejection. Integration/browser. |
 | T17 · PAR03/13/14 | Optional profile blank; custom required answer missing/invalid option | Answer error preserves input, no partial seat/submission; corrected form joins without global contacts. Integration/browser. |
@@ -89,10 +89,10 @@ Each canonical ID maps below; mapping is a planned method, never proof of execut
 | PAR15 | T20 |
 | SEC01 | T02, T04, T13, T18 |
 | SEC02 | T13 |
-| SEC03 | T09, T13, T21 |
+| SEC03 | T09, T13, T14, T21 |
 | SEC04 | T14, T26 |
 | SEC05 | T14 |
-| SEC06 | T26 |
+| SEC06 | T14, T26 |
 | SEC07 | T18, T21 |
 | DEP01 | T15 |
 | DEP02 | T15, T26 |

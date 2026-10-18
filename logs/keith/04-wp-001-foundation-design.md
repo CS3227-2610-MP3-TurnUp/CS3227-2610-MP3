@@ -1,0 +1,84 @@
+# 01 - WP-001 Foundation Specification and Design - 18 October 2026
+
+## Request
+
+Implement the accepted documentation-only plan: parent SDD coordination; foundation and hosting/SoC research; Requirements Analyst reconciliation; independent specification review; bounded future implementation handoffs. Keith owns CHG-K-002 and this planned PR increment on `wp-001-foundation-design`, base `43c1bc5dee0fb3840ccfd4c36e111cf77aa365e4`. No application, provisioning, live API, commit or remote-write work is included.
+
+## Results
+
+- Allocated [CHG-K-002](../../changes/CHG-K-002-wp-001-foundation-design/change.md) after local/live allocation checks, created the branch and four change/design/task/verification records. Five new documentation/log files and four scoped canonical modifications comprise this increment. Existing CONTRIBUTING.md edit, supplied PDFs, earlier logs, agent definitions and unrelated specs are preserved.
+- Parent acted as SDD Coordinator. Application Foundation and Hosting & SoC engineers performed parallel read-only official-source research; Requirements Analyst authored only the four canonical paths after the research handoff. Their configured model/effort settings are retained; actual provider routing is not independently inspected. No Delivery Agent or Implementation Verifier was dispatched for documentation-only work.
+- Added D13 for Keith-supplied API-key access; refined DEP04, T14 failure outcomes/coverage and WP-001 design/readiness links. Preserved 58 canonical requirement IDs, 58 coverage IDs, 32 scenario IDs and earlier accepted decisions. Database/tooling/adapter recommendations remain proposals; G04/G08 retain their dependent model/budget/data/hosting/course and execution choices.
+- The [design](../../changes/CHG-K-002-wp-001-foundation-design/design.md) records sourced version families, configuration/database/migration/recovery boundaries, provider interface/failures, future writer/consumer handoffs and planned verification. Researched constraints include Hobby organization-repository integration, eligibility/content-use settings, protected previews and Neon resource/recovery limits; no deployment route, account setting, selected model or course compliance is claimed verified.
+- Read live issue/PR bodies and repository metadata; recorded precise pending reconciliation for #4/#6/#10/#11/#12 and responsible owners. Remote writes remain outside scope; no issues are marked synchronised or complete. Previous closed documentation/workflow PR evidence is preserved.
+- Parent's structural helper and `git diff --check` pass: exact nine authored paths, 79 preserved inputs, 40 current local links/anchors, stable 58 definitions/coverage and 32 scenarios; unaffected requirement/scenario/decision rows preserved. Captured 83 original input hashes; four canonical files are the only permitted changes among those originals.
+- Independent Specification Reviewer (`/root/specification_review`) audited actual final outputs against the user conversation/source inputs and returned no actionable content findings. It independently checked preservation/IDs/coverage, extracted all nine PDF pages, re-ran the inspected structural helper and made focused primary-source checks. Closing consistency review found one low-severity stale “pending” preservation status; parent corrected its historical wording (F01 in verification). No material specification/design corrections or rejected findings required disposition. Broad research, live allocation/issue reads, actual model routing and runtime checks retain their stated attribution/limits; no universal secret/injection claim is made.
+- CHG-K-002's defined documentation/design delivery and verification are complete. Technology proposals and dependent G04/G08 choices remain open; human PR review/merge status is recorded on GitHub when published. Final parent structural and independent evidence-only consistency rechecks passed; F01 is corrected with no outstanding findings. The reviewer independently reproduced the five-file design/canonical snapshot recorded in verification.md.
+- No application/dependency installation, schema/migration, production private-data access, provisioning/deployment, provider call/spend, runtime/injection acceptance, commit/push or PR/issue mutation was performed. Supplied reference PDFs remain unchanged user inputs; later publication must preserve reference availability.
+
+# 02 - Select Vercel CLI Deployment - 18 October 2026
+
+## Request
+
+Record Keith's choice to use the CLI deployment route described in the preceding conversation and update relevant documentation. Continue CHG-K-002 on `wp-001-foundation-design`, using this same owner log. This is documentation-only; no workflow, project, token or deployment execution is requested.
+
+## Results
+
+- Parent records the selected organization repository → trusted GitHub Actions checks/build → Vercel CLI prebuilt route in the design, with preview/production target isolation, separate deployment/provider credentials, ignored secret-bearing caches, serialized migrations, checks before upload/promotion and planned runtime evidence. Native Git import is not a prerequisite; differing public/private repository wording in provider docs is explicitly qualified.
+- Requirements Analyst updates five specification/plan/handoff paths: decisions/G08, deployment contract context, WP-001, implementation plan and integration handoffs. D01–D13, canonical requirement rows, acceptance-scenarios.md and earlier ownership/privacy rules remain unchanged. Other stack proposals and eligibility/access/runtime gates stay open.
+- This prompt modifies ten existing Markdown files; the cumulative increment now has eleven authored paths. Entry 01 and its earlier check/review evidence remain historical and preserved. Pending issue-reconciliation notes carry the selected route without claiming remote updates or implementation closure.
+- Current structural checks and `git diff --check` passed: ten prompt paths/eleven cumulative authored paths, 78 pre-prompt inputs and original log entry 01 preserved, 70 local links/anchors, unchanged requirement/decision/scenario rows, 58 requirement/coverage IDs and 32 scenarios. Independent Specification Reviewer audited the actual follow-up diff, independently reran the inspected helper and separate preservation/row checks, and checked focused official CLI/Git sources; no actionable findings or corrections were required. Current final evidence/status consistency is recorded separately in verification.md.
+- CLI-route documentation delivery/review is complete. Method selection removes that question only; account/token permissions, policy/course eligibility, other stack selections and actual build/migration/hosted/SoC evidence remain pending. No code, YAML, dependencies, credentials, remote mutations or deployments were created or run.
+- Final independent evidence/status consistency recheck passed with no actionable findings and independently reproduced the current seven-file snapshot in verification.md. Earlier review results and corrected F01 remain historical; this prompt's evidence supports documentation only.
+
+# 03 - Select Foundation Stack and Neon - 18 October 2026
+
+## Request
+
+Settle Keith's choices: accept the recommended foundation stack and use Neon PostgreSQL for development and production. Record the decisions in CHG-K-002 on the existing branch and planned PR increment; no application or provisioning execution is requested.
+
+## Results
+
+- Parent updates selected foundation/Neon design and change/task/verification records. Requirements Analyst reconciles six baseline/specification/plan/handoff paths. Eleven paths change this prompt; twelve cumulative authored paths. Earlier log entries remain preserved.
+- The selected version families and Prisma migration approach are documented in design.md; exact patch pins and actual compatibility checks remain unrun. Hosted Neon is the development database, with synthetic-only non-production resources and an independent production project/credentials. Preview/test/shadow resources derive only from synthetic non-production data; development agents cannot access production private records.
+- CLI method selection remains in force. Optional Zod, account/session policy, parser/model/budgets and other dependent product decisions are not adopted. G08 retains operational access, region/allowances/recovery/course and execution evidence; acceptance does not mean installation or runtime verification.
+- Local pending issue-reconciliation notes identify #4/#6/#12 and dependent #10/#11 without remote changes. Structural checks and `git diff --check` passed: eleven prompt/twelve cumulative paths, 77 pre-prompt/76 original inputs preserved, 83 local links/anchors, 58 requirement/coverage IDs and 32 scenarios; prior log entries, requirement/decision rows and scenario bytes unchanged. Independent Specification Reviewer audited the actual diff and contracts, reran the inspected helper and separate preservation checks, checked focused primary migration/branching sources, and reproduced the eight-file snapshot in verification.md. No actionable findings or corrections were required; no broad version or runtime/provider verification is inferred.
+- No application code, dependencies, account/project provisioning, credentials, production data, model calls, paid upgrades, deployments, commits or remote writes.
+- Final independent evidence/status consistency recheck passed with no actionable findings and reproduced the unchanged eight-file snapshot. Foundation/Neon decision documentation is complete; operational and runtime prerequisites remain as recorded.
+
+# 04 - Keep SoCLaaS References Local - 18 October 2026
+
+## Request
+
+Keep the supplied SoCLaaS reference PDFs as local files, ignore them in Git, then commit and push the change to the same `origin/wp-001-foundation-design` branch. Continue the CHG-K-002 PR increment and preserve previous log entries.
+
+## Results
+
+- Added a narrowly scoped root `.gitignore` rule for `docs/reference/cf_guides_soclaas_*.pdf`; removed the two PDFs from Git's index while preserving their local bytes. Added `docs/reference/README.md` to explain local setup and fresh-clone availability.
+- Updated the design's earlier publication instruction and appended current verification evidence. Product requirements, scenarios, selected stack and prior review evidence remain unchanged. Earlier commits retain the PDFs; history is not rewritten.
+- Python SHA-256 comparisons passed for both local PDFs; Git checks confirmed both are absent from the index and ignored, while the README is not ignored. Working and staged whitespace checks passed. No runtime tests apply to this maintenance change. Commit and push are authorised by this prompt; their final results are reported in the delivery response.
+
+# 05 - Verify Final Design Review Coverage - 18 October 2026
+
+## Request
+
+Assess the reported review gap after the local-only SoCLaaS reference update: independently audit the final tip and record the recheck before treating CHG-K-002 documentation delivery as complete.
+
+## Results
+
+- Confirmed F02: `d29aa0e` changes design.md outside the previously reviewed eight-file snapshot, while change.md still claimed current independent review/completion. Earlier checks explicitly excluded the follow-up. Scoped status to the earlier reviewed snapshots pending the final-tip audit.
+- Independent read-only Specification Reviewer `/root/final_design_review` audited final tip `d29aa0e`, the complete design/reference policy, actual follow-up diff, applicable canonical contracts and evidence. No additional actionable content findings; reproduced the updated eight-file snapshot `0b954fe8d86844305e52eafc5c74ed1230b0baed55e6f14f161094aed17c5b0b`. All 22 spec files are unchanged, with 58 matching requirement/coverage IDs and 32 scenarios; 84 local links/anchors include four explicitly local-only PDF links and no unexpected missing targets. Both local PDFs remain byte-identical, untracked and ignored; source support is unchanged.
+- Parent corrected current change status and appended task/evidence records, resolving F02 with the actual independent content review. Exactly four record/log paths changed; 84 other tracked files and previous log entries preserved; `git diff --check` passed. No design/product change, runtime test, new external research, commit or remote mutation. Closing independent evidence/status consistency recheck passed with no actionable discrepancies; reviewer independently confirmed the four-file scope, preservation/log-prefix checks, unchanged updated snapshot and whitespace. Parent's final recheck passed after recording that result.
+
+# 06 - Simplify Agent and GitHub Review Workflow - 18 October 2026
+
+## Request
+
+Implement the assessed workflow changes: independent agent review after implementation and final GitHub review after pushing, no agent checks of human independent review or approval administration, focused implementation review rules and necessary Codex Cloud trigger changes. Continue this PR increment and preserve earlier uncommitted review evidence.
+
+## Results
+
+- Parent updates the 15 workflow instruction/template/plan paths listed in tasks.md, plus the existing change/task/verification records and this entry. Root Code Review Rules focus findings on concrete defects, exclude all human development-review assessment and prevent evidence-only review cycles. Standalone spec audits require explicit assignment; completed implementations, including agent/workflow configuration, receive independent agent review.
+- Accepted product decisions, application approval/access behaviour, runtime evidence, human ownership and existing agent model/permission settings remain unchanged. Validation, completed-change independent agent review and actual Cloud trigger results are recorded in the latest [verification section](../../changes/CHG-K-002-wp-001-foundation-design/verification.md#review-workflow-implementation--18-october-2026). No commit, push, GitHub comment, merge or deployment is requested by this prompt.
+- Structural checks passed for eight TOML definitions, preserved models/configuration, 19-path scope, 69 preserved tracked files, prior log prefix, 20 unchanged canonical specs and 115 local links/anchors. The full skill validator cannot run without PyYAML; limited checks of the four skills' simple frontmatter passed. Loaded project Cloud settings already show “On every push”; no setting mutation is needed. Root AGENTS.md is the displayed review-instructions source.
+- Independent Implementation Verifier `/root/workflow_implementation_review` reviewed the actual completed workflow change with no authorship/writes and no actionable findings. It independently reproduced the implementation snapshot, validated preservation/syntax/links, checked six representative instruction cases and recorded bounded injection handling in verification.md. These establish workflow instruction coverage, not live Cloud or application behaviour. Parent's final preservation/structural check passed after recording the result; no additional evidence-only review cycle is required.
