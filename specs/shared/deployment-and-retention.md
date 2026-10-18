@@ -1,6 +1,6 @@
 # Deployment, retention and development evidence
 
-Owner: Keith for database migrations, retention infrastructure, deployment and release checks; reviewer: Darryl. Both humans decide unresolved retention policies and supply role evidence. See [ownership](../implementation-plan.md#human-ownership). B1 target; this scaffold creates no hosted runtime or passing application checks.
+Owner: Keith for database migrations, retention infrastructure, deployment and release checks; reviewer: Darryl. Both humans decide unresolved retention policies and supply role evidence. See [ownership](../implementation-plan.md#human-ownership). B1 target; local foundation checks are recorded in [CHG-K-004](../../changes/CHG-K-004-wp-001-foundation/verification.md), while hosted runtime and complete application checks remain unverified.
 
 | ID | Observable requirement |
 | --- | --- |
@@ -16,7 +16,7 @@ Vercel function storage is not the durable application store. Originals/fulltext
 
 [D13](../decisions.md) settles the SoC credential mechanism and supplier only. Keep the key within the SEC06 server-side boundary; provider access or configuration failures must remain technical failures rather than missing event information. The [CHG-K-002 design](../../changes/CHG-K-002-wp-001-foundation-design/design.md) distinguishes selected foundation/deployment choices from remaining provider proposals and constraints. G04/G08 still require permitted-model, limit, data-handling, intended-host reachability, deployment-eligibility and course evidence before their dependent work or claims. Documentation research supplies no hosted/provider runtime result.
 
-Keith selected the [CLI deployment route](../../changes/CHG-K-002-wp-001-foundation-design/design.md#selected-cli-deployment-route) on 18 October 2026 under G08. That design governs the organization-repository build/deployment path and its environment, credential and migration boundaries; workflow authoring and execution remain future assigned work. Selection supplies no account/team/token access, policy/course eligibility, migration/recovery or hosted evidence and does not waive DEP02/03 or SEC06. Preserve revision, build-artifact, environment/target, deployment URL, required-check and migration/recovery evidence through the [integration handoffs](../integration-handoffs.md).
+Keith selected the [CLI deployment route](../../changes/CHG-K-002-wp-001-foundation-design/design.md#selected-cli-deployment-route) on 18 October 2026 under G08. That design governs the organization-repository build/deployment path and its environment, credential and migration boundaries. The [CHG-K-005 hosted feasibility increment](../../changes/CHG-K-005-wp-001-hosted-feasibility/change.md) implements the workflow and server-only probe locally; its verification record distinguishes local checks from unrun live deployment, migration, recovery and provider checks. Selection and local implementation supply no account/team/token access, policy/course eligibility or hosted evidence and do not waive DEP02/03 or SEC06. Preserve revision, build-artifact, environment/target, deployment URL, required-check and migration/recovery evidence through the [integration handoffs](../integration-handoffs.md).
 
 ## Retention targets
 
@@ -30,4 +30,4 @@ Keith selected the [CLI deployment route](../../changes/CHG-K-002-wp-001-foundat
 
 Do not delete live publications with inactive draft cleanup or retain personal history indefinitely merely because versions are immutable. Define derived/cached/backup expiry and deletion/anonymisation relationships; do not claim erasure while recoverable backups remain under policy. See [G06/G07](../decisions.md).
 
-Verification: T14/15/26/28. Actual hosted walkthrough, deterministic suite and bounded live-model evaluation are release evidence; scaffold checks validate documents only.
+Verification: T14/15/26/28. Actual hosted walkthrough, deterministic suite and bounded live-model evaluation are release evidence. Local foundation/provider checks are partial evidence; documentation checks alone validate documents only.

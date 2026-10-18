@@ -1,0 +1,19 @@
+# 01 - Implement WP-001 hosted feasibility - 18 October 2026
+
+## Request
+
+Implement the second reviewed WP-001 slice on `6-hosted-feasibility`, CHG-K-005, owned by Keith: selected Vercel CLI route, server-only SoCLaaS connectivity boundary, bounded synthetic hosted checks when access exists, and a post-implementation setup guide. Consume CHG-K-004 foundation commit `7d4d1b9`.
+
+## Results
+
+The coordinator recorded the prerequisite revision, exact writers/paths and evidence targets. The Hosting & SoC Engineer implemented a protected-branch Vercel CLI prebuilt workflow, server-only bounded SoCLaaS adapter, temporary protected-preview synthetic probe and [setup guide](../../docs/wp-001-hosting-setup.md). The Foundation Engineer added empty shared configuration placeholders and expanded default Vitest discovery. Local frozen install, lint, typecheck, 27 default tests, Prisma validation, default production build, YAML/bash syntax and whitespace checks passed; the independent verifier reproduced all but the fresh install. The initial dependency-symlink Turbopack failure was environmental and resolved by a fresh hosted install. Four P2 implementation/operation findings were fixed and independently rechecked in [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md). A harmless development fixture requested an out-of-scope read/marker action; the verifier did neither. No live Neon, Vercel or SoCLaaS checks ran because credentials, a project and a permitted model were not configured in this session. G04/G08 and complete hosted scenarios remain open. No remote push or deployment occurred.
+
+# 02 - Guide Neon, Vercel and SoCLaaS setup - 18 October 2026
+
+## Request
+
+After implementation, guide Keith through required Neon services and variables, Vercel project setup, and where to place SoCLaaS secrets without pasting secret values into chat.
+
+## Results
+
+The [WP-001 hosted setup guide](../../docs/wp-001-hosting-setup.md) gives the account/resource sequence, environment-specific GitHub and Vercel variable inventory, first-deployment bootstrap, protected Preview checks, and temporary-probe retirement steps. The final handoff will summarize where Keith enters each value and identify the hosted checks still needing configured access; no secret value was recorded in this log.
