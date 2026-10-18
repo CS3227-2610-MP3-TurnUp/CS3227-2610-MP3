@@ -45,3 +45,40 @@ Settle Keith's choices: accept the recommended foundation stack and use Neon Pos
 - Local pending issue-reconciliation notes identify #4/#6/#12 and dependent #10/#11 without remote changes. Structural checks and `git diff --check` passed: eleven prompt/twelve cumulative paths, 77 pre-prompt/76 original inputs preserved, 83 local links/anchors, 58 requirement/coverage IDs and 32 scenarios; prior log entries, requirement/decision rows and scenario bytes unchanged. Independent Specification Reviewer audited the actual diff and contracts, reran the inspected helper and separate preservation checks, checked focused primary migration/branching sources, and reproduced the eight-file snapshot in verification.md. No actionable findings or corrections were required; no broad version or runtime/provider verification is inferred.
 - No application code, dependencies, account/project provisioning, credentials, production data, model calls, paid upgrades, deployments, commits or remote writes.
 - Final independent evidence/status consistency recheck passed with no actionable findings and reproduced the unchanged eight-file snapshot. Foundation/Neon decision documentation is complete; operational and runtime prerequisites remain as recorded.
+
+# 04 - Keep SoCLaaS References Local - 18 October 2026
+
+## Request
+
+Keep the supplied SoCLaaS reference PDFs as local files, ignore them in Git, then commit and push the change to the same `origin/wp-001-foundation-design` branch. Continue the CHG-K-002 PR increment and preserve previous log entries.
+
+## Results
+
+- Added a narrowly scoped root `.gitignore` rule for `docs/reference/cf_guides_soclaas_*.pdf`; removed the two PDFs from Git's index while preserving their local bytes. Added `docs/reference/README.md` to explain local setup and fresh-clone availability.
+- Updated the design's earlier publication instruction and appended current verification evidence. Product requirements, scenarios, selected stack and prior review evidence remain unchanged. Earlier commits retain the PDFs; history is not rewritten.
+- Python SHA-256 comparisons passed for both local PDFs; Git checks confirmed both are absent from the index and ignored, while the README is not ignored. Working and staged whitespace checks passed. No runtime tests apply to this maintenance change. Commit and push are authorised by this prompt; their final results are reported in the delivery response.
+
+# 05 - Verify Final Design Review Coverage - 18 October 2026
+
+## Request
+
+Assess the reported review gap after the local-only SoCLaaS reference update: independently audit the final tip and record the recheck before treating CHG-K-002 documentation delivery as complete.
+
+## Results
+
+- Confirmed F02: `d29aa0e` changes design.md outside the previously reviewed eight-file snapshot, while change.md still claimed current independent review/completion. Earlier checks explicitly excluded the follow-up. Scoped status to the earlier reviewed snapshots pending the final-tip audit.
+- Independent read-only Specification Reviewer `/root/final_design_review` audited final tip `d29aa0e`, the complete design/reference policy, actual follow-up diff, applicable canonical contracts and evidence. No additional actionable content findings; reproduced the updated eight-file snapshot `0b954fe8d86844305e52eafc5c74ed1230b0baed55e6f14f161094aed17c5b0b`. All 22 spec files are unchanged, with 58 matching requirement/coverage IDs and 32 scenarios; 84 local links/anchors include four explicitly local-only PDF links and no unexpected missing targets. Both local PDFs remain byte-identical, untracked and ignored; source support is unchanged.
+- Parent corrected current change status and appended task/evidence records, resolving F02 with the actual independent content review. Exactly four record/log paths changed; 84 other tracked files and previous log entries preserved; `git diff --check` passed. No design/product change, runtime test, new external research, commit or remote mutation. Closing independent evidence/status consistency recheck passed with no actionable discrepancies; reviewer independently confirmed the four-file scope, preservation/log-prefix checks, unchanged updated snapshot and whitespace. Parent's final recheck passed after recording that result.
+
+# 06 - Simplify Agent and GitHub Review Workflow - 18 October 2026
+
+## Request
+
+Implement the assessed workflow changes: independent agent review after implementation and final GitHub review after pushing, no agent checks of human independent review or approval administration, focused implementation review rules and necessary Codex Cloud trigger changes. Continue this PR increment and preserve earlier uncommitted review evidence.
+
+## Results
+
+- Parent updates the 15 workflow instruction/template/plan paths listed in tasks.md, plus the existing change/task/verification records and this entry. Root Code Review Rules focus findings on concrete defects, exclude all human development-review assessment and prevent evidence-only review cycles. Standalone spec audits require explicit assignment; completed implementations, including agent/workflow configuration, receive independent agent review.
+- Accepted product decisions, application approval/access behaviour, runtime evidence, human ownership and existing agent model/permission settings remain unchanged. Validation, completed-change independent agent review and actual Cloud trigger results are recorded in the latest [verification section](../../changes/CHG-K-002-wp-001-foundation-design/verification.md#review-workflow-implementation--18-october-2026). No commit, push, GitHub comment, merge or deployment is requested by this prompt.
+- Structural checks passed for eight TOML definitions, preserved models/configuration, 19-path scope, 69 preserved tracked files, prior log prefix, 20 unchanged canonical specs and 115 local links/anchors. The full skill validator cannot run without PyYAML; limited checks of the four skills' simple frontmatter passed. Loaded project Cloud settings already show “On every push”; no setting mutation is needed. Root AGENTS.md is the displayed review-instructions source.
+- Independent Implementation Verifier `/root/workflow_implementation_review` reviewed the actual completed workflow change with no authorship/writes and no actionable findings. It independently reproduced the implementation snapshot, validated preservation/syntax/links, checked six representative instruction cases and recorded bounded injection handling in verification.md. These establish workflow instruction coverage, not live Cloud or application behaviour. Parent's final preservation/structural check passed after recording the result; no additional evidence-only review cycle is required.

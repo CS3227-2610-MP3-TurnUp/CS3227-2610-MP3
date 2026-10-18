@@ -65,3 +65,23 @@ Consume Keith's explicit selection recorded in change.md; same change/branch/PR 
 Next bounded application assignment consumes the selected stack, Neon and CLI route without reopening those choices. It must allocate exact files/revision and an independent Implementation Verifier, provision only its authorised resources, validate/pin exact versions and produce actual setup/migration/hosted evidence. G04/G08 retain remaining dependent access, limits, region/recovery, policy and execution prerequisites.
 
 Follow-up outcome: parent and Analyst delivered assigned paths; structural checks and independent full-content audit passed with no actionable findings. Reviewer independently checked preserved inputs, unchanged rows/scenarios/log history and the eight-file design/spec snapshot. No corrections were required; actual checks and closing consistency are recorded in verification.md. Documentation delivery completes without installation, provisioning or runtime acceptance.
+
+## Final-tip review follow-up — 18 October 2026
+
+The user requested assessment of the missing independent review for the local-only reference update. Source tip: `d29aa0e2ca8e324aa29dc6d38c24bbdf03cd9544`; actual update: `bd44c11..d29aa0e`. Earlier completed tasks/reviews retain their historical scope.
+
+- Sole writer: parent for this change's change.md, tasks.md, verification.md and the existing Keith log, entry 05. No design, canonical specification or application changes are assigned here.
+- Independent reviewer: `/root/final_design_review`, configured Specification Reviewer, read-only. Audit the final design/reference policy and affected canonical contracts, inspect the actual follow-up diff and evidence, reproduce the eight-file snapshot, then recheck final corrected evidence/status.
+- Outcome: independent final-tip content audit passed; the reported medium-severity F02 is corrected by the review and the status/evidence reconciliation. No additional actionable content findings or design corrections were required. Exact checks, snapshot and closing evidence recheck belong in verification.md. This assignment authorises no new implementation, deployment, commit or remote mutation.
+
+## Implement clarified review workflow — 18 October 2026
+
+Parent owns these 15 implementation paths: root AGENTS.md and CONTRIBUTING.md; changes/README.md and all three changes/_template/*.md files; .codex/agents/{sdd_coordinator,specification_reviewer,implementation_verifier}.toml; .agents/skills/{sdd-coordination,sdd-repository-bootstrap,specification-audit,implementation-verification}/SKILL.md; specs/implementation-plan.md and specs/integration-handoffs.md. Parent also owns this change's change.md/tasks.md/verification.md and Keith log entry 06, preserving all preceding entries and pre-existing uncommitted work.
+
+Implementation: completed-change agent review, explicitly assigned standalone spec audits, focused Code Review Rules, no agent human-review assessment, concise verification evidence and no evidence-only review cycles. Independently review this workflow instruction implementation with the Implementation Verifier; do not dispatch a separate per-document audit. Checks cover TOML/model preservation, skill validation, local links, changed-path/log preservation and substantive review behaviour through representative cases.
+
+Cloud check: the loaded repository settings already show Code Review trigger “On every push”; no mutation is needed. Record the repository/personal scope and actual state in verification.md. Do not change credentials, connections or security configuration. Keep actual limitations visible.
+
+Actual findings/checks/revision/limitations belong in verification.md; evidence-only recording does not start another review. No commit, push, GitHub comment or live review is assigned by this prompt.
+
+Delivery: all 15 assigned workflow paths implemented; the independent completed-change review and final structural checks are recorded in verification.md. Cloud repository trigger already meets the selected setting; no mutation required. Earlier uncommitted records and log history remain preserved. Publication/final GitHub review follows a later authorised push.
