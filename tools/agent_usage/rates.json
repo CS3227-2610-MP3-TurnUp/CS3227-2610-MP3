@@ -1,0 +1,28 @@
+{
+  "version": "2026-10-18.1",
+  "snapshot_date": "2026-10-18",
+  "basis": "Standard comparison estimate; actual billing reconciliation deferred",
+  "credits_source": "https://learn.chatgpt.com/docs/pricing",
+  "priority_alias_source": "https://developers.openai.com/api/docs/pricing",
+  "credits_per_million": {
+    "gpt-6.1-sol": [50, 2.5, 250],
+    "gpt-6-sol": [50, 5, 250],
+    "gpt-6-astra": [250, 25, 1250],
+    "gpt-6-luna": [2.5, 0.25, 12.5],
+    "gpt-5.6-sol": [100, 10, 500],
+    "gpt-5.6-terra": [50, 5, 300],
+    "gpt-5.6-luna": [5, 0.5, 30]
+  },
+  "api_usd_per_million": {
+    "gpt-6.1-sol": {"input": 2, "cached": 0.1, "write": 2.5, "output": 10, "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"},
+    "gpt-6-luna": {"input": 0.1, "cached": 0.01, "write": 0.125, "output": 0.5, "source": "https://developers.openai.com/api/docs/models/gpt-6-luna"}
+  },
+  "api_long_context": {"input_threshold": 272000, "input_multiplier": 2, "output_multiplier": 1.5},
+  "notes": [
+    "Credit rates are ordered input, cached input, output. Codex credits have no separate cache-write charge.",
+    "Known fast (formerly priority) and ultrafast tiers multiply Standard credit rates by 2 and 6; these purchased-credit comparisons do not describe included subscription usage. API fast is 2x, ultrafast is 6x for Sol only, batch/flex are 0.5x. Unknown or missing tiers use a disclosed Standard assumption. These are neither bills nor subscription allowance estimates.",
+    "API estimates cover model tokens only and require known cache-write counts. Cache reads and writes are treated as disjoint subsets of total input; unknown provider accounting remains unpriced.",
+    "API long-context multipliers apply to the full request above 272000 input tokens. Credit long-context multipliers are not stated in the credit source and are not inferred.",
+    "Reasoning output is included in output and cached input is included in input; neither subset is added to total tokens."
+  ]
+}

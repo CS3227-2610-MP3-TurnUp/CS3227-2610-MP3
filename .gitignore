@@ -1,2 +1,6 @@
+# Local Python tooling caches and optional generated output
+__pycache__/
+*.py[cod]
+.agent-usage/
 # Local SoCLaaS reference exports
 /docs/reference/cf_guides_soclaas_*.pdf
