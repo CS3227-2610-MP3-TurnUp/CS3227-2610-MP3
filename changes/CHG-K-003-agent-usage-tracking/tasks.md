@@ -49,3 +49,16 @@ Read set: applicable AGENTS guidance, selected configured role/skills, specs tas
 
 
 A released only store.py/report.py/report.html/test_core.py/test_report.py; collector.py required no changes. B released privacy.py/cli.py/automation.py/test_privacy.py; common.py required no changes. B's state-only/ledger helper interface and controlled `PrivacyError(OSError)` were integrated by A alone. Parent inspection identified the Windows LocalFree DLL binding and foreign-platform permission-mutation order; B corrected both before full checks. Verification records exact checks. The independent verifier reviewed the final 19-file integrated implementation snapshot read-only and found no actionable defects; Python 3.11/3.14 each ran 70 tests with 69 passing and one native Windows ACL skip. Coordinator settled documentation, evidence and log entry04. No corrective review round is required. Native Windows ACL execution and any future runtime refresh remain separate bounded work; neither was performed here.
+
+## File-URI redaction correction — 18 October 2026
+
+Continue K-003 from `e2831b8dc42beb095293f587504860c27087396b` in the existing branch/worktree. The human assigns a generator–verifier workflow: configured Application Foundation Engineer `/root/file_uri_generator` owns only `tools/agent_usage/exchange.py` and `tests/agent_usage/test_core.py`; the primary agent verifies the implementation independently and owns these records, operating documentation and log entry05. The primary authors no implementation. Preserve unrelated work; no commit/push, live state, installation or remote mutation.
+
+The generator adds case-insensitive whole-token file-URI redaction after HTTPS shielding and before existing raw-path redaction. Keep parentheses inside the token, the existing raw-path boundaries, exchange schema and APIs. Imports reject unsanitized file-URI evidence through the shared validation/redaction logic. Tests cover the reported POSIX/Windows forms, uppercase scheme, localhost/network authorities, percent encoding, parenthesized path components, adjacent HTTPS evidence, unchanged source annotations, atomic rejection and repeated sanitized import.
+
+- [x] Record source, single-writer ownership, contract and generator/verifier handoff before implementation.
+- [x] Generator implements scoped change and regression tests, then releases ownership with evidence.
+- [x] Primary independently reviews actual source and reproduces focused/integrated checks; no actionable defects remain.
+- [x] Finalize verification, operating documentation and existing increment log from actual results.
+
+Generator released only exchange.py and test_core.py. The primary authored no implementation/test changes and independently verified the completed diff. Both Python 3.11 and 3.14 ran 71 tests: 70 passed and the existing native Windows ACL test skipped. A separate nine-case export/import harness confirmed source preservation, raw annotation rejection, populated-destination atomicity and repeated sanitized import. Exact evidence and reviewed snapshot are in verification.md.

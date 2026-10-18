@@ -1,5 +1,6 @@
 """Synthetic accounting fixtures; never read a contributor's real transcripts."""
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -350,7 +351,26 @@ class CoreTests(unittest.TestCase):
         self.write('root', [self.meta('root'), self.turn(), self.usage()])
         collect(self.state)
         Ledger(self.state).bind('root', 'CHG-K-003')
-        Ledger(self.state).annotate('t1', 'review', 'accepted', 'See /Users/keith/private.txt and C:\\Users\\Darryl\\notes.txt https://example.org/pull/1')
+        evidence = (
+            'See /Users/keith/private.txt and C:\\Users\\Darryl\\notes.txt '
+            'https://example.org/pull/1; '
+            'file:///Users/alice/secret-uri-alice.txt '
+            'file://C:/Users/bob/secret-uri-bob.txt '
+            'FILE:///Users/carol/secret-uri-carol.txt '
+            'file:/C:/Users/dana/secret-uri-dana.txt '
+            'file://localhost/Users/erin/secret-uri-erin.txt '
+            'file://server/share/frank/secret-uri-frank.txt '
+            'file:///Users/Gail%20Grove/secret-uri-gail.txt '
+            'file:///Users/(harry)/secret-uri-harry.txt '
+            'file:///C:/Users/ivy(work)/secret-uri-ivy.txt; '
+            'quoted "FILE:///Users/jules/secret-uri-jules.txt"; '
+            'angle <file:///Users/kim/secret-uri-kim.txt>; '
+            'link [notes](file:///Users/lee(notes)/secret-uri-lee.txt). '
+            'Unrelated schemes: profile:///Users/mallory/keep-profile.txt '
+            'and my-file:///Users/nick/keep-my-file.txt'
+        )
+        Ledger(self.state).annotate('t1', 'review', 'accepted', evidence)
+        self.source_snapshot = Ledger(self.state).snapshot(raw=True)
         output = self.root / 'export.jsonl'
         export_data(self.state, output)
         return output
@@ -358,18 +378,60 @@ class CoreTests(unittest.TestCase):
     def test_export_privacy_and_repeated_import(self):
         output = self.export_fixture()
         text = output.read_text()
+        self.assertEqual(Ledger(self.state).snapshot(raw=True), self.source_snapshot)
         self.assertNotIn(str(self.repo), text)
         self.assertNotIn('/Users/keith', text)
         self.assertNotIn('Darryl', text)
         self.assertIn('https://example.org/pull/1', text)
+        self.assertIsNone(re.search(r'(?i)(?<![\w.+-])file:', text))
+        for secret in (
+            'secret-uri-alice.txt', 'secret-uri-bob.txt', 'secret-uri-carol.txt',
+            'secret-uri-dana.txt', 'secret-uri-erin.txt', 'secret-uri-frank.txt',
+            'secret-uri-gail.txt', 'secret-uri-harry.txt', 'secret-uri-ivy.txt',
+            'secret-uri-jules.txt', 'secret-uri-kim.txt', 'secret-uri-lee.txt',
+            'alice', 'bob', 'carol', 'dana', 'erin', 'frank', 'Gail%20Grove',
+            '(harry)', 'ivy(work)', 'jules', 'kim', 'lee(notes)',
+        ):
+            self.assertNotIn(secret.lower(), text.lower())
+        self.assertIn('profile:///Users/mallory/keep-profile.txt', text)
+        self.assertIn('my-file:///Users/nick/keep-my-file.txt', text)
         self.assertNotIn('cwd', text)
         self.assertNotIn('codex_home', text)
         self.assertIn('machine_id', text)
         self.assertNotIn('creator_account_id', text)
         other = self.root / 'other'
-        self.assertGreater(import_data(other, [output])['inserted_records'], 0)
-        self.assertEqual(import_data(other, [output])['inserted_records'], 0)
+        first = import_data(other, [output])
+        second = import_data(other, [output])
+        self.assertGreater(first['inserted_records'], 0)
+        self.assertEqual(second['inserted_records'], 0)
         self.assertEqual(Ledger(other).snapshot()['responses'][0]['owner'], 'keith')
+
+    def test_import_rejects_file_uri_atomically(self):
+        output = self.export_fixture()
+        destination = self.root / 'existing-import'
+        import_data(destination, [output])
+        before = Ledger(destination).snapshot()
+        lines = [json.loads(line) for line in output.read_text().splitlines()]
+        lines.append(dict(
+            type='threads',
+            data=dict(
+                thread_id='incoming',
+                parent_thread_id=None,
+                project_id='turnup',
+                owner='keith',
+                role='root',
+                agent_path=None,
+                started_at=None,
+                ended_at=None,
+                cli_version=None,
+                source_revision='FILE:///Users/(incoming-user)',
+            ),
+        ))
+        bad = self.root / 'unsanitized-file-uri.jsonl'
+        bad.write_text('\n'.join(json.dumps(record) for record in lines) + '\n')
+        with self.assertRaisesRegex(ValueError, 'Local path prohibited'):
+            import_data(destination, [bad])
+        self.assertEqual(Ledger(destination).snapshot(), before)
 
     def test_conflicting_import_atomic_across_files(self):
         output = self.export_fixture()

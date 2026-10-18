@@ -9,6 +9,7 @@ from .store import FIELDS, KEYS, Ledger, canonical
 
 VERSION = 1
 _URL = re.compile(r'https://[^\s<>\"\']+')
+_FILE_URI = re.compile(r'''(?i)(?<![\w.+-])file:[^\s<>"']+''')
 _LOCAL = re.compile(r'(?<![\w:/])(?:[A-Za-z]:[\\/][^\s<>\"\']*|\\\\[^\s<>\"\']+|/(?!/)[^\s<>\"\']+)')
 
 
@@ -21,6 +22,7 @@ def _redact(value):
         urls.append(match.group())
         return f'URLPLACEHOLDER{len(urls)-1}END'
     text = _URL.sub(save, value)
+    text = _FILE_URI.sub('[local-path]', text)
     text = _LOCAL.sub('[local-path]', text)
     for index, url in enumerate(urls):
         text = text.replace(f'URLPLACEHOLDER{index}END', url)

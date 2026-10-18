@@ -33,3 +33,7 @@ Private-storage Engineer B publishes the helper interface and failure contract; 
 
 
 Implementation handoff: B provided `ensure_private_state(state_dir) -> Path` and `ensure_private_ledger(state_dir, ledger_path=None) -> Path`; `PrivacyError` derives from `OSError` for the CLI's controlled failure path. A integrated `ensure_private_ledger` before SQLite connection and at each transaction. State-only entry points use `ensure_private_state` without creating a ledger. Explicit foreign-platform apply is rejected before permission changes. Selected leaves remain unresolved until link/reparse checks; unrelated ancestors are not chmodded. Previously installed copied runtimes require the ordinary `setup --apply` refresh to run these corrections; this prompt performs no live refresh or private-state repair.
+
+## File-URI correction contract — 18 October 2026
+
+Source `e2831b8`: redact complete case-insensitive `file:` URI tokens to `[local-path]` after protecting HTTPS evidence and before existing raw-path redaction. URI tokens end at whitespace, angle brackets or quotes; parentheses remain part of the token so path components cannot survive. Trailing Markdown punctuation may be consumed. The shared validator rejects incoming unsanitized file URIs; exports sanitize copies without changing local annotations. Public APIs and exchange schema v1 remain unchanged. Implementation and verification evidence is recorded separately.

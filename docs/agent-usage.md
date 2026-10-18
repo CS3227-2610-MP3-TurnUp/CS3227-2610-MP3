@@ -83,6 +83,8 @@ python3 -m tools.agent_usage report
 
 Exports contain normalized response usage, thread/turn relationships, explicit attribution/evaluation and safe coverage observations. They exclude transcript text, prompts, tool arguments/results, credentials, account identifiers, registry data and absolute source paths. Machine UUIDs are random local provenance identifiers. No automatic upload is configured. Treat reports/exports as project work metadata and share intentionally.
 
+Evidence exports replace local paths and case-insensitive `file:` URI tokens with `[local-path]` while preserving HTTPS evidence links. Parentheses remain inside URI tokens; trailing Markdown punctuation may also be removed. Exporting leaves the original local annotation unchanged. Imports reject unsanitized file-URI fields. Regenerate older exports from the updated source to apply this redaction; existing copied automation runtimes still require the usual setup refresh.
+
 Repeated imports and re-exported records do not duplicate usage. Imports validate the version/fields and reject conflicting response facts or metadata atomically; review the diagnostic rather than editing an export to suppress a conflict. Collectors never infer acceptance or human contribution from token consumption alone.
 
 ## Accounting and recovery

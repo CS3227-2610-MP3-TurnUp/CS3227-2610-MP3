@@ -1,6 +1,6 @@
 # CHG-K-003 — Agent usage tracking
 
-Status: bounded review-pointer fixes implemented, locally checked and independently reviewed, 18 October 2026, at source `c06e668d0ffc0e46a8dc0015b7f3ac24f02763e2`. Earlier implementation, independent verification and successful native Windows CI remain historical evidence in verification.md. Fresh synthetic checks and independent implementation review completed as recorded in verification.md. Native Windows ACL execution remains unverified; no live installation/state repair or delivery action was performed.
+Status: file-URI evidence redaction correction implemented and independently verified on 18 October 2026 against `e2831b8dc42beb095293f587504860c27087396b` plus this working copy. Earlier lifecycle/private-storage corrections and successful native Windows concurrency CI remain historical evidence in verification.md. The new URI correction uses synthetic data only; no live installation/state repair, commit or push was performed. Native Windows ACL execution remains unverified.
 
 ## Intent and source
 

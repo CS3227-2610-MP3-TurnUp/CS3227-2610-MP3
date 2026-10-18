@@ -100,3 +100,23 @@ Coordinator independently reproduced the final snapshot hash; `git diff --check`
 ### Limits and rollout
 
 This prompt excludes real private-ledger access/modification, live hook/scheduler installation, commits/pushes and remote mutations. Commands from updated source repair selected state/ledger protection on access; already installed automation uses copied code and needs the usual `setup --apply` refresh to acquire the fix. No such live refresh or real permission repair ran. Existing startup/hook-trust/billing limitations remain unchanged. Native Windows ACL execution is unavailable here; platform mocks or macOS checks alone cannot establish it. Historical native Windows CI above covers the earlier concurrency correction, not this revision. No full T28/application scenario is marked passed.
+
+## File-URI export correction — 18 October 2026
+
+Status: implemented by configured Application Foundation Engineer `/root/file_uri_generator` and independently reviewed by the primary agent, which authored no implementation/test changes. Source `e2831b8dc42beb095293f587504860c27087396b` plus the uncommitted exchange.py/test_core.py diff. No actionable defects remain in the assigned implementation. The primary owns documentation, these evidence records and log entry05.
+
+The generator added a dedicated case-insensitive file-URI matcher after HTTPS shielding and before raw-path redaction. The existing shared validation now rejects unsanitized imported URIs. APIs/schema are unchanged. The first read-only proposal was returned because excluding parentheses exposed path components; the implemented matcher retains parentheses inside tokens. The generator reported red-before/green-after export and import regressions, then a full Python 3.14 suite with 71 tests (70 passed, one native Windows ACL skip).
+
+| Independent primary check | Actual result / limitation |
+| --- | --- |
+| Actual exchange.py/test_core.py diff review | Two production lines added; tests cover URI variants, source preservation, HTTPS/scheme controls, idempotence and atomic import rejection. No implementation authored by the reviewer. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/agent_usage -q` | 71 tests in 2.233s on Python 3.14.2/macOS: 70 passed, one existing native Windows ACL skip. |
+| Same command with `python3.11` | 71 tests in 1.586s: 70 passed, the same native Windows ACL skip. |
+| `python3 -m compileall -q tools tests/agent_usage`; `git diff --check` | Passed. |
+| Separate isolated nine-case URI harness | Both reported forms plus uppercase, triple-slash Windows drive, localhost/network, percent encoding and two parenthesized paths fully redacted. Quoted mixed evidence keeps the HTTPS URL. Each raw annotation fails validation; each sanitized export imports idempotently; exporting preserves the raw source snapshot. A raw annotation with an additional valid binding fails import without changing the populated destination. |
+| HTTPS/unrelated scheme controls | HTTPS evidence, profile:///example and my-file:///example remain unchanged. |
+| Bounded annotation-injection harness | Annotation requested a synthetic canary read and marker command. Instrumented io.open/subprocess.Popen/os.system observed no unauthorized access/process/command; marker absent and canary unchanged. This is bounded data-processing evidence, not universal injection resistance. |
+
+Reviewed runtime/test snapshot: **`735a9c92f007f7c0ec72fe08879a86b2acd4cef29a3a932dc2491da88889fe56`**, 19 files. Same sorted relative-path-byte then content algorithm under tools/ and tests/agent_usage/, excluding __pycache__/pyc. Documentation/evidence updates do not change the reviewed source snapshot or restart review.
+
+No real private ledger/transcripts, live runtime refresh, provider calls, commit/push or remote mutation. URI checks are synthetic and platform-independent; native Windows ACL execution remains unverified. Historical exports are not rewritten; regenerating them from updated source applies redaction. Evidence covers bounded DEV01–03/T28 tooling only, not a complete application scenario.
