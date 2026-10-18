@@ -1,6 +1,6 @@
 # CHG-K-003 — Agent usage tracking
 
-Status: tooling implementation and independent verification complete. Local backfill and current-login scheduling verified; login persistence, hook trust, Windows runtime and remote CI remain limited as recorded in verification.md. Human PR approval and publication are separate.
+Status: bounded review-pointer fixes implemented, locally checked and independently reviewed, 18 October 2026, at source `c06e668d0ffc0e46a8dc0015b7f3ac24f02763e2`. Earlier implementation, independent verification and successful native Windows CI remain historical evidence in verification.md. Fresh synthetic checks and independent implementation review completed as recorded in verification.md. Native Windows ACL execution remains unverified; no live installation/state repair or delivery action was performed.
 
 ## Intent and source
 
@@ -21,3 +21,10 @@ Single writers: collector agent owns store/collector/exchange and core tests; re
 Response deduplication, incremental recovery, descendant attribution, explicit overrides, missing/unpriced coverage, privacy-limited idempotent exchange, offline reports, hook preservation and reversible scheduling must have synthetic evidence. Record real backfill separately from fixtures. Windows runtime, GitHub CI execution and hook trust require actual evidence; generated files alone do not prove activation.
 
 No existing feature issue is closed or reconciled: this is an additive development tool, not a product decision. Human review lives on GitHub PRs; no local human-approval gate.
+
+
+## Review-pointer follow-up — 18 October 2026
+
+Keith authorises three implementation fixes within this existing increment: record Interrupt as an end observation; allow annotation/reporting of evidenced root tasks with no response records; enforce private local state-directory/ledger creation and repair. This follow-up authorises configured specialist agents, isolated synthetic checks and documentation only. It excludes commits, pushes, remote mutations, real private-ledger reads/modifications and live installation changes; earlier delivery authority does not apply to this follow-up.
+
+Source/spec revision: `c06e668d0ffc0e46a8dc0015b7f3ac24f02763e2`, B1/D12, DEV01–03 and repository evidence of T28. No new change ID or product behaviour is introduced. The coordinator records bounded ownership before worker dispatch; [tasks](tasks.md#review-pointer-fix-assignments--18-october-2026) defines the sequential privacy-interface handoff. Acceptance requires observable interruption timing, visible/annotatable zero-response root tasks without fabricated usage, private storage permissions on supported platforms, regressions and independent review of the integrated implementation.

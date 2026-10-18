@@ -21,6 +21,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from .common import atomic_json, now, registry
+from .privacy import ensure_private_state
 
 EVENTS = ("SessionStart", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd")
 MARKER = "TurnUp agent usage queue (managed)"
@@ -44,6 +45,7 @@ def hook(state, event):
     session = _safe(event.get("session_id"))
     if session is None:
         return {"queued": False, "reason": "missing_session"}
+    state = ensure_private_state(state)
     config = registry(state)
     project_id = None
     cwd = event.get("cwd")
@@ -217,7 +219,7 @@ def _schedule(state, selected, args):
 
 @contextmanager
 def _setup_lock(state):
-    state.mkdir(parents=True, exist_ok=True)
+    state = ensure_private_state(state)
     path = state / "automation.lock"
     try:
         fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
@@ -248,9 +250,10 @@ def _bootout(label):
 
 def setup(state, platform_name=None, apply=False):
     """Prepare local artifacts; mutate hooks and scheduler only with apply=True."""
-    state = Path(state).expanduser().resolve()
+    state = Path(state).expanduser()
     selected = _platform(platform_name)
     _check_apply_platform(selected, apply)
+    state = ensure_private_state(state)
     config = registry(state)
     hook_path = Path(config["codex_home"]) / "hooks.json"
     with _setup_lock(state):
@@ -312,10 +315,12 @@ def setup(state, platform_name=None, apply=False):
 
 def uninstall(state, platform_name=None, apply=False):
     """Remove exact installed hooks and job. Retain runtime, ledger and exports."""
-    state = Path(state).expanduser().resolve()
+    state = Path(state).expanduser()
     selected = _platform(platform_name) if platform_name else None
     if selected is not None:
         _check_apply_platform(selected, apply)
+    if state.exists() or state.is_symlink():
+        state = ensure_private_state(state)
     initial = _manifest(state)
     if not initial:
         return {"applied": False, "installed": False}
@@ -352,7 +357,7 @@ def uninstall(state, platform_name=None, apply=False):
 
 
 def doctor(state):
-    state = Path(state).expanduser().resolve()
+    state = ensure_private_state(Path(state).expanduser())
     config = registry(state)
     manifest = _manifest(state)
     hooks = _read_hooks(Path(config["codex_home"]) / "hooks.json")

@@ -113,6 +113,69 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(out["summary"]["fully_credit_priced_accepted_tasks"], 0)
         self.assertIsNone(out["summary"]["credits_per_fully_priced_accepted_task"])
 
+    def test_lifecycle_only_zero_response_tasks_keep_unknown_usage_and_annotation(self):
+        data = snapshot()
+        data["threads"].append(dict(thread_id="orphan", parent_thread_id="missing-parent", project_id="turnup", role="worker"))
+        data["turns"].extend([
+            dict(turn_id="root-turn-only", thread_id="root", root_turn_id="root-turn-only", started_at="2026-10-18T17:30:00Z", ended_at=None),
+            dict(turn_id="child-only", thread_id="child", root_turn_id="child-only", started_at="2026-10-18T17:00:00Z"),
+            dict(turn_id="orphan-only", thread_id="orphan", root_turn_id="orphan-only", started_at="2026-10-18T17:00:00Z"),
+        ])
+        data["lifecycles"] = [
+            dict(event_name="TaskStart", thread_id="root", turn_id="interrupted", root_turn_id="interrupted", timestamp="2026-10-18T18:00:00Z"),
+            dict(event_name="Interrupt", thread_id="root", turn_id="interrupted", root_turn_id=None, timestamp="2026-10-18T18:01:00Z"),
+            dict(event_name="TaskStart", thread_id="root", turn_id="completed", root_turn_id="completed", timestamp="2026-10-18T19:00:00Z"),
+            dict(event_name="TaskEnd", thread_id="root", turn_id="completed", root_turn_id="completed", timestamp="2026-10-18T19:01:00Z"),
+            dict(event_name="Stop", thread_id="child", turn_id="child-only", root_turn_id=None, timestamp="2026-10-18T18:01:00Z"),
+            dict(event_name="Interrupt", thread_id="orphan", turn_id="orphan-only", root_turn_id=None, timestamp="2026-10-18T18:01:00Z"),
+        ]
+        data["annotations"].extend([
+            dict(root_turn_id="root-turn-only", phase="planning", outcome="abandoned", evidence="Synthetic root turn without responses"),
+            dict(root_turn_id="interrupted", phase="correction", outcome="needs_changes", evidence="Synthetic interrupted task"),
+            dict(root_turn_id="completed", phase="delivery", outcome="accepted", evidence="Synthetic completed task"),
+        ])
+
+        out = build(data)
+        tasks = {task["root_turn_id"]: task for task in out["tasks"]}
+        self.assertEqual(set(tasks), {"t1", "root-turn-only", "interrupted", "completed"})
+        self.assertEqual(out["summary"]["responses"], 2)
+        self.assertEqual(out["summary"]["tasks"], 4)
+        self.assertEqual(out["summary"]["tasks_without_responses"], 3)
+        self.assertEqual(out["summary"]["accepted_tasks"], 2)
+        self.assertEqual(out["summary"]["fully_credit_priced_accepted_tasks"], 1)
+        self.assertAlmostEqual(out["summary"]["credits_per_fully_priced_accepted_task"], 13.1)
+
+        self.assertEqual((tasks["root-turn-only"]["phase"], tasks["root-turn-only"]["outcome"]), ("planning", "abandoned"))
+        self.assertEqual(tasks["root-turn-only"]["usage_status"], "missing")
+        self.assertIsNone(tasks["root-turn-only"]["input_tokens"])
+        interrupted = tasks["interrupted"]
+        self.assertEqual((interrupted["phase"], interrupted["outcome"]), ("correction", "needs_changes"))
+        self.assertEqual(interrupted["usage_status"], "missing")
+        self.assertEqual(interrupted["responses"], 0)
+        for field in ("input_tokens", "output_tokens", "estimated_credits", "api_equivalent_usd", "observed_response_span_seconds"):
+            self.assertIsNone(interrupted[field], field)
+        self.assertEqual(interrupted["task_elapsed_seconds"], 60)
+        self.assertEqual(tasks["completed"]["outcome"], "accepted")
+        self.assertEqual(tasks["completed"]["usage_status"], "missing")
+        self.assertEqual(tasks["completed"]["task_elapsed_seconds"], 60)
+
+        with tempfile.TemporaryDirectory() as directory:
+            result = generate(data, Path(directory))
+            with Path(result["paths"]["tasks"]).open(newline="") as handle:
+                csv_tasks = {row["root_turn_id"]: row for row in csv.DictReader(handle)}
+            self.assertEqual(csv_tasks["interrupted"]["usage_status"], "missing")
+            self.assertEqual(csv_tasks["interrupted"]["responses"], "0")
+            self.assertEqual(csv_tasks["interrupted"]["input_tokens"], "")
+            self.assertEqual(csv_tasks["interrupted"]["estimated_credits"], "")
+            html = Path(result["paths"]["html"]).read_text()
+            self.assertIn("Tasks without response records (usage missing)", html)
+            self.assertIn("Usage status", html)
+            encoded = html.split('<script id="report-data" type="application/json">')[1].split('</script>')[0]
+            html_data = json.loads(encoded)
+            html_task = next(task for task in html_data["tasks"] if task["root_turn_id"] == "interrupted")
+            self.assertEqual(html_task["usage_status"], "missing")
+            self.assertIsNone(html_task["estimated_credits"])
+
     def test_unbound_unknown_time_and_lifecycle(self):
         data = snapshot()
         data["bindings"] = []

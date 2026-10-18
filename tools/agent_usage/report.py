@@ -10,7 +10,7 @@ from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from .store import attribute
+from .store import attribute, discover_root_tasks, root_task_bounds
 
 DIMENSIONS = ("project", "day", "contributor", "change", "wp", "agent", "agent_path", "model", "effort", "phase", "tier")
 TOKENS = ("input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")
@@ -138,17 +138,22 @@ def build(snapshot):
         for value, group in sorted(groups.items()):
             rollups.append({"dimension": dimension, "value": value, **aggregate(group)})
     tasks = []
-    turns = {(t.get("thread_id"), t.get("turn_id")): t for t in snapshot.get("turns", [])}
     grouped = defaultdict(list)
     for row in rows:
         if row["root_turn_id"]:
             grouped[(row["root_thread_id"], row["root_turn_id"])].append(row)
-    for (root, turn), group in sorted(grouped.items(), key=lambda x: str(x[0])):
+    annotations = {a.get("root_turn_id"): a for a in snapshot.get("annotations", [])}
+    task_pairs = discover_root_tasks(snapshot) | set(grouped)
+    for root, turn in sorted(task_pairs, key=str):
+        group = grouped.get((root, turn), [])
         stamps = sorted(_time(r["timestamp"]) for r in group if _time(r["timestamp"]))
-        bounds = turns.get((root, turn), {})
-        start, end = _time(bounds.get("started_at")), _time(bounds.get("ended_at"))
+        start_value, end_value = root_task_bounds(snapshot, root, turn)
+        start, end = _time(start_value), _time(end_value)
+        annotation = annotations.get(turn, {})
         tasks.append({"root_thread_id": root, "root_turn_id": turn,
-                      "outcome": group[0]["outcome"], "phase": group[0]["phase"],
+                      "phase": annotation.get("phase") or "unassigned",
+                      "outcome": annotation.get("outcome") or "unassigned",
+                      "usage_status": "observed" if group else "missing",
                       "task_elapsed_seconds": (end - start).total_seconds() if start and end and end >= start else None,
                       "observed_response_span_seconds": (stamps[-1] - stamps[0]).total_seconds() if stamps else None,
                       **aggregate(group)})
@@ -162,10 +167,11 @@ def build(snapshot):
                           "completed_lifecycle_seconds": (end - start).total_seconds() if start and end and end >= start else None})
     spans = [t["completed_lifecycle_seconds"] for t in lifecycle if t["completed_lifecycle_seconds"] is not None]
     accepted = [t for t in tasks if t["outcome"] == "accepted"]
-    complete_accepted = [t for t in accepted if not t["estimated_credits_missing"]]
+    complete_accepted = [t for t in accepted if t["usage_status"] == "observed" and not t["estimated_credits_missing"]]
     summary = aggregate(rows)
     summary.update({"threads": len(threads), "threads_without_responses": len(set(threads) - {r["thread_id"] for r in rows}),
-                    "tasks": len(tasks), "accepted_tasks": len(accepted), "fully_credit_priced_accepted_tasks": len(complete_accepted),
+                    "tasks": len(tasks), "tasks_without_responses": sum(t["usage_status"] == "missing" for t in tasks),
+                    "accepted_tasks": len(accepted), "fully_credit_priced_accepted_tasks": len(complete_accepted),
                     "missing_task_elapsed_bounds": sum(t["task_elapsed_seconds"] is None for t in tasks),
                     "credits_per_fully_priced_accepted_task": sum(t["estimated_credits"] for t in complete_accepted) / len(complete_accepted) if complete_accepted else None,
                     "correction_estimated_credits": aggregate([r for r in rows if r["phase"] == "correction"])["estimated_credits"],
@@ -224,7 +230,7 @@ def generate(snapshot, output):
     for name in ("rollups", "responses", "tasks", "threads"):
         path = output / (name + ".csv")
         rows = data[name]
-        fields = list(rows[0]) if rows else {"rollups": ["dimension", "value", "responses"], "responses": list(DIMENSIONS) + list(TOKENS), "tasks": ["root_turn_id", "outcome", "task_elapsed_seconds", "observed_response_span_seconds"], "threads": ["thread_id", "agent", "agent_path", "completed_lifecycle_seconds"]}[name]
+        fields = list(rows[0]) if rows else {"rollups": ["dimension", "value", "responses"], "responses": list(DIMENSIONS) + list(TOKENS), "tasks": ["root_thread_id", "root_turn_id", "phase", "outcome", "usage_status", "responses", "task_elapsed_seconds", "observed_response_span_seconds"], "threads": ["thread_id", "agent", "agent_path", "completed_lifecycle_seconds"]}[name]
         def write_csv(f, rows=rows, fields=fields):
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()

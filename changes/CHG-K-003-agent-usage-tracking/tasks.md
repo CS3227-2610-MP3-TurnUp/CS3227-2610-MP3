@@ -24,3 +24,28 @@ Final handoff: all workers released ownership before final integration. Independ
 ## Windows CI correction — 18 October 2026
 
 Continue this change at `2fc8aa0b67dd920434a306ed946ef93bf3f15926`. Parent is the sole writer of `tools/agent_usage/common.py`, new `tests/agent_usage/test_common.py`, and these change/log records. The existing independent Implementation Verifier performs read-only review and relevant regression checks. Preserve earlier outputs and original log entries. Scope: transient Windows replacement errors during concurrent hook association publication; no provider, application or OS-installation changes. The existing same-branch delivery authorisation carries the correction to CI after local validation/review.
+
+
+## Review-pointer fix assignments — 18 October 2026
+
+Source `c06e668d0ffc0e46a8dc0015b7f3ac24f02763e2`; worktree `.worktrees/agent-usage-tracking`; branch `agent-usage-tracking`; human/log owner Keith; DEV01–03/T28 repository evidence only. These assignments are recorded before dispatch. Preserve all unrelated edits. The parent coordinates configured roles and owns integration checks; no commit/push, real private-state operation, live installation or remote mutation is authorised for this prompt.
+
+| Deliverable / exact allowed paths | Sole writer | Dependencies / handoff | Observable acceptance |
+| --- | --- | --- | --- |
+| `tools/agent_usage/store.py`, `report.py`, `report.html`; `tests/agent_usage/test_core.py`, `test_report.py`; `collector.py` only if needed and announced | Application Foundation Engineer A (lifecycle/report) | Existing snapshot/schema; privacy helper interface from B before A alone adds store calls | Interrupt contributes an end observation. Shared root discovery combines responses, collected root turns and root-thread lifecycle evidence, retains descendant attribution and invents no roots. Zero-response tasks annotate and appear in HTML/CSV/JSON with additive `usage_status=missing`; response-bearing tasks use `observed`. Summary exposes `tasks_without_responses`; missing usage is excluded from fully priced accepted-task metrics. Exchange schema remains unchanged. |
+| New `tools/agent_usage/privacy.py`; `cli.py`, `automation.py`; new `tests/agent_usage/test_privacy.py`; `common.py` only if needed and announced | Application Foundation Engineer B (private storage) | Publish exact helper signatures/failure contract to A and parent before store integration; never edit store.py | State directories and ledger are created/repaired as POSIX 0700/0600 or protected Windows current-user-only ACLs through stdlib ctypes. Clear failure if protection cannot be enforced; synthetic creation/repair/failure checks preserve prior data. |
+| K-003 `change.md`, `design.md`, `tasks.md`, `verification.md`; `docs/agent-usage.md`; existing `logs/keith/05-agent-usage-tracking.md` | SDD Coordinator | Read actual files and primary/worker/reviewer evidence; finalise after integrated checks | Describe actual behaviour and limitations; retain historical evidence and one new Request/Results entry for this human prompt. No unrun result is recorded as passed. |
+| Integrated checks and coordination | Parent | A/B release ownership; inspect actual outputs | Run appropriate synthetic integration/full suite and report exact revision/checks/limitations; writes only to unowned paths after coordination. |
+| Read-only integrated implementation review | Independent Implementation Verifier | Completed A/B implementation, actual final source/files and checks | Review implementation/configuration against these contracts, reproduce relevant checks, report actionable findings and limitations; author no implementation. No assessment of human review. |
+
+Read set: applicable AGENTS guidance, selected configured role/skills, specs task map/baseline, deployment DEV01–03, complete T28 and coverage, implementation ownership/handoffs, CONTRIBUTING evidence/log rules and these K-003 records. Workers report changed paths, actual checks, limitations and dependency release to the parent/coordinator. All contributions belong under log entry04; workers do not edit coordinator-owned records. Independent review covers the integrated implementation once; evidence/log-only completion does not restart it.
+
+- [x] Bounded owners, source, dependencies, acceptance and exclusions recorded before dispatch.
+- [x] B publishes private-storage interface; A integrates it sequentially in store.py.
+- [x] A/B complete fixes and release ownership with actual checks.
+- [x] Parent checks integrated files and regression suite.
+- [x] Independent verifier reviews completed implementation; no actionable defects found.
+- [x] Coordinator finalises docs, verification and prompt log from actual evidence.
+
+
+A released only store.py/report.py/report.html/test_core.py/test_report.py; collector.py required no changes. B released privacy.py/cli.py/automation.py/test_privacy.py; common.py required no changes. B's state-only/ledger helper interface and controlled `PrivacyError(OSError)` were integrated by A alone. Parent inspection identified the Windows LocalFree DLL binding and foreign-platform permission-mutation order; B corrected both before full checks. Verification records exact checks. The independent verifier reviewed the final 19-file integrated implementation snapshot read-only and found no actionable defects; Python 3.11/3.14 each ran 70 tests with 69 passing and one native Windows ACL skip. Coordinator settled documentation, evidence and log entry04. No corrective review round is required. Native Windows ACL execution and any future runtime refresh remain separate bounded work; neither was performed here.

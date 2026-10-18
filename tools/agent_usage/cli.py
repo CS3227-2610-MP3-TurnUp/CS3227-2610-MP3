@@ -10,10 +10,13 @@ import uuid
 from pathlib import Path
 
 from . import __version__
-from .common import atomic_json, registry, state_path
+from .common import atomic_json, registry
+from .privacy import ensure_private_state
 
 
 def initialize(state, owner, repo, codex_home=None):
+    # Protect the selected directory before reading or writing its registry.
+    state = ensure_private_state(state)
     repo = Path(repo).expanduser().resolve()
     config = json.loads((repo / ".codex" / "agent-usage.json").read_text(encoding="utf-8"))
     if not isinstance(config, dict) or config.get("schema_version") != 1 or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", config.get("project_id", "")):
@@ -99,6 +102,12 @@ def parser():
 def execute(args, state):
     if args.command == "init":
         return initialize(state, args.owner, args.repo, args.codex_home)
+    # The hook validates and parses its event before it needs local state;
+    # hook() then secures the directory before registry reads or queue writes.
+    # Setup/uninstall validate an explicitly selected OS before securing or
+    # mutating local state, preserving the foreign-platform no-write contract.
+    if args.command not in ("hook", "setup", "uninstall"):
+        state = ensure_private_state(state)
     if args.command == "hook":
         from .automation import hook
         data = sys.stdin.read(1_048_577)
@@ -109,10 +118,10 @@ def execute(args, state):
             raise ValueError("Hook event must be a JSON object")
         hook(state, event)
         return {}
-    registry(state)
     if args.command in ("setup", "uninstall"):
         from . import automation
         return getattr(automation, args.command)(state, platform_name=args.platform, apply=args.apply)
+    registry(state)
     if args.command == "doctor":
         from .automation import doctor
         from .store import Ledger
@@ -174,7 +183,8 @@ def execute(args, state):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
-        result = execute(args, state_path(args.state))
+        selected_state = Path(args.state or os.environ.get("TURNUP_USAGE_STATE", Path.home() / ".turnup-agent-usage")).expanduser()
+        result = execute(args, selected_state)
         print(json.dumps(result if result is not None else {"ok": True}, default=str, indent=2))
         return 0
     except (ValueError, OSError, RuntimeError, KeyError, sqlite3.Error) as error:

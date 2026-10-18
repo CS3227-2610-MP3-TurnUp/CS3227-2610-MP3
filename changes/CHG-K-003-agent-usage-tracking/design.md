@@ -18,3 +18,18 @@ Lifecycle correction: native task start/completion and queued lifecycle events a
 
 
 Windows atomic publication: keep the fully written temporary JSON and retry `os.replace` only for Windows errors5/32/33, up to7 total attempts with10–320ms exponential waits (0.63s total requested backoff per file). Persistent contention/permissions still raise; other OS/errors fail immediately. Preserve the previous destination on failed publication and clean up the temporary file. Queue IDs and privacy fields do not change. Windows file-sharing semantics are documented by [Microsoft](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew); exact reported WinError5 was observed in the failed CI run, rather than inferred from a macOS-only test.
+
+
+## Review-pointer correction contract — 18 October 2026
+
+Source `c06e668d0ffc0e46a8dc0015b7f3ac24f02763e2`; implementation/check status is maintained in verification.md. These corrections retain exchange schema v1 and the existing distinction between observed usage, missing evidence and acceptance annotations.
+
+- Treat `Interrupt` as a root-turn end observation alongside `TaskEnd` and `Stop`. Continue selecting valid timestamp bounds and respecting later starts/resumes; observed elapsed time remains distinct from active execution time.
+- Share one root-task discovery contract between annotation validation and report generation. Combine response root IDs, collected root turns and lifecycle observations associated with root threads. Preserve response-derived descendant attribution. Child-only evidence and arbitrary annotation IDs do not establish a root task.
+- Include evidenced tasks that have no response records. Their annotations and lifecycle timing remain usable; report tasks expose additive `usage_status` values `observed` (response records exist) or `missing` (none exist), with summary `tasks_without_responses`. Zero-response tasks have unknown token/cost values, not fabricated zero usage, and cannot enter fully priced accepted-task cost metrics. HTML, CSV and embedded report JSON expose this coverage; no normalized exchange field is added.
+- Protect the selected state directory and `ledger.sqlite3` before opening SQLite, and repair permissions on subsequent ledger access. POSIX modes are 0700 for the state directory and 0600 for the ledger. Windows uses a protected DACL granting the current user access, implemented with standard-library ctypes. Creation must avoid an initially exposed ledger; failed enforcement stops with a clear error. Preserve existing data and do not alter unrelated ancestors. Existing user state is outside this correction's test scope; use isolated synthetic fixtures only.
+
+Private-storage Engineer B publishes the helper interface and failure contract; lifecycle Engineer A alone integrates that interface into store.py. This ordering avoids overlapping writers. Actual native Windows execution is separate evidence from platform mocks.
+
+
+Implementation handoff: B provided `ensure_private_state(state_dir) -> Path` and `ensure_private_ledger(state_dir, ledger_path=None) -> Path`; `PrivacyError` derives from `OSError` for the CLI's controlled failure path. A integrated `ensure_private_ledger` before SQLite connection and at each transaction. State-only entry points use `ensure_private_state` without creating a ledger. Explicit foreign-platform apply is rejected before permission changes. Selected leaves remain unresolved until link/reparse checks; unrelated ancestors are not chmodded. Previously installed copied runtimes require the ordinary `setup --apply` refresh to run these corrections; this prompt performs no live refresh or private-state repair.

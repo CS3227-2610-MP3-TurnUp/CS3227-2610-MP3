@@ -7,7 +7,7 @@ from pathlib import Path
 from tools.agent_usage.collector import collect, process_events
 from tools.agent_usage.common import atomic_json
 from tools.agent_usage.exchange import export_data, import_data
-from tools.agent_usage.store import Ledger, attribute
+from tools.agent_usage.store import Ledger, attribute, discover_root_tasks, root_task_bounds
 
 
 class CoreTests(unittest.TestCase):
@@ -255,6 +255,89 @@ class CoreTests(unittest.TestCase):
         process_events(self.state, {'stop': dict(version=1, project_id='turnup', event='Stop', session_id='root', turn_id='t1', time='2026-10-18T01:10:00Z')})
         self.assertIsNone(self.snap()['threads'][0]['ended_at'])
         self.assertEqual(self.snap()['turns'][0]['ended_at'], '2026-10-18T01:10:00Z')
+
+    def test_interrupt_ends_matching_turn_for_sixty_seconds_and_later_resume_reopens_it(self):
+        self.write('root', [self.meta('root'), self.turn(stamp='2026-10-18T01:00:00Z')])
+        collect(self.state)
+        process_events(self.state, {
+            'interrupt': dict(version=1, project_id='turnup', event='Interrupt', session_id='root', turn_id='t1', time='2026-10-18T01:01:00Z')
+        })
+        snapshot = self.snap()
+        self.assertIsNone(snapshot['threads'][0]['ended_at'])
+        self.assertEqual(snapshot['turns'][0]['ended_at'], '2026-10-18T01:01:00Z')
+        start = next(t for t in snapshot['turns'] if t['turn_id'] == 't1')['started_at']
+        end = next(t for t in snapshot['turns'] if t['turn_id'] == 't1')['ended_at']
+        from tools.agent_usage.store import instant
+        self.assertEqual((instant(end) - instant(start)).total_seconds(), 60)
+
+        self.write('root', [self.record('event_msg', dict(type='task_started', turn_id='t1', root_turn_id='t1'), '2026-10-18T01:02:00Z')], mode='a')
+        collect(self.state)
+        self.assertIsNone(next(t for t in self.snap()['turns'] if t['turn_id'] == 't1')['ended_at'])
+        self.write('root', [self.record('event_msg', dict(type='task_complete', turn_id='t1', root_turn_id='t1'), '2026-10-18T01:03:00Z')], mode='a')
+        collect(self.state)
+        self.assertEqual(next(t for t in self.snap()['turns'] if t['turn_id'] == 't1')['ended_at'], '2026-10-18T01:03:00Z')
+
+    def test_interrupt_and_completed_lifecycle_only_root_tasks_roundtrip_idempotently(self):
+        records = [self.meta('root')]
+        for kind, turn, stamp in (
+            ('task_started', 'interrupted', '2026-10-18T01:00:00Z'),
+            ('task_started', 'completed', '2026-10-18T02:00:00Z'),
+            ('task_complete', 'completed', '2026-10-18T02:01:00Z'),
+        ):
+            records.append(self.record('event_msg', dict(type=kind, turn_id=turn, root_turn_id=turn), stamp))
+        self.write('root', records)
+        collect(self.state)
+        process_events(self.state, {
+            'interrupt': dict(version=1, project_id='turnup', event='Interrupt', session_id='root', turn_id='interrupted', time='2026-10-18T01:01:00Z')
+        })
+
+        ledger = Ledger(self.state)
+        ledger.annotate('interrupted', 'correction', 'needs_changes', 'Synthetic interruption')
+        ledger.annotate('completed', 'delivery', 'accepted', 'Synthetic completion')
+        snapshot = ledger.snapshot()
+        self.assertEqual(snapshot['responses'], [])
+        self.assertEqual(set(discover_root_tasks(snapshot)), {('root', 'interrupted'), ('root', 'completed')})
+        self.assertEqual(root_task_bounds(snapshot, 'root', 'interrupted'), ('2026-10-18T01:00:00Z', '2026-10-18T01:01:00Z'))
+        self.assertEqual(root_task_bounds(snapshot, 'root', 'completed'), ('2026-10-18T02:00:00Z', '2026-10-18T02:01:00Z'))
+        self.assertIn('Interrupt', {event['event_name'] for event in snapshot['lifecycles']})
+
+        exported = self.root / 'root-tasks.jsonl'
+        export_data(self.state, exported)
+        imported = self.root / 'imported-root-tasks'
+        first = import_data(imported, [exported])
+        second = import_data(imported, [exported])
+        imported_snapshot = Ledger(imported).snapshot()
+        self.assertGreater(first['inserted_records'], 0)
+        self.assertEqual(second['inserted_records'], 0)
+        self.assertEqual(len(imported_snapshot['lifecycles']), 4)
+        self.assertEqual(len(imported_snapshot['annotations']), 2)
+        self.assertEqual(set(discover_root_tasks(imported_snapshot)), {('root', 'interrupted'), ('root', 'completed')})
+
+    def test_root_task_discovery_rejects_child_and_unresolved_ancestry_ids(self):
+        ledger = Ledger(self.state)
+        with ledger.transaction() as db:
+            for thread_id, parent_id in (('root', None), ('child', 'root'), ('orphan', 'missing-parent')):
+                ledger.put(db, 'threads', dict(thread_id=thread_id, parent_thread_id=parent_id, project_id='turnup', owner='keith'))
+            for thread_id, turn_id in (('root', 'root-turn'), ('child', 'child-only'), ('orphan', 'orphan-only')):
+                ledger.put(db, 'turns', dict(thread_id=thread_id, turn_id=turn_id, root_turn_id=turn_id, started_at='2026-10-18T01:00:00Z'))
+        snapshot = ledger.snapshot()
+        self.assertEqual(discover_root_tasks(snapshot), {('root', 'root-turn')})
+        ledger.annotate('root-turn', 'review', 'accepted', 'Synthetic root task')
+        for unknown in ('child-only', 'orphan-only', 'invented'):
+            with self.subTest(turn=unknown), self.assertRaisesRegex(ValueError, 'Unknown root turn'):
+                ledger.annotate(unknown, 'review', 'accepted', 'Must remain unknown')
+
+    def test_ledger_rejects_selected_state_symlink_before_creating_database(self):
+        target = self.root / 'private-target'
+        target.mkdir()
+        link = self.root / 'state-link'
+        try:
+            link.symlink_to(target, target_is_directory=True)
+        except (NotImplementedError, OSError) as error:
+            self.skipTest(f'Symlink creation is unavailable: {error}')
+        with self.assertRaises(OSError):
+            Ledger(link)
+        self.assertFalse((target / 'ledger.sqlite3').exists())
 
     def test_malformed_exchange_container_types_rejected(self):
         for index, value in enumerate(([], 'text', 3, None, {'type': [], 'data': {}}, {'type': {}, 'data': {}}, {'type': 'threads', 'data': []})):

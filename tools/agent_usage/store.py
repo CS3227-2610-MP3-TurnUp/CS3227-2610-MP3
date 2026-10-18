@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .common import now, registry
+from .privacy import ensure_private_ledger
 
 FIELDS = {
     'projects': ('project_id', 'name', 'timezone'),
@@ -31,9 +32,9 @@ def row_key(table, row):
 
 class Ledger:
     def __init__(self, state):
-        self.state = Path(state)
-        self.state.mkdir(parents=True, exist_ok=True)
-        self.path = self.state / 'ledger.sqlite3'
+        self.state = Path(state).expanduser()
+        self.path = ensure_private_ledger(self.state, self.state / 'ledger.sqlite3')
+        self.state = self.path.parent
         with self.transaction() as db:
             for table in FIELDS:
                 db.execute(f'CREATE TABLE IF NOT EXISTS {table} (key TEXT PRIMARY KEY, data TEXT NOT NULL)')
@@ -44,6 +45,7 @@ class Ledger:
 
     @contextmanager
     def transaction(self):
+        self.path = ensure_private_ledger(self.state, self.path)
         db = sqlite3.connect(self.path, timeout=30)
         try:
             db.execute('PRAGMA busy_timeout=30000')
@@ -100,7 +102,7 @@ class Ledger:
             raise ValueError('Invalid outcome')
         if not isinstance(evidence, str) or len(evidence) > 2000:
             raise ValueError('Evidence must be text of at most 2000 characters')
-        if not any(r['root_turn_id'] == root_turn_id for r in self.snapshot()['responses']):
+        if not isinstance(root_turn_id, str) or not root_turn_id or root_turn_id not in {turn for _, turn in discover_root_tasks(self.snapshot())}:
             raise ValueError('Unknown root turn')
         with self.transaction() as db:
             self.put(db, 'annotations', dict(root_turn_id=root_turn_id, phase=phase, outcome=outcome, evidence=evidence), replace=True)
@@ -144,6 +146,70 @@ def attribute(snapshot, response):
     return dict(change_id=(selected or {}).get('change_id'), wp=(selected or {}).get('wp'), root_thread_id=root, root_turn_started_at=root_start, phase=annotation.get('phase'), outcome=annotation.get('outcome'), evidence=annotation.get('evidence'))
 
 
+def discover_root_tasks(snapshot):
+    """Return evidenced (root thread, root turn) pairs for annotation and reports.
+
+    Response-derived tasks retain their established ancestry attribution. Turn and
+    lifecycle-only evidence qualifies only when its own thread is a known root
+    thread; child turns and threads with unresolved parents cannot create roots.
+    """
+    tasks = set()
+    for response in snapshot.get('responses', []):
+        turn_id = response.get('root_turn_id')
+        if isinstance(turn_id, str) and turn_id:
+            root_thread = attribute(snapshot, response).get('root_thread_id')
+            tasks.add((root_thread, turn_id))
+
+    root_threads = {
+        thread.get('thread_id')
+        for thread in snapshot.get('threads', [])
+        if isinstance(thread.get('thread_id'), str) and thread.get('thread_id')
+        and thread.get('parent_thread_id') is None
+    }
+    for turn in snapshot.get('turns', []):
+        thread_id = turn.get('thread_id')
+        turn_id = turn.get('root_turn_id') or turn.get('turn_id')
+        if thread_id in root_threads and isinstance(turn_id, str) and turn_id:
+            tasks.add((thread_id, turn_id))
+
+    turn_lifecycle_events = {'TaskStart', 'TaskEnd', 'Stop', 'Interrupt'}
+    for event in snapshot.get('lifecycles', []):
+        thread_id = event.get('thread_id')
+        turn_id = event.get('root_turn_id') or event.get('turn_id')
+        if (thread_id in root_threads and event.get('event_name') in turn_lifecycle_events
+                and isinstance(turn_id, str) and turn_id):
+            tasks.add((thread_id, turn_id))
+    return tasks
+
+
+def root_task_bounds(snapshot, root_thread_id, root_turn_id):
+    """Return observed start/end for a root task, including lifecycle-only tasks."""
+    matching_turns = [
+        turn for turn in snapshot.get('turns', [])
+        if turn.get('thread_id') == root_thread_id
+        and (turn.get('root_turn_id') or turn.get('turn_id')) == root_turn_id
+    ]
+    starts = [turn.get('started_at') for turn in matching_turns]
+    ends = [turn.get('ended_at') for turn in matching_turns]
+    for event in snapshot.get('lifecycles', []):
+        if event.get('thread_id') != root_thread_id:
+            continue
+        if (event.get('root_turn_id') or event.get('turn_id')) != root_turn_id:
+            continue
+        if event.get('event_name') == 'TaskStart':
+            starts.append(event.get('timestamp'))
+        elif event.get('event_name') in {'TaskEnd', 'Stop', 'Interrupt'}:
+            ends.append(event.get('timestamp'))
+    valid_starts = [value for value in starts if instant(value)]
+    valid_ends = [value for value in ends if instant(value)]
+    start = min(valid_starts, key=instant, default=None)
+    end = max(valid_ends, key=instant, default=None)
+    latest_start = max(valid_starts, key=instant, default=None)
+    if end and latest_start and instant(end) < instant(latest_start):
+        end = None
+    return start, end
+
+
 def instant(value):
     """Return a timezone-aware observation instant, or None for invalid input."""
     if not isinstance(value, str):
@@ -174,7 +240,7 @@ def observed_lifecycles(snapshot):
         if instant(turn.get('started_at')):
             starts.append(turn['started_at'])
         turn['started_at'] = min(starts, key=instant, default=None)
-        ends = [e['timestamp'] for e in own if e['event_name'] in {'TaskEnd', 'Stop'} and instant(e['timestamp'])]
+        ends = [e['timestamp'] for e in own if e['event_name'] in {'TaskEnd', 'Stop', 'Interrupt'} and instant(e['timestamp'])]
         end = max(ends, key=instant, default=None)
         latest_start = max(starts, key=instant, default=None)
         turn['ended_at'] = end if end and (latest_start is None or instant(end) >= instant(latest_start)) else None
