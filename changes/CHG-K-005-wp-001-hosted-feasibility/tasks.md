@@ -66,3 +66,15 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Hosting & SoC Engineer handed off only the assigned workflow and guide changes at source `88482f3`.
 - [x] Independent primary-agent verification found no actionable defect and reproduced the branch, syntax and preservation checks recorded in verification.md.
 - [x] Delivery Agent committed the six reviewed implementation/evidence paths as `70d187fb2923b6f401520db0e976b63461e5efbc` and pushed `6-hosted-feasibility`; independent remote-head read-back matched that hash and the worktree was clean. No deployment or PR-description update occurred.
+
+## 19 October 2026 cancellation, persistence and promotion correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 19 | Forward request cancellation, add caller-known idempotent persistence IDs, and narrow stale production promotion | Hosting & SoC Engineer; exact implementation paths in change.md | Clean source `94dd874`; SEC05–06, DEP03–04, DEV01–03, T14/T15/T28 portions | Deterministic cancellation/retry and promotion checks, safe recovery guidance |
+| 20 | Independently review and reproduce relevant checks | Primary agent as Implementation Verifier; no implementation authorship | Completed writer handoff | Reviewed digest, findings/recheck, exact results and live limits in verification.md |
+| 21 | Record and deliver reviewed correction | Primary agent; records/log and Git delivery only | Completed independent review | Existing Keith log entry, commit, remote head read-back; no deployment or merge |
+
+- [x] Hosting & SoC Engineer completed only the assigned implementation paths and handed off focused/default test and syntax results.
+- [x] Independent review reproduced applicable checks; a documentation overstatement about cancellation timing was corrected and rechecked. Exact evidence and remaining limits are in verification.md.
+- [ ] Commit and push the reviewed increment to `6-hosted-feasibility`; read back the remote branch head.

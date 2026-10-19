@@ -34,7 +34,11 @@ The Actions workflow provides these stages:
 2. A protected `master` or one-segment `preview/*` push (for example, `preview/check`) runs locked dependency install, local checks, target-matched Vercel settings pull and target-matched build.
 3. After a successful build, `db:migrate:deploy` applies reviewed migrations to the matching environment using the GitHub Actions direct migration secret; only then does the workflow upload the already-built output.
 4. A Production upload uses `--skip-domain`, then the workflow verifies the project, target, commit/ref metadata and HTTPS root response. It promotes that same deployment URL only after verification and the `production-promotion` environment gate.
-5. One workflow-level concurrency group serializes preview and production release runs through promotion. A newer `master` head invalidates an older candidate before promotion.
+5. Preview and Production releases use separate concurrency groups. When a newer Production run starts, GitHub Actions requests cancellation of the older run, including during migration or promotion approval, using [`cancel-in-progress`](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency). Cancellation is asynchronous, so the older run may still reach or complete the external Vercel promotion before cancellation takes effect. The promotion step checks that its commit is still the `master` head immediately before promoting the verified URL; this narrows the stale-promotion window but cannot eliminate it.
+
+Production cancellation can interrupt `prisma migrate deploy`. Do not assume a cancelled step applied no database changes: inspect the migration output and the Production database migration status before retrying or promoting another candidate. If a migration is incomplete or failed, repair it deliberately with a reviewed forward migration and the team's approved Prisma recovery procedure; do not run an automatic destructive down-migration. The last ready Production deployment remains the serving application until a candidate is promoted, but its compatibility with any already-applied migration must be checked.
+
+The synthetic SoC probe passes the incoming request's abort signal to the provider client. The `vercel.json` entry enables request cancellation only for `/api/internal/foundation-probe`. Vercel documents that cancellation is Node.js-only and opt-in by function path ([Functions API Reference](https://vercel.com/docs/functions/functions-api-reference)); a cancelled invocation may be reclaimed before application cleanup finishes. The durable in-flight reservation is therefore retained for cancellation, and the local abort does not prove that SoCLaaS stopped processing or billing. Follow the uncertain-result recovery steps below before clearing that reservation.
 
 ### GitHub configuration
 
@@ -105,23 +109,27 @@ Vercel CLI `curl` is used to test protected deployment URLs. The command support
 Only after the Preview deployment is protected with Vercel Authentication, the Preview database is confirmed non-production, and G04 permits a bounded test. Before enabling SoCLaaS, confirm the exact configured model is permitted for the key and course, then verify the key's request, concurrency, output-token, rate-window, cost and data-handling limits from authoritative current sources. Choose all four `FOUNDATION_PROBE_SOC_*` values explicitly from those verified limits for one probe activation. `maxAttempts` and `outputTokenBudget` are cumulative gate caps, not rolling-window limits; the gate does not infer or reset a provider quota window. If the verified limits or remaining allowance are unknown, leave the probe disabled. No example numeric values are safe defaults.
 
 1. In Vercel **Preview** variables, set the four `FOUNDATION_PROBE_SOC_*` limits. Ensure the token is temporarily stored as a Vercel **Preview** secret `FOUNDATION_PROBE_TOKEN`; set Preview `FOUNDATION_PROBE_ENABLED=true` only when ready to test. Keep the token out of shell tracing, shell history, source, URL query strings and logs. `openssl rand -hex 32` can generate 32 random bytes encoded as hex; store the result directly in an approved secret manager before configuring Vercel. Keep all four limit variables and the enablement/token settings absent or disabled in Production.
-2. Use an authenticated Vercel CLI session linked to the project. Keep the original token in the approved secret manager and load it into the local process through that manager's protected injection mechanism. Vercel sensitive environment values are write-only; do not try to retrieve `FOUNDATION_PROBE_TOKEN` with `vercel env pull` or `vercel env run` ([environment variable docs](https://vercel.com/docs/environment-variables/manage-across-environments)). Disable shell tracing, do not paste the token into a command, and do not capture request headers in logs. Replace only the deployment URL and returned synthetic UUID; never add caller prompt, model or base URL values.
+2. Use an authenticated Vercel CLI session linked to the project. Keep the original token in the approved secret manager and load it into the local process through that manager's protected injection mechanism. Vercel sensitive environment values are write-only; do not try to retrieve `FOUNDATION_PROBE_TOKEN` with `vercel env pull` or `vercel env run` ([environment variable docs](https://vercel.com/docs/environment-variables/manage-across-environments)). Disable shell tracing, do not paste the token into a command, and do not capture request headers in logs. Generate and retain a caller-known synthetic UUID before sending the persistence-create request; if its response is lost, retry using that same ID. The ID is not a credential. Never add caller prompt, model or base URL values.
 
 ```sh
 export PROBE_URL='https://<protected-preview-deployment>.vercel.app'
 set +x
+export PROBE_ID="$(node --input-type=module -e 'import { randomUUID } from "node:crypto"; process.stdout.write(randomUUID())')"
+printf 'Retain this synthetic probe ID for retry, check and cleanup: %s\n' "$PROBE_ID"
 
-# Create a synthetic record; keep its returned UUID for later checks and cleanup.
-corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-create" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
+# Create a synthetic record with the ID already known to the caller.
+corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-create&id=$PROBE_ID" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
 
-# Replace <returned-uuid> with the create response's id.
-corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-check&id=<returned-uuid>" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
+# If the create response was lost, retry this exact request with the same PROBE_ID.
+corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-create&id=$PROBE_ID" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
+
+corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-check&id=$PROBE_ID" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
 
 # Fixed synthetic SoCLaaS request; response contains only ok/classification.
 corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=soc" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
 
 # Delete the synthetic record when checks are complete.
-corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-delete&id=<returned-uuid>" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
+corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=persistence-delete&id=$PROBE_ID" --deployment "$PROBE_URL" -X POST -H "Authorization: Bearer $FOUNDATION_PROBE_TOKEN"
 ```
 
 For persistence across redeploys, create the record, deploy the next reviewed Preview revision, then check the same UUID before deleting it. Record each probe-enabled deployment's environment, revision and URL privately so every URL can be removed afterward; do not record keys, connection strings, prompt payloads or raw provider error bodies. After checks, remove the Preview `FOUNDATION_PROBE_TOKEN` setting and set `FOUNDATION_PROBE_ENABLED=false` for future deployments, then deploy a reviewed Preview revision with the probe disabled. Vercel environment changes apply only to new deployments, so the old probe-enabled URLs retain their original settings ([environment variable behavior](https://vercel.com/docs/environment-variables)). Delete every probe-enabled deployment, including the initial check deployment and any redeploy used for persistence verification, with `vercel remove <deployment-url>` or the Vercel dashboard ([CLI removal docs](https://vercel.com/docs/cli/remove)). Verify each removed URL no longer serves the route and the new disabled deployment returns 404. Rotate the token in the approved secret manager, unset it from the local process, and do not leave the probe enabled for ordinary Preview traffic.

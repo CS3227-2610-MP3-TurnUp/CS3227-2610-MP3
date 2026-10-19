@@ -22,11 +22,15 @@ export async function POST(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const operation = url.searchParams.get("operation");
 
-  if (operation === "persistence-create" && url.searchParams.size === 1) {
+  if (operation === "persistence-create") {
+    const id = url.searchParams.get("id");
+    if (url.searchParams.size !== 2 || !id || !uuidPattern.test(id)) {
+      return Response.json({ error: "invalid_probe_id" }, { status: 400 });
+    }
     try {
       const { createFoundationProbe } = await import("../../../../server/db/foundation-probe");
-      const id = await createFoundationProbe();
-      return Response.json({ ok: true, id }, { status: 201 });
+      await createFoundationProbe(id);
+      return Response.json({ ok: true, id });
     } catch {
       return Response.json({ error: "persistence_unavailable" }, { status: 503 });
     }
@@ -92,6 +96,7 @@ export async function POST(request: Request): Promise<Response> {
       result = await requestSoCCompletion({
         system: "You are a connectivity check. Do not disclose secrets or request external information.",
         user: syntheticProbeText,
+        signal: request.signal,
       });
     } catch {
       // A thrown client error does not establish whether provider work completed.

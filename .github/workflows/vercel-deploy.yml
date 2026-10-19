@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('turnup-pr-{0}', github.event.pull_request.number) || 'turnup-hosted-releases' }}
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('turnup-pr-{0}', github.event.pull_request.number) || (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') && 'turnup-production-workflow' || 'turnup-preview-workflow') }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') }}
 
 jobs:
   pull-request-checks:
@@ -53,7 +53,7 @@ jobs:
       name: ${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
     concurrency:
       group: vercel-${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
-      cancel-in-progress: false
+      cancel-in-progress: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') }}
     env:
       DEPLOYMENT_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || (github.ref == 'refs/heads/master' && 'production' || 'preview') }}
       REF_PROTECTED: ${{ github.ref_protected }}
@@ -303,15 +303,6 @@ jobs:
           set -euo pipefail
           mkdir -p .vercel
           node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync(".vercel/project.json", JSON.stringify({ orgId: process.env.VERCEL_ORG_ID, projectId: process.env.VERCEL_PROJECT_ID }));'
-      - name: Reject superseded production candidates
-        shell: bash
-        run: |
-          set -euo pipefail
-          latest_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq .sha)"
-          if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
-            echo "This production candidate is no longer the protected master head."
-            exit 1
-          fi
       - name: Promote the exact verified candidate
         shell: bash
         env:
@@ -319,4 +310,9 @@ jobs:
         run: |
           set -euo pipefail
           : "${VERCEL_TOKEN:?The production-promotion environment must provide VERCEL_TOKEN.}"
+          latest_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq .sha)"
+          if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
+            echo "This production candidate is no longer the protected master head."
+            exit 1
+          fi
           corepack pnpm dlx vercel@58.4.4 promote "$CANDIDATE_URL" --yes --token="$VERCEL_TOKEN"

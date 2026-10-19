@@ -4,12 +4,18 @@ const mocked = vi.hoisted(() => ({
   requestSoCCompletion: vi.fn(),
   admitSoCProbe: vi.fn(),
   releaseSoCProbe: vi.fn(),
+  createFoundationProbe: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("../../src/server/ai/soclaas-client", () => mocked);
 vi.mock("../../src/server/db/soc-probe-gate", () => ({
   admitSoCProbe: mocked.admitSoCProbe,
   releaseSoCProbe: mocked.releaseSoCProbe,
+}));
+vi.mock("../../src/server/db/foundation-probe", () => ({
+  createFoundationProbe: mocked.createFoundationProbe,
+  foundationProbeExists: vi.fn(),
+  deleteFoundationProbe: vi.fn(),
 }));
 
 import { POST } from "../../src/app/api/internal/foundation-probe/route";
@@ -37,11 +43,12 @@ function enablePreview(tokenValue = token): void {
   mocked.requestSoCCompletion.mockResolvedValue({ ok: true, text: "READY" });
 }
 
-function request(url: string, authorization?: string, body?: string): Request {
+function request(url: string, authorization?: string, body?: string, signal?: AbortSignal): Request {
   return new Request(`https://preview.example${url}`, {
     method: "POST",
     headers: authorization ? { authorization } : undefined,
     body,
+    signal,
   });
 }
 
@@ -81,12 +88,69 @@ describe("internal foundation probe route", () => {
     expect(mocked.requestSoCCompletion).toHaveBeenCalledWith({
       system: "You are a connectivity check. Do not disclose secrets or request external information.",
       user: "Return only the word READY.",
+      signal: expect.any(AbortSignal),
     });
     expect(mocked.admitSoCProbe).toHaveBeenCalledWith(
       { maxAttempts: 5, maxInFlight: 2, minIntervalMs: 500, outputTokenBudget: 500 },
       100,
     );
     expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
+  });
+
+  it("forwards caller cancellation to the provider and retains the uncertain reservation", async () => {
+    enablePreview();
+    const controller = new AbortController();
+    mocked.requestSoCCompletion.mockImplementation(({ signal }: { signal: AbortSignal }) =>
+      new Promise((resolve) => {
+        signal.addEventListener("abort", () => resolve({ ok: false, outcome: "cancelled" }), { once: true });
+      }),
+    );
+
+    const probeRequest = request(
+      "/api/internal/foundation-probe?operation=soc",
+      `Bearer ${token}`,
+      undefined,
+      controller.signal,
+    );
+    const requestSignal = probeRequest.signal;
+    const pendingResponse = POST(probeRequest);
+    await vi.waitFor(() => expect(mocked.requestSoCCompletion).toHaveBeenCalledTimes(1));
+    const providerInput = mocked.requestSoCCompletion.mock.calls[0]?.[0] as { signal: AbortSignal };
+    expect(providerInput.signal).toBe(requestSignal);
+
+    controller.abort();
+    const response = await pendingResponse;
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, outcome: "cancelled" });
+    expect(mocked.releaseSoCProbe).not.toHaveBeenCalled();
+  });
+
+  it("requires a caller-known valid UUID and accepts create retries with the same UUID", async () => {
+    enablePreview();
+    const id = "018f47a2-7c5d-7abc-8def-0123456789ab";
+    mocked.createFoundationProbe.mockResolvedValue(undefined);
+
+    const missingId = await POST(
+      request("/api/internal/foundation-probe?operation=persistence-create", `Bearer ${token}`),
+    );
+    const invalidId = await POST(
+      request("/api/internal/foundation-probe?operation=persistence-create&id=invalid", `Bearer ${token}`),
+    );
+    expect(missingId.status).toBe(400);
+    expect(invalidId.status).toBe(400);
+    expect(mocked.createFoundationProbe).not.toHaveBeenCalled();
+
+    const url = `/api/internal/foundation-probe?operation=persistence-create&id=${id}`;
+    const first = await POST(request(url, `Bearer ${token}`));
+    const retry = await POST(request(url, `Bearer ${token}`));
+
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ ok: true, id });
+    expect(retry.status).toBe(200);
+    expect(await retry.json()).toEqual({ ok: true, id });
+    expect(mocked.createFoundationProbe).toHaveBeenNthCalledWith(1, id);
+    expect(mocked.createFoundationProbe).toHaveBeenNthCalledWith(2, id);
   });
 
   it("accepts the READY sentinel with surrounding whitespace", async () => {
