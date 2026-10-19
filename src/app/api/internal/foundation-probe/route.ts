@@ -98,7 +98,7 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
     }
 
-    if (!result.ok && isUncertainProviderOutcome(result.outcome)) {
+    if (!result.ok && isUncertainProviderFailure(result)) {
       return Response.json({ ok: false, outcome: result.outcome }, { status: 503 });
     }
 
@@ -123,8 +123,14 @@ function loadSoCProbeGate(): Promise<SoCProbeGateModule> {
   return socProbeGateModule;
 }
 
-function isUncertainProviderOutcome(outcome: string): boolean {
-  return outcome === "timeout" || outcome === "cancelled" || outcome === "unavailable";
+function isUncertainProviderFailure(
+  result: Exclude<Awaited<ReturnType<typeof requestSoCCompletion>>, { ok: true }>,
+): boolean {
+  return (
+    result.outcome === "timeout" ||
+    result.outcome === "cancelled" ||
+    (result.outcome === "unavailable" && result.failureSource === "transport")
+  );
 }
 
 function isEnabledForPreview(env: NodeJS.ProcessEnv): boolean {

@@ -101,12 +101,16 @@ describe("server-side SoCLaaS boundary", () => {
     [401, "unauthenticated"],
     [403, "forbidden"],
     [429, "rate_or_budget_limited"],
+    [418, "unavailable"],
+    [500, "unavailable"],
     [503, "unavailable"],
+    [599, "unavailable"],
   ] as const)("maps HTTP %i to a safe classified failure", async (status, outcome) => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response("secret body", { status }));
     expect(await requestSoCCompletion(input, { env: configured, fetchImpl })).toEqual({
       ok: false,
       outcome,
+      ...(outcome === "unavailable" ? { failureSource: "http_response" } : {}),
     });
   });
 
@@ -126,6 +130,7 @@ describe("server-side SoCLaaS boundary", () => {
     await expect(requestSoCCompletion(input, { env: configured, fetchImpl })).resolves.toEqual({
       ok: false,
       outcome: "unavailable",
+      failureSource: "http_response",
     });
     expect(bodyCancelCalled).toBe(true);
   });
@@ -139,7 +144,7 @@ describe("server-side SoCLaaS boundary", () => {
 
     const failedFetch = vi.fn<typeof fetch>().mockRejectedValue(new Error("synthetic secret marker"));
     const result = await requestSoCCompletion(input, { env: configured, fetchImpl: failedFetch });
-    expect(result).toEqual({ ok: false, outcome: "unavailable" });
+    expect(result).toEqual({ ok: false, outcome: "unavailable", failureSource: "transport" });
     expect(JSON.stringify(result)).not.toContain("synthetic secret marker");
 
     const emptyFetch = vi.fn<typeof fetch>().mockResolvedValue(

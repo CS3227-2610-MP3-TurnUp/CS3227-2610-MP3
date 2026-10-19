@@ -57,3 +57,13 @@ Implement the accepted PR #18 review correction so the fixed synthetic SoCLaaS p
 ## Results
 
 The coordinator recorded an exact two-file Hosting & SoC Engineer handoff. The engineer changed the Preview probe route and its deterministic tests: successful adapter responses with trimmed text other than `READY` now return safe `invalid_response` after releasing the completed in-flight lease, without disclosing provider text. Refusal, extra/partial text, whitespace success and delayed lease release are covered. The independent Implementation Verifier authored none of the code, found no unresolved actionable defect, and reproduced 21 focused and 80 full tests, typecheck, lint, Prisma validation, production build and whitespace checks. The exact reviewed two-file digest and completion-metadata limitation are in [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md). No live Neon, Vercel or SoCLaaS check ran; G04/G08 and hosted acceptance remain open. Delivery commit `64f854ce4c8731be1eca929da296a5fa1d44a259` (`Fix hosted probe completion sentinel`) was pushed to `6-hosted-feasibility`. PR #18 remains open at that head against `4-foundation-stack`, with the correction, verification evidence and live limits recorded in its updated description. GitHub returned no commit statuses or PR workflow runs for this correction commit at read-back. No merge, deploy, live provider call or secret use occurred.
+
+# 07 - Release completed HTTP probe leases - 19 October 2026
+
+## Request
+
+Implement the verified PR #18 / CHG-K-005 review correction so a completed SoCLaaS HTTP failure releases the Preview probe's in-flight reservation while uncertain transport outcomes retain it, using the Hosting & SoC Engineer generator and independent Implementation Verifier workflow.
+
+## Results
+
+The coordinator recorded the four-file single-writer handoff. The Hosting & SoC Engineer distinguished HTTP-derived and transport-derived `unavailable` internally, released completed HTTP leases before the unchanged safe response, and added deterministic status, release-order and synthetic one-slot recovery tests. The independent Implementation Verifier authored no implementation, found no actionable defect, and reproduced 40 focused and 85 default tests, typecheck, lint and whitespace checks on Node 24.21.0. [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the reviewed snapshot, exact evidence and limits. No live SoCLaaS, Neon, Vercel or database recovery test ran; G04/G08 and complete hosted scenarios remain open. No commit, push, PR update or deployment had occurred at this verification handoff.

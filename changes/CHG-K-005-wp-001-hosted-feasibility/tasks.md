@@ -42,3 +42,15 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 
 - [x] Sentinel correction and independent review recorded in verification.md.
 - [x] PR #18 updated with the reviewed completion-sentinel correction; commit `64f854ce4c8731be1eca929da296a5fa1d44a259` is on `6-hosted-feasibility`, and the PR remains open against `4-foundation-stack`.
+
+## 19 October 2026 completed-HTTP lease correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 13 | Distinguish completed HTTP `unavailable` from uncertain transport and correct probe lease release; regression tests | Hosting & SoC Engineer; exact four paths in change.md | Source `b256f944`; existing durable gate contract, SEC05–06, DEP04, T14 | Received 5xx/unmapped non-2xx releases before safe response; transport/timeout/cancellation/thrown retains; no public result change |
+| 14 | Independent completed-change review and material-fix recheck | Implementation Verifier; read-only implementation | Generator's integrated four-file handoff | Exact revised snapshot, reproduced checks, actionable findings and limitations |
+| 15 | Record source, implementation and verification evidence in CHG-K-005 and existing Keith log | Coordinator; record/log paths only | Generator and verifier results | Accurate changed paths, checks, findings and hosted limits; no unsupported live claim |
+
+- [x] Hosting & SoC Engineer handed off the four-file implementation and regression tests at source `b256f944`.
+- [x] Independent Implementation Verifier reviewed that implementation without authorship, reproduced focused/default tests, typecheck, lint and whitespace checks, and reported no actionable finding.
+- [x] Coordinator recorded results and limitations in verification.md and Keith's existing PR increment log. At the verification handoff, no commit, push, PR update or live check had occurred for this correction.

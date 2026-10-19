@@ -25,9 +25,11 @@ export type SoCOutcome =
   | "cancelled"
   | "invalid_response";
 
-export type SoCResult =
-  | { ok: true; text: string; usage?: SoCUsage }
-  | { ok: false; outcome: SoCOutcome };
+export type SoCFailure =
+  | { ok: false; outcome: Exclude<SoCOutcome, "unavailable"> }
+  | { ok: false; outcome: "unavailable"; failureSource: "http_response" | "transport" };
+
+export type SoCResult = { ok: true; text: string; usage?: SoCUsage } | SoCFailure;
 
 export interface SoCUsage {
   promptTokens?: number;
@@ -87,7 +89,10 @@ export async function requestSoCCompletion(
       // The status is sufficient for classification; discard the untrusted body without reading it.
       clearTimeout(timer);
       await cancelResponseBodyBounded(response);
-      return { ok: false, outcome: classifyStatus(response.status) };
+      const outcome = classifyStatus(response.status);
+      return outcome === "unavailable"
+        ? { ok: false, outcome, failureSource: "http_response" }
+        : { ok: false, outcome };
     }
 
     const responseText = await readBoundedResponse(response);
@@ -103,7 +108,7 @@ export async function requestSoCCompletion(
   } catch {
     if (didCancel) return { ok: false, outcome: "cancelled" };
     if (didTimeout) return { ok: false, outcome: "timeout" };
-    return { ok: false, outcome: "unavailable" };
+    return { ok: false, outcome: "unavailable", failureSource: "transport" };
   } finally {
     clearTimeout(timer);
     input.signal?.removeEventListener("abort", onCallerAbort);

@@ -250,21 +250,84 @@ describe("internal foundation probe route", () => {
     expect(mocked.requestSoCCompletion).not.toHaveBeenCalled();
   });
 
-  it.each(["timeout", "cancelled", "unavailable"] as const)(
-    "retains the reservation when provider outcome %s is uncertain",
-    async (outcome) => {
-      enablePreview();
-      mocked.requestSoCCompletion.mockResolvedValue({ ok: false, outcome });
+  it.each([
+    ["timeout", { ok: false, outcome: "timeout" }],
+    ["cancelled", { ok: false, outcome: "cancelled" }],
+    ["transport unavailable", { ok: false, outcome: "unavailable", failureSource: "transport" }],
+  ] as const)("retains the reservation when provider outcome %s is uncertain", async (_label, result) => {
+    enablePreview();
+    mocked.requestSoCCompletion.mockResolvedValue(result);
 
-      const response = await POST(
-        request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
-      );
+    const response = await POST(
+      request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
+    );
 
-      expect(response.status).toBe(503);
-      expect(await response.json()).toEqual({ ok: false, outcome });
-      expect(mocked.releaseSoCProbe).not.toHaveBeenCalled();
-    },
-  );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, outcome: result.outcome });
+    expect(mocked.releaseSoCProbe).not.toHaveBeenCalled();
+  });
+
+  it("releases a completed HTTP unavailable lease before returning the safe response", async () => {
+    enablePreview();
+    mocked.requestSoCCompletion.mockResolvedValue({
+      ok: false,
+      outcome: "unavailable",
+      failureSource: "http_response",
+    });
+
+    let finishRelease!: () => void;
+    mocked.releaseSoCProbe.mockImplementation(
+      () => new Promise<void>((resolve) => {
+        finishRelease = resolve;
+      }),
+    );
+
+    let responseSettled = false;
+    const pendingResponse = POST(
+      request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
+    ).then((response) => {
+      responseSettled = true;
+      return response;
+    });
+
+    await vi.waitFor(() => expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation"));
+    expect(responseSettled).toBe(false);
+    finishRelease();
+
+    const response = await pendingResponse;
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, outcome: "unavailable" });
+  });
+
+  it("allows the next probe when max in-flight is one after a completed HTTP failure", async () => {
+    enablePreview();
+    vi.stubEnv("FOUNDATION_PROBE_SOC_MAX_IN_FLIGHT", "1");
+    let inFlight = 0;
+    let nextReservation = 0;
+    mocked.admitSoCProbe.mockImplementation(async () => {
+      if (inFlight >= 1) return { status: "limited" };
+      inFlight += 1;
+      nextReservation += 1;
+      return { status: "admitted", reservationId: `reservation-${nextReservation}` };
+    });
+    mocked.releaseSoCProbe.mockImplementation(async () => {
+      inFlight -= 1;
+    });
+    mocked.requestSoCCompletion
+      .mockResolvedValueOnce({ ok: false, outcome: "unavailable", failureSource: "http_response" })
+      .mockResolvedValueOnce({ ok: true, text: "READY" });
+
+    const first = await POST(request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`));
+    const second = await POST(request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`));
+
+    expect(first.status).toBe(503);
+    expect(await first.json()).toEqual({ ok: false, outcome: "unavailable" });
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({ ok: true });
+    expect(mocked.requestSoCCompletion).toHaveBeenCalledTimes(2);
+    expect(mocked.releaseSoCProbe).toHaveBeenNthCalledWith(1, "reservation-1");
+    expect(mocked.releaseSoCProbe).toHaveBeenNthCalledWith(2, "reservation-2");
+  });
 
   it("holds the reservation when the provider client throws with an unknown result", async () => {
     enablePreview();
