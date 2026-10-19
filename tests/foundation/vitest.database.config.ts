@@ -4,6 +4,11 @@ import { defineConfig } from "vitest/config";
 
 const require = createRequire(import.meta.url);
 const serverOnlyTestEntry = resolve(dirname(require.resolve("server-only")), "empty.js");
+const integrationTests = ["tests/foundation/database.integration.test.ts"];
+
+if (process.env.RUN_SOC_PROBE_GATE_DB_INTEGRATION === "1") {
+  integrationTests.push("tests/foundation/soc-probe-gate.integration.test.ts");
+}
 
 export default defineConfig({
   resolve: {
@@ -14,7 +19,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["tests/foundation/**/*.integration.test.ts"],
+    include: integrationTests,
     exclude: [],
   },
 });

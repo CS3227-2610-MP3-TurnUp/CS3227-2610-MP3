@@ -5,14 +5,14 @@ import { prisma } from "./client";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/** Create a random synthetic receipt for an explicitly protected hosting check. */
-export async function createFoundationProbe(): Promise<string> {
-  const id = randomUUID();
-  await prisma.foundationProbe.create({
-    data: { id, marker: randomUUID() },
-    select: { id: true },
-  });
-  return id;
+/** Create or recover the same synthetic receipt when a caller retries after a lost response. */
+export async function createFoundationProbe(id: string): Promise<void> {
+  assertProbeId(id);
+  await prisma.$executeRaw`
+    INSERT INTO "foundation_probe" ("id", "marker")
+    VALUES (${id}::uuid, ${randomUUID()}::uuid)
+    ON CONFLICT ("id") DO NOTHING
+  `;
 }
 
 /** Return only whether the synthetic receipt exists; never expose stored markers. */

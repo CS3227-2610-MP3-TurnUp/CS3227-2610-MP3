@@ -16,3 +16,32 @@ model FoundationProbe {
 
   @@map("foundation_probe")
 }
+
+// Durable aggregate admission state for the protected synthetic SoC probe.
+// It remains inert in Production, where the route is disabled.
+model SoCProbeGate {
+  id                   Int                   @id @default(1)
+  attemptCount         BigInt                @default(0) @map("attempt_count")
+  inFlightCount        BigInt                @default(0) @map("in_flight_count")
+  reservedOutputTokens BigInt                @default(0) @map("reserved_output_tokens")
+  lastAdmissionAt      DateTime?             @map("last_admission_at") @db.Timestamptz(6)
+  maxAttemptsLimit     BigInt?               @map("max_attempts_limit")
+  maxInFlightLimit     BigInt?               @map("max_in_flight_limit")
+  minIntervalMs        BigInt?               @map("min_interval_ms")
+  outputTokenBudget    BigInt?               @map("output_token_budget")
+  reservations         SoCProbeReservation[]
+
+  @@map("soc_probe_gate")
+}
+
+// A lease identifies exactly one admitted request so retries or late releases
+// cannot decrement another request's in-flight slot.
+model SoCProbeReservation {
+  id        String       @id @db.Uuid
+  gateId    Int          @default(1) @map("gate_id")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  gate      SoCProbeGate @relation(fields: [gateId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("soc_probe_reservation")
+}

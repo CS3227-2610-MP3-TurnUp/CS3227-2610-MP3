@@ -1,0 +1,318 @@
+name: Vercel prebuilt deployment
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master, "preview/*"]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target; production is permitted only from protected master
+        required: true
+        type: choice
+        options: [preview, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('turnup-pr-{0}', github.event.pull_request.number) || (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') && 'turnup-production-workflow' || 'turnup-preview-workflow') }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') }}
+
+jobs:
+  pull-request-checks:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Lint, typecheck, test and validate Prisma schema
+        run: |
+          corepack pnpm lint
+          corepack pnpm typecheck
+          corepack pnpm test
+          corepack pnpm db:validate
+
+  deploy:
+    if: >-
+      github.ref_protected &&
+      ((github.event_name == 'push' &&
+        (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/preview/'))) ||
+       (github.event_name == 'workflow_dispatch' &&
+        ((inputs.target == 'production' && github.ref == 'refs/heads/master') ||
+         (inputs.target == 'preview' && startsWith(github.ref, 'refs/heads/preview/')))))
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
+    concurrency:
+      group: vercel-${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
+      cancel-in-progress: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') }}
+    env:
+      DEPLOYMENT_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || (github.ref == 'refs/heads/master' && 'production' || 'preview') }}
+      REF_PROTECTED: ${{ github.ref_protected }}
+      TURNUP_ENVIRONMENT: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') && 'production' || 'preview' }}
+      DATABASE_ENVIRONMENT: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') && 'production' || 'non-production' }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_PROJECT_INITIALIZED: ${{ vars.VERCEL_PROJECT_INITIALIZED }}
+    outputs:
+      candidate_url: ${{ steps.upload.outputs.candidate_url }}
+      target: ${{ steps.trust-check.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Confirm trusted branch and exact deployment target
+        id: trust-check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$REF_PROTECTED" != "true" ]]; then
+            echo "Deployment requires a protected branch."
+            exit 1
+          fi
+          case "$GITHUB_REF:$DEPLOYMENT_TARGET" in
+            refs/heads/master:production) ;;
+            refs/heads/preview/*:preview)
+              preview_branch="${GITHUB_REF#refs/heads/preview/}"
+              if [[ -z "$preview_branch" || "$preview_branch" == */* ]]; then
+                echo "Preview deployments require exactly one branch segment after preview/."
+                exit 1
+              fi
+              ;;
+            *) echo "Branch and deployment target do not match."; exit 1 ;;
+          esac
+          if [[ -z "$VERCEL_ORG_ID" || -z "$VERCEL_PROJECT_ID" ]]; then
+            echo "Vercel project variables are missing."
+            exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            echo "Pull requests cannot receive deployment credentials."
+            exit 1
+          fi
+          echo "Deployment target: $DEPLOYMENT_TARGET"
+          echo "Source revision: $GITHUB_SHA"
+          printf 'target=%s\n' "$DEPLOYMENT_TARGET" >> "$GITHUB_OUTPUT"
+      - name: Require an initialized production deployment before Preview
+        if: env.DEPLOYMENT_TARGET == 'preview'
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$VERCEL_PROJECT_INITIALIZED" != "true" ]]; then
+            echo "Preview is blocked until the protected production bootstrap has been promoted and recorded in the Preview environment."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          const ownerId = process.env.VERCEL_ORG_ID;
+          const isTeamOwner = /^team_[A-Za-z0-9]+$/.test(ownerId ?? "");
+          const isPersonalOwner =
+            /^usr_[A-Za-z0-9]+$/.test(ownerId ?? "") || /^[A-Za-z0-9]{24}$/.test(ownerId ?? "");
+          if ((!isTeamOwner && !isPersonalOwner) || ownerId.trim() !== ownerId) {
+            console.error("VERCEL_ORG_ID is missing or uses an unsupported Vercel account ID.");
+            process.exit(1);
+          }
+          const endpoint = new URL("https://api.vercel.com/v7/deployments");
+          endpoint.searchParams.set("projectId", process.env.VERCEL_PROJECT_ID);
+          if (isTeamOwner) endpoint.searchParams.set("teamId", ownerId);
+          endpoint.searchParams.set("target", "production");
+          endpoint.searchParams.set("state", "READY");
+          endpoint.searchParams.set("limit", "1");
+          const response = await fetch(endpoint, { headers: { authorization: `Bearer ${process.env.VERCEL_TOKEN}` } });
+          if (!response.ok) {
+            console.error("Could not confirm an initialized production deployment; Preview is blocked.");
+            process.exit(1);
+          }
+          const result = await response.json();
+          if (!Array.isArray(result.deployments) || !result.deployments.some((deployment) =>
+            deployment.projectId === process.env.VERCEL_PROJECT_ID && deployment.target === "production" && deployment.state === "READY"
+          )) {
+            console.error("No ready production deployment exists. Complete the protected staged production bootstrap before deploying Preview.");
+            process.exit(1);
+          }
+          NODE
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Run required local gates
+        run: |
+          corepack pnpm lint
+          corepack pnpm typecheck
+          corepack pnpm test
+          corepack pnpm db:validate
+      - name: Link exact Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync(".vercel/project.json", JSON.stringify({ orgId: process.env.VERCEL_ORG_ID, projectId: process.env.VERCEL_PROJECT_ID }));'
+      - name: Pull target-matched Vercel settings
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            corepack pnpm dlx vercel@58.4.4 pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          else
+            corepack pnpm dlx vercel@58.4.4 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          fi
+      - name: Build the matching Vercel target
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            corepack pnpm dlx vercel@58.4.4 build --target=preview --token="$VERCEL_TOKEN"
+          else
+            corepack pnpm dlx vercel@58.4.4 build --target=production --prod --token="$VERCEL_TOKEN"
+          fi
+      - name: Apply reviewed migrations to the matching database
+        shell: bash
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: corepack pnpm db:migrate:deploy
+      - name: Upload checked prebuilt output
+        id: upload
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            deployment_url="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
+          else
+            deployment_url="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --prod --skip-domain --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
+          fi
+          node --input-type=module -e 'const url = new URL(process.argv[1]); if (url.protocol !== "https:" || !url.hostname.endsWith(".vercel.app") || url.username || url.password) process.exit(1);' "$deployment_url"
+          printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
+          echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
+          printf 'Candidate URL: `%s`\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$DEPLOYMENT_TARGET" == "production" ]]; then
+            echo "Candidate was uploaded with --skip-domain; promotion waits for candidate verification and the protected production-promotion environment."
+          fi
+
+  verify-production-candidate:
+    needs: deploy
+    if: needs.deploy.outputs.target == 'production'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      CANDIDATE_URL: ${{ needs.deploy.outputs.candidate_url }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      SOURCE_SHA: ${{ github.sha }}
+      SOURCE_REF: ${{ github.ref_name }}
+    outputs:
+      candidate_url: ${{ steps.verify.outputs.candidate_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Link exact Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync(".vercel/project.json", JSON.stringify({ orgId: process.env.VERCEL_ORG_ID, projectId: process.env.VERCEL_PROJECT_ID }));'
+      - name: Check candidate project, production target and source revision
+        id: verify
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const candidate = new URL(process.env.CANDIDATE_URL);
+          if (candidate.protocol !== "https:" || !candidate.hostname.endsWith(".vercel.app")) process.exit(1);
+          const ownerId = process.env.VERCEL_ORG_ID;
+          const isTeamOwner = /^team_[A-Za-z0-9]+$/.test(ownerId ?? "");
+          const isPersonalOwner =
+            /^usr_[A-Za-z0-9]+$/.test(ownerId ?? "") || /^[A-Za-z0-9]{24}$/.test(ownerId ?? "");
+          if ((!isTeamOwner && !isPersonalOwner) || ownerId.trim() !== ownerId) {
+            console.error("VERCEL_ORG_ID is missing or uses an unsupported Vercel account ID.");
+            process.exit(1);
+          }
+          const endpoint = new URL(`https://api.vercel.com/v13/deployments/${encodeURIComponent(candidate.hostname)}`);
+          if (isTeamOwner) endpoint.searchParams.set("teamId", ownerId);
+          const response = await fetch(endpoint, { headers: { authorization: `Bearer ${process.env.VERCEL_TOKEN}` } });
+          if (!response.ok) process.exit(2);
+          const deployment = await response.json();
+          if (
+            deployment.projectId !== process.env.VERCEL_PROJECT_ID ||
+            deployment.readyState !== "READY" ||
+            deployment.target !== "production" ||
+            deployment.meta?.turnupTarget !== "production" ||
+            deployment.meta?.turnupCommit !== process.env.SOURCE_SHA ||
+            deployment.meta?.turnupRef !== process.env.SOURCE_REF
+          ) process.exit(3);
+          NODE
+          status="$(corepack pnpm dlx vercel@58.4.4 --token="$VERCEL_TOKEN" curl / --deployment "$CANDIDATE_URL" --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
+          if [[ "$status" != "200" ]]; then
+            echo "Production candidate HTTPS root smoke failed."
+            exit 1
+          fi
+          printf 'candidate_url=%s\n' "$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
+          echo "Candidate project, production target, source revision and HTTPS root smoke passed."
+
+  promote-production-candidate:
+    needs: [deploy, verify-production-candidate]
+    if: needs.deploy.outputs.target == 'production' && needs.verify-production-candidate.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: production-promotion
+    env:
+      CANDIDATE_URL: ${{ needs.verify-production-candidate.outputs.candidate_url }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Link exact Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync(".vercel/project.json", JSON.stringify({ orgId: process.env.VERCEL_ORG_ID, projectId: process.env.VERCEL_PROJECT_ID }));'
+      - name: Promote the exact verified candidate
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          : "${VERCEL_TOKEN:?The production-promotion environment must provide VERCEL_TOKEN.}"
+          latest_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq .sha)"
+          if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
+            echo "This production candidate is no longer the protected master head."
+            exit 1
+          fi
+          corepack pnpm dlx vercel@58.4.4 promote "$CANDIDATE_URL" --yes --token="$VERCEL_TOKEN"
