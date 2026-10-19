@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [master]
   push:
-    branches: [master, "preview/**"]
+    branches: [master, "preview/*"]
   workflow_dispatch:
     inputs:
       target:
@@ -86,7 +86,13 @@ jobs:
           fi
           case "$GITHUB_REF:$DEPLOYMENT_TARGET" in
             refs/heads/master:production) ;;
-            refs/heads/preview/*:preview) ;;
+            refs/heads/preview/*:preview)
+              preview_branch="${GITHUB_REF#refs/heads/preview/}"
+              if [[ -z "$preview_branch" || "$preview_branch" == */* ]]; then
+                echo "Preview deployments require exactly one branch segment after preview/."
+                exit 1
+              fi
+              ;;
             *) echo "Branch and deployment target do not match."; exit 1 ;;
           esac
           if [[ -z "$VERCEL_ORG_ID" || -z "$VERCEL_PROJECT_ID" ]]; then

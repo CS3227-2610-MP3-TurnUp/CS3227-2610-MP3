@@ -54,3 +54,15 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Hosting & SoC Engineer handed off the four-file implementation and regression tests at source `b256f944`.
 - [x] Independent Implementation Verifier reviewed that implementation without authorship, reproduced focused/default tests, typecheck, lint and whitespace checks, and reported no actionable finding.
 - [x] Coordinator recorded results and limitations in verification.md and Keith's existing PR increment log. At the verification handoff, no commit, push, PR update or live check had occurred for this correction.
+
+## 19 October 2026 Preview deployment branch-policy correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 16 | Align Preview branch trigger, manual trust guard and setup instructions for one-level `preview/name` branches | Hosting & SoC Engineer; workflow, setup guide and optional new focused test only | Source `88482f3`; GitHub environment branch-policy rule; DEP03, DEV01–03, T15/T28 foundations | One-level protected Preview branches eligible; nested/empty branch suffix denied; Production gates preserved |
+| 17 | Independently inspect changed workflow/guide and reproduce branch-pattern, syntax and relevant regression checks | Primary agent as Implementation Verifier; read-only implementation | Complete generator handoff | Actionable findings, reviewed snapshot, exact checks and hosted limits in verification.md |
+| 18 | Commit and push reviewed increment to `6-hosted-feasibility` | Delivery Agent; Git metadata/remote only | Independent verification and accurate existing Keith log | Commit hash, remote head read-back, clean status; no merge or deployment |
+
+- [x] Hosting & SoC Engineer handed off only the assigned workflow and guide changes at source `88482f3`.
+- [x] Independent primary-agent verification found no actionable defect and reproduced the branch, syntax and preservation checks recorded in verification.md.
+- [ ] Delivery Agent commit, push and remote-head read-back remain to be recorded.

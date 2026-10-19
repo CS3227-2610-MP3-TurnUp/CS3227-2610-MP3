@@ -67,3 +67,13 @@ Implement the verified PR #18 / CHG-K-005 review correction so a completed SoCLa
 ## Results
 
 The coordinator recorded the four-file single-writer handoff. The Hosting & SoC Engineer distinguished HTTP-derived and transport-derived `unavailable` internally, released completed HTTP leases before the unchanged safe response, and added deterministic status, release-order and synthetic one-slot recovery tests. The independent Implementation Verifier authored no implementation, found no actionable defect, and reproduced 40 focused and 85 default tests, typecheck, lint and whitespace checks on Node 24.21.0. [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the reviewed snapshot, exact evidence and limits. No live SoCLaaS, Neon, Vercel or database recovery test ran; G04/G08 and complete hosted scenarios remain open. No commit, push, PR update or deployment had occurred at this verification handoff.
+
+# 08 - Align Preview deployment branch policy - 19 October 2026
+
+## Request
+
+Verify the PR #18 review of the Preview environment branch pattern, correct it through a separate implementation agent if valid, independently verify the result, then use a Delivery Agent to commit and push `6-hosted-feasibility`.
+
+## Results
+
+The review was valid: the workflow accepted nested `preview/**` branches while the documented GitHub environment policy allowed only `preview/*`, whose wildcard does not match `/`. The Hosting & SoC Engineer aligned the workflow push filter, trust check and setup guide to one-segment Preview branches. The primary agent authored no implementation and independently verified YAML parsing, all 20 workflow shell blocks, seven synthetic trust-check cases, environment-pattern matching and whitespace; no actionable defect remained. [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the reviewed two-file snapshot and limits. No GitHub Actions deployment or remote environment setting was exercised. Delivery outcome will be recorded after the assigned Delivery Agent's remote read-back.
