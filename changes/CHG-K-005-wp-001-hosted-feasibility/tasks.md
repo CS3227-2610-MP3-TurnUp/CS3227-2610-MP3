@@ -89,4 +89,4 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 
 - [x] Hosting & SoC Engineer changed only the two assigned implementation paths and handed off deterministic pre-/post-dispatch cases.
 - [x] Independent review confirmed the report and reproduced focused/default tests, typecheck, lint and whitespace checks with no unresolved actionable finding.
-- [ ] Delivery Agent commit and push are pending; no deployment, merge, live provider call or remote environment mutation is in scope.
+- [x] Delivery Agent committed the six reviewed code/evidence paths as `a609eab63d1b140032a97a8dd372d6c273768392` (`fix: release reservations on pre-dispatch cancellation`) and pushed `6-hosted-feasibility`. The agent reported remote-head read-back matched; local HEAD and upstream tracking status are aligned. No deployment or merge occurred.
