@@ -112,9 +112,17 @@ jobs:
             exit 1
           fi
           node --input-type=module <<'NODE'
+          const ownerId = process.env.VERCEL_ORG_ID;
+          const isTeamOwner = /^team_[A-Za-z0-9]+$/.test(ownerId ?? "");
+          const isPersonalOwner =
+            /^usr_[A-Za-z0-9]+$/.test(ownerId ?? "") || /^[A-Za-z0-9]{24}$/.test(ownerId ?? "");
+          if ((!isTeamOwner && !isPersonalOwner) || ownerId.trim() !== ownerId) {
+            console.error("VERCEL_ORG_ID is missing or uses an unsupported Vercel account ID.");
+            process.exit(1);
+          }
           const endpoint = new URL("https://api.vercel.com/v7/deployments");
           endpoint.searchParams.set("projectId", process.env.VERCEL_PROJECT_ID);
-          endpoint.searchParams.set("teamId", process.env.VERCEL_ORG_ID);
+          if (isTeamOwner) endpoint.searchParams.set("teamId", ownerId);
           endpoint.searchParams.set("target", "production");
           endpoint.searchParams.set("state", "READY");
           endpoint.searchParams.set("limit", "1");
@@ -232,8 +240,16 @@ jobs:
           node --input-type=module <<'NODE'
           const candidate = new URL(process.env.CANDIDATE_URL);
           if (candidate.protocol !== "https:" || !candidate.hostname.endsWith(".vercel.app")) process.exit(1);
+          const ownerId = process.env.VERCEL_ORG_ID;
+          const isTeamOwner = /^team_[A-Za-z0-9]+$/.test(ownerId ?? "");
+          const isPersonalOwner =
+            /^usr_[A-Za-z0-9]+$/.test(ownerId ?? "") || /^[A-Za-z0-9]{24}$/.test(ownerId ?? "");
+          if ((!isTeamOwner && !isPersonalOwner) || ownerId.trim() !== ownerId) {
+            console.error("VERCEL_ORG_ID is missing or uses an unsupported Vercel account ID.");
+            process.exit(1);
+          }
           const endpoint = new URL(`https://api.vercel.com/v13/deployments/${encodeURIComponent(candidate.hostname)}`);
-          endpoint.searchParams.set("teamId", process.env.VERCEL_ORG_ID);
+          if (isTeamOwner) endpoint.searchParams.set("teamId", ownerId);
           const response = await fetch(endpoint, { headers: { authorization: `Bearer ${process.env.VERCEL_TOKEN}` } });
           if (!response.ok) process.exit(2);
           const deployment = await response.json();

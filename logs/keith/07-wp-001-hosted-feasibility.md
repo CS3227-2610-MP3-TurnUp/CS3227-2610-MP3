@@ -27,3 +27,13 @@ Implement the accepted PR review correction plan for CHG-K-005 / PR #18 after th
 ## Results
 
 The coordinator merged reviewed foundation correction `e23fc98` into this branch at `5b2c902`. The Hosting & SoC Engineer updated only [the setup guide](../../docs/wp-001-hosting-setup.md) to require `sslmode=require&sslaccept=strict` on direct migration/shadow URLs, distinguish pooled runtime `pg` settings, and explain private replacement of Preview/Production GitHub environment secrets and local values. An independent verifier reviewed the integrated code and guide; 30 default tests, TypeScript, ESLint, Prisma validation, default production build and whitespace checks passed. Synthetic Prisma config-loader checks rejected production reset without executing it. Exact reviewed revision, guide digest, checks and limits are in [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md). Live Neon/Vercel/SoCLaaS checks and secret replacement remain unrun; no credential value was handled in this work.
+
+# 04 - Correct Vercel REST account scope - 19 October 2026
+
+## Request
+
+Implement the accepted PR #18 review correction for personal Vercel account REST calls while preserving the confirmed `team_` project, after the CHG-K-004 typecheck handoff; independently verify both PR corrections and deliver the work branches and updated PRs.
+
+## Results
+
+The coordinator merged the independently reviewed CHG-K-004 typecheck correction `81ed723` into `6-hosted-feasibility` at `4a7b378`. The Hosting & SoC Engineer updated the two Vercel REST checks, setup guide and a focused synthetic account-scope test. The first independent pass exposed Vercel's documented unprefixed personal ID, which the initial `usr_`-only logic rejected; the writer added that form, and both workflow requests now omit `teamId` for supported personal IDs while preserving `teamId` for team IDs. The independent material recheck passed 50 tests, typecheck, lint, YAML parsing, all 20 workflow bash blocks and direct synthetic execution of both REST scripts; [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the exact finding, checks and compatibility limit. No live Vercel, Neon, SoCLaaS or deployment check ran, and no secret was handled.

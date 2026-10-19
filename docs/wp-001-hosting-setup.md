@@ -24,6 +24,8 @@ The application checks the pooled/direct host shape and each driver's TLS settin
 
 Create one Vercel project for TurnUp and record its Vercel `orgId` (personal account or team ID) and `projectId` from `vercel link` / `.vercel/project.json`. These are Vercel identifiers, not GitHub organization values. The workflow links the project using those IDs and pins Vercel CLI to [the verified `58.4.4` release](https://github.com/vercel/vercel/releases/tag/vercel%4058.4.4). Its `build --target`, `deploy --prebuilt --target`, `--prod --skip-domain`, `promote`, and `curl --deployment` usage follows the official [build](https://vercel.com/docs/cli/build), [deploy](https://vercel.com/docs/cli/deploy), [curl](https://vercel.com/docs/cli/curl), and [promotion](https://vercel.com/docs/cli/promote) docs. Do not add branch-specific Preview variables: the workflow pulls the generic Preview environment. If branch-specific variables become necessary, change the workflow to pass `--git-branch` and verify the result before use.
 
+Set `VERCEL_ORG_ID` to the linked project's `orgId`: team-owned projects use a `team_` ID. Personal projects may use a `usr_` ID or an unprefixed user ID; Vercel's [Get the User API example](https://vercel.com/docs/rest-api/user/get-the-user) shows a 24-character alphanumeric user ID. The workflow passes `teamId` to its REST API checks only for valid `team_` IDs; recognized personal IDs omit `teamId` and use the default account scope. Missing or malformed IDs and unrecognized prefixes fail before either API request. The current project is confirmed team-owned (`team_`), so its existing team-scoped API requests continue unchanged. `VERCEL_ORG_ID` remains in `.vercel/project.json` for CLI linking in both account types.
+
 Set the Production Branch to `master`. Use GitHub Actions as the sole deploy route; disable or disconnect Vercel Git auto-deploys so a push cannot bypass the reviewed migration/build/candidate/promotion sequence. Before the first deployment, enable Vercel Authentication for **All Deployments** so the initial staged Production candidate is not public. Vercel announced all-deployment Authentication on all plans on 9 September 2026 in its [current changelog](https://vercel.com/changelog/protect-production-deployments-for-free-on-every-plan); verify the actual project's settings. Vercel documents that [a project's first deployment is Production](https://vercel.com/docs/domains/working-with-domains/deploying-and-redirecting#deploying-your-domain), so the setup flow must initialize deliberately.
 
 The Actions workflow provides these stages:
@@ -42,14 +44,14 @@ Add these **variables** in each environment used by a Vercel CLI job, including 
 
 | Variable | Value |
 | --- | --- |
-| `VERCEL_ORG_ID` | Vercel `orgId` from the linked project; for team projects use the team ID. |
+| `VERCEL_ORG_ID` | Vercel `orgId` from the linked project: `team_` for a team; `usr_` or a 24-character alphanumeric user ID for a personal account. |
 | `VERCEL_PROJECT_ID` | Vercel `projectId`. |
 
 Add these **secrets** separately to `preview` and `production`; add only `VERCEL_TOKEN` to `production-promotion`:
 
 | Secret | Value |
 | --- | --- |
-| `VERCEL_TOKEN` | A narrowly scoped Vercel access token allowed to pull/build/deploy/promote only the intended project/team. |
+| `VERCEL_TOKEN` | A Vercel access token with access to the linked personal account for `usr_` or supported unprefixed user IDs, or scoped to the intended team for `team_` projects, and allowed to pull/build/deploy/promote that project. |
 | `MIGRATION_DATABASE_URL` | Add to `preview` and `production` only. It is that environment's direct Neon URL and migration role, with `sslmode=require&sslaccept=strict`. Production and Preview must use different projects. The workflow exposes this secret to the migration step only. |
 
 Do not make these repository-wide secrets: the workflow obtains secrets only through the selected protected environment and PR jobs do not access them. The GitHub [environment documentation](https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments) describes environment-scoped secrets and protection rules.
