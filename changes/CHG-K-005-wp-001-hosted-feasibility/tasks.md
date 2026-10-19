@@ -125,4 +125,4 @@ Source `802cdfa`; primary-agent paths and scope are in change.md. Keith owns the
 - [x] Use existing step-scoped environment authentication; add regression coverage of executable command arguments and retained smoke flags.
 - [x] Run focused/default tests, lint, typecheck, YAML/shell syntax and whitespace checks; update operator guidance.
 - [x] Independent agent `review_curl_auth` completed review with no actionable findings; results and limitations recorded in verification.md.
-- [ ] Delivery agent: commit the reviewed correction, push `fix-vercel-curl-authentication`, open a PR against `master`, and record actual remote read-back evidence.
+- [x] Delivery agent committed `3f5db5d44fedc5ed05303f54b26e81376e2ccdd8`, pushed `fix-vercel-curl-authentication`, opened [PR #21](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/21) against `master`, and confirmed the remote branch and open PR head match. No merge or hosted rerun is claimed.
