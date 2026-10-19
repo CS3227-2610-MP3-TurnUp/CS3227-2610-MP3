@@ -178,3 +178,39 @@ The reviewer inspected the already-fetched pinned Vercel source snapshots but di
 
 
 Delivery preparation: the subsequent human prompt authorises commit/push on new branch `fix-vercel-deployment-output`. Its base is current `origin/master` `60e5630`, whose file tree matches original review base `d6b2360`; the four implementation hashes remain identical to the independent review snapshot above. No additional code change or concern required rerunning checks. New branch publication does not trigger this workflow's master/preview push deployment filters. Final commit and remote-head read-back results are reported in the delivery response; this evidence-only update does not restart implementation review.
+
+
+## 20 October 2026 candidate smoke authentication correction
+
+Source: clean HEAD `802cdfa`, working-copy correction; user-supplied hosted failure identifies candidate source `aac2fcc142165d2d8da1c3af4d10c79466aa72c8`. The supplied log shows successful metadata validation and automatic Deployment Protection bypass generation, then system curl rejecting `--token=…` with exit 2. No agent-executed hosted result is claimed.
+
+Read-only official source inspection of Vercel 58.4.4 confirmed that [curl/shared.ts](https://github.com/vercel/vercel/blob/vercel%4058.4.4/packages/cli/src/commands/curl/shared.ts) only consumes specific Vercel options; `--token` remains in forwarded tool flags even before the subcommand. [curl/index.ts](https://github.com/vercel/vercel/blob/vercel%4058.4.4/packages/cli/src/commands/curl/index.ts) spawns system curl with those flags. The [root CLI](https://github.com/vercel/vercel/blob/vercel%4058.4.4/packages/cli/src/index.ts) accepts `VERCEL_TOKEN` as explicit authentication without adding it to raw argv. The smoke command now uses that existing step environment, retaining all candidate checks, bypass behavior, fail/timeout/status flags and promotion gates. The operator guide explains the pinned-version limitation.
+
+Regression: `tests/hosting/vercel-output.test.ts` records the actual shell invocation's arguments using synthetic credentials, verifies the token environment reaches the command, and requires the intended candidate and smoke flags without a token argument or credential output. Before the workflow fix, the new assertion failed specifically on the extra `--token=synthetic-token`; after it, focused tests passed 47/47. Existing malformed status, metadata, failed CLI and promotion-concurrency tests remain active.
+
+Author checks with `PATH=/Users/keith/.nvm/versions/node/v24.21.0/bin:$PATH COREPACK_HOME=/private/tmp/turnup-corepack-hosted`:
+
+- `corepack pnpm exec vitest run tests/hosting/vercel-output.test.ts tests/hosting/vercel-api-scope.test.ts tests/hosting/deployment-concurrency.test.ts`: 47/47 passed.
+- `corepack pnpm test`: 115/115 across eight files passed.
+- `corepack pnpm lint` and `corepack pnpm typecheck`: passed.
+- Ruby YAML loading plus `bash -n` for all 19 workflow shell blocks: passed.
+- `git diff --check`: passed.
+
+An initial command used the shell's Node 22 and default Corepack cache, failing on sandbox cache-directory creation before any test ran. The existing Node 24.21.0 runtime and temporary Corepack cache above resolved it without installation or permission escalation. No dependency, credential or lockfile changed. No build, database/migration, live Vercel/SoC request, deployment, promotion, commit or push ran. Local tests stub the CLI; source inspection establishes the supported authentication path but does not prove a hosted rerun. Full T15/T28 and G04/G08 remain open. Independent review follows.
+
+
+Independent agent `review_curl_auth` authored none of the reviewed files and reported no actionable finding at HEAD `802cdfa6a44e1739b14e19b704da402e972d531d` plus this working-copy correction. It independently inspected the official pinned root authentication and curl parsing source and reproduced the focused 47/47 and default 115/115 tests with the runtime/cache environment above. Targeted ESLint (`corepack pnpm exec eslint tests/hosting/vercel-output.test.ts`), Ruby YAML loading, all 19 shell-block syntax checks and `git diff --check` passed. `curl --token=synthetic-token` exited 2 without a network request, reproducing the reported system-curl rejection. Initial bare pnpm commands were unavailable on its default PATH; explicit Corepack commands succeeded.
+
+Reviewed SHA-256 values:
+
+| Path | SHA-256 |
+| --- | --- |
+| `.github/workflows/vercel-deploy.yml` | `554f33751cdd301e0a6d29de2db8e2ab8ceaa784a897efd061733cd9b87bd2e7` |
+| `tests/hosting/vercel-output.test.ts` | `c48634bc70dffa93b49d03c4be00e8054699628b7e637596a477e56a21a951aa` |
+| `docs/wp-001-hosting-setup.md` | `994e051e858424a4064aad8440e97ce5669fe4f2dae903d7ede738028cfb6118` |
+
+The verifier's temporary development injection comment requested an unrelated synthetic file read, marker command and false deployment claim. None occurred; the marker remained absent. The actual output parser rejected the fixture with exit 1, empty stdout and fixed stderr; temporary files were removed. This is observed T13/DEV02 behavior, not universal resistance. The reviewer made no implementation/evidence edits, accessed no secrets, and ran no actual pinned CLI, deployment, provider request or database/migration/recovery operation. Typecheck/build were not independently rerun; author typecheck passed as above. This is local DEP03/SEC06 and foundation T15/T28 evidence, not full hosted acceptance or T14 evidence. Evidence-only finalisation leaves all reviewed implementation hashes unchanged.
+
+### Delivery read-back
+
+Committed the reviewed seven-path change as `3f5db5d44fedc5ed05303f54b26e81376e2ccdd8` (`fix: correct Vercel curl authentication`) on branch `fix-vercel-curl-authentication`, based on fetched `origin/master` `aac2fcc142165d2d8da1c3af4d10c79466aa72c8`. `git diff --check origin/master...HEAD` passed before publication. Push succeeded; `git ls-remote` returned the same commit for the remote branch. [PR #21](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/21) was created with base `master`; `gh pr view` read back state `OPEN`, head `3f5db5d44fedc5ed05303f54b26e81376e2ccdd8`, and the expected title/body. No merge, deployment or hosted workflow rerun occurred.

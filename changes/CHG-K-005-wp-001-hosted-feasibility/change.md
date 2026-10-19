@@ -81,3 +81,16 @@ DEP03, SEC06 and the foundation release portions of T15/T28 apply. Preserve prot
 ### 20 October delivery authorisation
 
 Keith subsequently requested a new branch, commit and push if no additional fix was needed. The primary agent fetched `origin/master` at `60e5630` and created `fix-vercel-deployment-output` from it, carrying the unchanged reviewed implementation. This supersedes the earlier no-Git-delivery boundary for this correction only. No deployment, promotion, merge or secret change is assigned.
+
+
+## 20 October 2026 candidate smoke authentication correction
+
+Keith supplied the merged workflow failure: Vercel 58.4.4 forwarded the global `--token=…` argument to system curl, which exited 2 after Deployment Protection bypass generation. Source: clean local HEAD `802cdfa`; reported candidate source `aac2fcc142165d2d8da1c3af4d10c79466aa72c8` is separate hosted evidence. This follow-up remains in CHG-K-005, owned by Keith, with new PR-increment log `logs/keith/10-vercel-curl-authentication.md`.
+
+The primary agent alone writes `.github/workflows/vercel-deploy.yml`, `tests/hosting/vercel-output.test.ts`, `docs/wp-001-hosting-setup.md`, this change's records and the named log. An independent Implementation Verifier reviews the completed diff read-only. Use the pinned CLI's existing `VERCEL_TOKEN` environment authentication for curl; preserve exact candidate metadata, protected access, status/exit checks and promotion gates. DEP03, SEC06 and foundation T15/T28 portions apply. The initial assignment excluded commit, push, deployment and promotion.
+
+### 20 October delivery authorization
+
+Keith subsequently requested `$commit` on a new branch and PR creation using a delivery agent. This supersedes the initial commit/push exclusion for this correction only. The delivery agent confirmed fresh `origin/master` at `aac2fcc142165d2d8da1c3af4d10c79466aa72c8`, which contains the reviewed output-reader prerequisite at `802cdfa`; branch `fix-vercel-curl-authentication` was created from that base. Commit, push and PR against `master` are authorized. No deployment, promotion or merge is assigned.
+
+Delivery completed: commit `3f5db5d44fedc5ed05303f54b26e81376e2ccdd8` was pushed to `fix-vercel-curl-authentication`, and [PR #21](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/21) was created against `master`. GitHub read-back confirmed the open PR head and remote branch both match that commit.

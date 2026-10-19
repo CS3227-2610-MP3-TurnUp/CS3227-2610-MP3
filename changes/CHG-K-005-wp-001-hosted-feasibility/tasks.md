@@ -115,3 +115,14 @@ Source `d6b2360950bd310071e6ae5ea38db678c4fac21a`; exact primary-agent paths and
 - [x] Separate only the exact known lockfile diagnostic from URL/status output; preserve command failure, metadata checks and staged promotion gates; remove redundant `--prod`.
 - [x] Add synthetic checks executing the actual upload/smoke shell scripts, including failed commands and malformed/duplicate output; document the bounded workaround and retry behavior.
 - [x] Final local checks and independent agent review completed with no actionable finding; findings/results/limits recorded in verification.md and the new increment log.
+
+
+## 20 October 2026 candidate smoke authentication correction
+
+Source `802cdfa`; primary-agent paths and scope are in change.md. Keith owns the planned PR increment and `logs/keith/10-vercel-curl-authentication.md`.
+
+- [x] Trace pinned CLI token handling and curl forwarding against official source.
+- [x] Use existing step-scoped environment authentication; add regression coverage of executable command arguments and retained smoke flags.
+- [x] Run focused/default tests, lint, typecheck, YAML/shell syntax and whitespace checks; update operator guidance.
+- [x] Independent agent `review_curl_auth` completed review with no actionable findings; results and limitations recorded in verification.md.
+- [x] Delivery agent committed `3f5db5d44fedc5ed05303f54b26e81376e2ccdd8`, pushed `fix-vercel-curl-authentication`, opened [PR #21](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/21) against `master`, and confirmed the remote branch and open PR head match. No merge or hosted rerun is claimed.
