@@ -268,7 +268,8 @@ jobs:
             deployment.meta?.turnupRef !== process.env.SOURCE_REF
           ) process.exit(3);
           NODE
-          status_output="$(corepack pnpm dlx vercel@58.4.4 --token="$VERCEL_TOKEN" curl / --deployment "$CANDIDATE_URL" --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
+          # Authenticate through VERCEL_TOKEN: this CLI forwards --token to system curl.
+          status_output="$(corepack pnpm dlx vercel@58.4.4 curl / --deployment "$CANDIDATE_URL" --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
           status="$(printf '%s\n' "$status_output" | node .github/scripts/read-vercel-output.mjs http-status)"
           if [[ "$status" != "200" ]]; then
             echo "Production candidate HTTPS root smoke failed."

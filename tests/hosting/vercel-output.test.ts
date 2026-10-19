@@ -25,9 +25,15 @@ function runStep(name: string, stdout: string, exitCode = 0, target = "productio
   const directory = mkdtempSync(join(tmpdir(), "turnup-vercel-output-"));
   const outputFile = join(directory, "output");
   const summaryFile = join(directory, "summary");
+  const argumentsFile = join(directory, "arguments");
   try {
     const result = spawnSync("bash", ["-c", `
-corepack() { printf '%s' "$CLI_STDOUT"; return "$CLI_EXIT"; }
+corepack() {
+  printf '%s\\n' "$@" > "$CLI_ARGUMENTS"
+  [[ "$VERCEL_TOKEN" == "synthetic-token" ]] || return 90
+  printf '%s' "$CLI_STDOUT"
+  return "$CLI_EXIT"
+}
 # Metadata fetch is covered separately by vercel-api-scope.test.ts.
 node() {
   if [[ "$1" == "--input-type=module" ]]; then cat >/dev/null; return 0; fi
@@ -41,6 +47,7 @@ ${stepScript(name)}
         NODE_ENV: "test",
         CLI_STDOUT: stdout,
         CLI_EXIT: String(exitCode),
+        CLI_ARGUMENTS: argumentsFile,
         DEPLOYMENT_TARGET: target,
         VERCEL_TOKEN: "synthetic-token",
         CANDIDATE_URL: candidate,
@@ -52,7 +59,8 @@ ${stepScript(name)}
     });
     let output = "";
     try { output = readFileSync(outputFile, "utf8"); } catch { /* Failed steps produce no output. */ }
-    return { ...result, output };
+    const args = readFileSync(argumentsFile, "utf8").trimEnd().split("\n");
+    return { ...result, output, args };
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -98,6 +106,17 @@ describe("Vercel output handling in the executable workflow steps", () => {
     const result = runStep("Check candidate project, production target and source revision", stdout);
     expect(result.status).not.toBe(0);
     expect(result.output).toBe("");
+  });
+
+  it("authenticates the protected smoke through the environment without forwarding CLI credentials to curl", () => {
+    const result = runStep("Check candidate project, production target and source revision", "200");
+    expect(result.status).toBe(0);
+    expect(result.args).toEqual([
+      "pnpm", "dlx", "vercel@58.4.4", "curl", "/", "--deployment", candidate,
+      "--fail", "--silent", "--show-error", "--output", "/dev/null",
+      "--write-out", "%{http_code}", "--max-time", "30",
+    ]);
+    expect(result.stdout + result.stderr + result.output).not.toContain("synthetic-token");
   });
 
   it("preserves a failed curl exit even if it prints 200", () => {
