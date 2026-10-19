@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/server/db/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Synthetic-only persistence fixture used by an explicitly protected hosting check.
+// Product account, event, registration, and message models belong to later packages.
+model FoundationProbe {
+  id        String   @id @db.Uuid
+  marker    String   @unique @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("foundation_probe")
+}
