@@ -41,4 +41,4 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 | 12 | Record and deliver PR #18 correction | Coordinator, then Delivery Agent | Independent verification | Keith log entry and work-branch PR update; no merge/deploy |
 
 - [x] Sentinel correction and independent review recorded in verification.md.
-- [ ] PR #18 updated with the reviewed correction.
+- [x] PR #18 updated with the reviewed completion-sentinel correction; commit `64f854ce4c8731be1eca929da296a5fa1d44a259` is on `6-hosted-feasibility`, and the PR remains open against `4-foundation-stack`.
