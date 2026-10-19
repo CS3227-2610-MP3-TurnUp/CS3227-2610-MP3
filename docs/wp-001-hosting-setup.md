@@ -14,11 +14,11 @@ For each environment, configure:
 
 | Name | Where it is used | Value requirements |
 | --- | --- | --- |
-| `DATABASE_URL` | Vercel runtime and local app | Neon pooled endpoint (hostname contains `-pooler`), credentialed PostgreSQL URL, TLS with `sslmode=require` or `sslmode=verify-full`; use a least-privilege runtime role. |
-| `MIGRATION_DATABASE_URL` | GitHub Actions migration step; local migration commands use `.env.local` | Direct Neon endpoint (no `-pooler` hostname), same environment/database as the runtime URL, TLS enabled, migration-capable role. Keep this out of Vercel runtime variables. |
-| `SHADOW_DATABASE_URL` | Local `db:migrate:dev` only | Separate direct non-production database from the migration target. Do not configure it in Vercel or point it at Production. |
+| `DATABASE_URL` | Vercel runtime and local app | Neon pooled endpoint (hostname contains `-pooler`), credentialed PostgreSQL URL, TLS with `sslmode=require` or `sslmode=verify-full`; use a least-privilege runtime role. This URL is consumed by the Node `pg` runtime driver. |
+| `MIGRATION_DATABASE_URL` | GitHub Actions migration step; local Prisma CLI process | Direct Neon endpoint (no `-pooler` hostname), same environment, branch and database as the runtime URL, migration-capable role, and query parameters `sslmode=require&sslaccept=strict`. Keep this out of Vercel runtime variables. |
+| `SHADOW_DATABASE_URL` | Local `db:migrate:dev` only | Separate direct non-production database from the migration target, also using `sslmode=require&sslaccept=strict`. Do not configure it in Vercel or point it at Production. |
 
-The application checks the pooled/direct host shape and TLS mode. Add `sslmode=require` to generated Neon URLs when needed. Do not put any connection URL in the repository, workflow source, issue, build log or deployment output.
+The application checks the pooled/direct host shape and each driver's TLS settings. Prisma CLI migration and shadow URLs must use `sslmode=require&sslaccept=strict`: Prisma's PostgreSQL connector documents `prefer`, `disable` and `require` as supported `sslmode` values, and its `sslaccept` option defaults to accepting invalid certificates. The application requires strict certificate validation for direct Prisma URLs and rejects `sslmode=verify-full` there because it is not a supported Prisma CLI mode. The pooled runtime `pg` URL has its own validation and may use `sslmode=require` or `sslmode=verify-full`; do not substitute its setting for the Prisma CLI URL rule. See the [Prisma PostgreSQL connection documentation](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/postgresql) and the [pinned Prisma PostgreSQL URL parser](https://github.com/prisma/prisma-engines/blob/d1b3f377ca835d73fd50954a5e22128b9ebdd6b8/quaint/src/connector/postgres/url.rs). When editing a Neon URI, keep exactly one `sslmode=require` and one `sslaccept=strict`: use `?` for the first query parameter and `&` for the next, replacing existing values instead of adding duplicates. Do not put any connection URL in the repository, workflow source, issue, build log or deployment output.
 
 ## 3. Create and protect the Vercel project
 
@@ -50,9 +50,17 @@ Add these **secrets** separately to `preview` and `production`; add only `VERCEL
 | Secret | Value |
 | --- | --- |
 | `VERCEL_TOKEN` | A narrowly scoped Vercel access token allowed to pull/build/deploy/promote only the intended project/team. |
-| `MIGRATION_DATABASE_URL` | Add to `preview` and `production` only. It is that environment's direct Neon URL and migration role. Production and Preview must use different projects. The workflow exposes this secret to the migration step only. |
+| `MIGRATION_DATABASE_URL` | Add to `preview` and `production` only. It is that environment's direct Neon URL and migration role, with `sslmode=require&sslaccept=strict`. Production and Preview must use different projects. The workflow exposes this secret to the migration step only. |
 
 Do not make these repository-wide secrets: the workflow obtains secrets only through the selected protected environment and PR jobs do not access them. The GitHub [environment documentation](https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments) describes environment-scoped secrets and protection rules.
+
+### Update migration URLs privately
+
+For each GitHub environment, open **Settings → Environments → `preview`** or **`production` → Environment secrets**, then update that environment's existing `MIGRATION_DATABASE_URL` secret with its matching direct Neon URI and the required `sslmode=require&sslaccept=strict` parameters. Keep the two values tied to their respective non-production and production Neon projects. GitHub does not show a saved secret value again; if you do not have the current URI in an approved private store, copy a fresh direct URI from the matching Neon project and replace the secret through the GitHub settings form. Never print the URI to confirm it, paste it into chat, or place it in an issue, PR, repository file, build log or deployment output.
+
+For local Prisma CLI commands, load `MIGRATION_DATABASE_URL` and (for `db:migrate:dev`) `SHADOW_DATABASE_URL` into the process from an approved local secret manager. An ignored `.env.local` is optional; it is not required if your secret manager can inject the values. Keep both local URLs on the non-production project, and apply `sslmode=require&sslaccept=strict` to each direct URI. Do not type the credential-bearing URL into a shell command or check it into Git.
+
+Changing only query parameters to add strict certificate checking does not require changing the database password. If a full URL or password was exposed, rotate the affected Neon role credential in that environment, then replace only that environment's GitHub secret and private local secret-manager entry with the new direct URI. Keep the Preview and Production credentials separate and do not record either value during rotation.
 
 In the `preview` environment add variable `VERCEL_PROJECT_INITIALIZED=false` before first use. Keep it false until the staged first Production candidate has passed checks, been promoted through the protected environment, and a ready Production deployment is visible. Then set it to `true`. Preview releases fail closed without this flag and a ready Production deployment. Do not set this flag just to bypass the bootstrap gate.
 
@@ -119,6 +127,6 @@ The route ignores request bodies and accepts only the fixed persistence operatio
 | GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`. |
 | GitHub environment secrets | `VERCEL_TOKEN` in `preview`, `production`, and `production-promotion`; `MIGRATION_DATABASE_URL` in `preview` and `production` only. |
 | Vercel Preview/Production runtime variables | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `SOCLAAS_BASE_URL`, `SOCLAAS_MODEL`, `SOCLAAS_MAX_INPUT_BYTES`, `SOCLAAS_MAX_OUTPUT_TOKENS`, `SOCLAAS_TIMEOUT_MS`, `SOCLAAS_API_KEY` (secret, after G04), `FOUNDATION_PROBE_ENABLED`, `FOUNDATION_PROBE_TOKEN` (temporary Preview secret only). |
-| Local `.env.local` only | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `MIGRATION_DATABASE_URL`, `SHADOW_DATABASE_URL`, SoCLaaS settings if explicitly approved for a synthetic local check. |
+| Local process via an approved secret manager (or optional ignored `.env.local`) | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `MIGRATION_DATABASE_URL`, `SHADOW_DATABASE_URL`, SoCLaaS settings if explicitly approved for a synthetic local check. Direct Prisma URLs use `sslmode=require&sslaccept=strict`. |
 
 No credential values belong in this inventory. Local checks and test doubles remain distinct from intended-host persistence across requests/redeploys and live SoCLaaS reachability; record unavailable access as unrun evidence, not a pass.

@@ -17,3 +17,13 @@ After implementation, guide Keith through required Neon services and variables, 
 ## Results
 
 The [WP-001 hosted setup guide](../../docs/wp-001-hosting-setup.md) gives the account/resource sequence, environment-specific GitHub and Vercel variable inventory, first-deployment bootstrap, protected Preview checks, and temporary-probe retirement steps. The final handoff will summarize where Keith enters each value and identify the hosted checks still needing configured access; no secret value was recorded in this log.
+
+# 03 - Correct hosted migration URL guidance - 19 October 2026
+
+## Request
+
+Implement the accepted PR review correction plan for CHG-K-005 / PR #18 after the CHG-K-004 migration guard handoff, so hosted setup and secret placement match the supported Prisma TLS settings.
+
+## Results
+
+The coordinator merged reviewed foundation correction `e23fc98` into this branch at `5b2c902`. The Hosting & SoC Engineer updated only [the setup guide](../../docs/wp-001-hosting-setup.md) to require `sslmode=require&sslaccept=strict` on direct migration/shadow URLs, distinguish pooled runtime `pg` settings, and explain private replacement of Preview/Production GitHub environment secrets and local values. An independent verifier reviewed the integrated code and guide; 30 default tests, TypeScript, ESLint, Prisma validation, default production build and whitespace checks passed. Synthetic Prisma config-loader checks rejected production reset without executing it. Exact reviewed revision, guide digest, checks and limits are in [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md). Live Neon/Vercel/SoCLaaS checks and secret replacement remain unrun; no credential value was handled in this work.
