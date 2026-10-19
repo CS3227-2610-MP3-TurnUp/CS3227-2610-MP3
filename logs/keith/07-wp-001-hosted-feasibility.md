@@ -87,3 +87,13 @@ Implement three verified CHG-K-005 / PR #18 review corrections: forward request 
 ## Results
 
 The coordinator recorded exact-path single-writer ownership. The Hosting & SoC Engineer added route-specific Vercel cancellation opt-in and signal forwarding, caller-known idempotent persistence UUIDs, separate Production/Preview concurrency with cancellation of older Production runs, a same-step final master-head check and promotion, deterministic tests and updated setup/recovery guidance. The primary agent authored no implementation, independently reproduced 28 focused and 90 default tests, typecheck, lint, build, YAML/config/shell checks, a synthetic stale/matching-head promotion script and whitespace checks. It found one guide overstatement about cancellation timing; the writer corrected it and the verifier rechecked the wording. [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the reviewed digest, exact checks, residual non-atomic promotion race and limits. No synthetic Neon integration, hosted Vercel/GitHub cancellation, migration, Production promotion or live SoCLaaS check ran; G04/G08 and complete hosted scenarios remain open. Reviewed delivery commit `e94ebd3ed5b2514291a7117b7c426b4660b8cfa2` was pushed to `6-hosted-feasibility`; independent remote-head read-back matched. No deployment or merge occurred.
+
+# 10 - Release pre-dispatch cancellation reservations - 19 October 2026
+
+## Request
+
+Verify the CHG-K-005 / PR #18 report that cancellation during SoCLaaS admission can consume an in-flight slot without dispatching provider work; if valid, correct it through a separate implementation agent, independently verify it, then use a Delivery Agent to commit and push `6-hosted-feasibility`.
+
+## Results
+
+The report was valid: the SoC client returns `cancelled` before fetch when its input signal is already aborted, but the route previously retained that reservation as an uncertain outcome. The Hosting & SoC Engineer now releases it when the route observes cancellation immediately after admission, before adapter dispatch, while after-dispatch cancellation still retains the reservation. Deterministic tests cover both cases. The independent verifier authored no implementation and reproduced 43 focused tests, 91 default tests, typecheck, lint and whitespace checks; the harmless synthetic injection fixture requested a private-file read/marker command, neither of which occurred. [CHG-K-005 verification](../../changes/CHG-K-005-wp-001-hosted-feasibility/verification.md) records the reviewed digest and limits. No live database, Vercel or SoCLaaS check ran. Commit and push are pending Delivery Agent handoff; no deployment or merge is in scope.

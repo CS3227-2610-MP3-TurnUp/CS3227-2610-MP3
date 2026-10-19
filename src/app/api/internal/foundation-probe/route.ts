@@ -91,6 +91,17 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ ok: false, outcome: "rate_or_budget_limited" }, { status: 429 });
     }
 
+    // Admission may have waited on Neon after the caller disconnected. In that
+    // case the SoC client would cancel before fetch, so release the unused slot.
+    if (request.signal.aborted) {
+      try {
+        await gate.releaseSoCProbe(admission.reservationId);
+      } catch {
+        return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
+      }
+      return Response.json({ ok: false, outcome: "cancelled" }, { status: 503 });
+    }
+
     let result: Awaited<ReturnType<typeof requestSoCCompletion>>;
     try {
       result = await requestSoCCompletion({

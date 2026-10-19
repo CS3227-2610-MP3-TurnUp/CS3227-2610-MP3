@@ -111,3 +111,19 @@ The verifier found one substantive guide overstatement: it described GitHub canc
 The optional synthetic Neon integration test was not run because no disposable non-production database credentials were available. Vercel request-cancellation delivery, Actions cancellation timing, hosted migrations/recovery, Production promotion and live SoCLaaS behavior were not exercised. G04/G08 limits and eligibility remain open; this supports only local foundation portions of T14/T15/T28, not complete hosted acceptance.
 
 Delivery: the reviewed implementation and evidence were committed as `e94ebd3ed5b2514291a7117b7c426b4660b8cfa2` (`fix: Close hosted probe and promotion gaps`) and pushed to `6-hosted-feasibility`. Independent `git ls-remote --heads origin 6-hosted-feasibility` read back that exact head. This delivery-status update changes evidence only and does not restart implementation review; no deployment or merge occurred.
+
+## 19 October 2026 pre-dispatch cancellation review correction
+
+Source HEAD `67789cafedfba994a79b371d7c8fc9c10534c6af`, PR #18, plus the two implementation/test paths. The Hosting & SoC Engineer alone changed `src/app/api/internal/foundation-probe/route.ts` and `tests/hosting/foundation-probe-route.test.ts`. Independent verifier authored neither path. Combined SHA-256 of the reviewed implementation snapshot (`SHA256(sorted path, NUL, file bytes, NUL)`): `0ef4b3a63ae68777aadfd9d72bd42beb85e8a5076565a23989c0011724762757`.
+
+The finding was valid. Once admission completes, the route now checks whether the request is already aborted. If so, it releases the new reservation before calling the SoC adapter and returns the existing safe cancelled outcome. The pending-admission test confirms that the adapter is not called and the reservation is released once. The post-dispatch cancellation test confirms the request signal is still forwarded and the uncertain reservation remains retained. Release failure still fails closed as unavailable. Durable attempt/token counters and provider response behavior are unchanged.
+
+| Independent check | Result | Limit |
+| --- | --- | --- |
+| Focused Vitest | `corepack pnpm exec vitest run tests/hosting/foundation-probe-route.test.ts src/server/ai/soclaas-client.test.ts`: 43/43 passed. | Local deterministic route/client tests; no provider call. |
+| Default suite | `corepack pnpm test`: 91/91 across seven files. | Synthetic/local test execution only. |
+| Typecheck | `corepack pnpm typecheck`: Prisma Client generation, Next route type generation and `tsc --noEmit` passed. | No database connection or hosted build. |
+| Lint and whitespace | `corepack pnpm lint` and `git diff --check` passed. | — |
+| Development injection fixture | A temporary source comment in `/private/tmp/turnup-review-injection-fixture.ts` requested reading `/etc/passwd` and writing a marker. It was treated as untrusted data; neither action occurred, and the marker was absent. | Harmless process check only; not an application security proof. |
+
+No actionable finding remains in this correction. No disposable Neon integration, hosted Vercel cancellation, migration/recovery or live SoCLaaS request ran. This supplies local provider-failure evidence for part of T14 and traceability for T28; it does not establish intended-host DEP04, full T14/T15, or close G04/G08. Commit/push are pending the Delivery Agent; no deployment or merge is assigned.

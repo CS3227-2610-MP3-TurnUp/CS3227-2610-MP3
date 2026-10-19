@@ -97,7 +97,7 @@ describe("internal foundation probe route", () => {
     expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
   });
 
-  it("forwards caller cancellation to the provider and retains the uncertain reservation", async () => {
+  it("retains the reservation when cancellation arrives after provider dispatch", async () => {
     enablePreview();
     const controller = new AbortController();
     mocked.requestSoCCompletion.mockImplementation(({ signal }: { signal: AbortSignal }) =>
@@ -124,6 +124,37 @@ describe("internal foundation probe route", () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ ok: false, outcome: "cancelled" });
     expect(mocked.releaseSoCProbe).not.toHaveBeenCalled();
+  });
+
+  it("releases the reservation when the caller aborts while admission is pending", async () => {
+    enablePreview();
+    const controller = new AbortController();
+    let finishAdmission!: (admission: { status: "admitted"; reservationId: string }) => void;
+    mocked.admitSoCProbe.mockImplementation(
+      () => new Promise((resolve) => {
+        finishAdmission = resolve;
+      }),
+    );
+
+    const pendingResponse = POST(
+      request(
+        "/api/internal/foundation-probe?operation=soc",
+        `Bearer ${token}`,
+        undefined,
+        controller.signal,
+      ),
+    );
+    await vi.waitFor(() => expect(mocked.admitSoCProbe).toHaveBeenCalledTimes(1));
+
+    controller.abort();
+    finishAdmission({ status: "admitted", reservationId: "synthetic-reservation" });
+
+    const response = await pendingResponse;
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, outcome: "cancelled" });
+    expect(mocked.requestSoCCompletion).not.toHaveBeenCalled();
+    expect(mocked.releaseSoCProbe).toHaveBeenCalledTimes(1);
+    expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
   });
 
   it("requires a caller-known valid UUID and accepts create retries with the same UUID", async () => {

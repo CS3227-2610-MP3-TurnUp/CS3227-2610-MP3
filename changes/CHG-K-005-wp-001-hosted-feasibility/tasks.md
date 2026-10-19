@@ -78,3 +78,15 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Hosting & SoC Engineer completed only the assigned implementation paths and handed off focused/default test and syntax results.
 - [x] Independent review reproduced applicable checks; a documentation overstatement about cancellation timing was corrected and rechecked. Exact evidence and remaining limits are in verification.md.
 - [x] Committed the reviewed implementation and evidence as `e94ebd3ed5b2514291a7117b7c426b4660b8cfa2` and pushed `6-hosted-feasibility`; remote head read-back matched. No deployment or merge occurred.
+
+## 19 October 2026 pre-dispatch cancellation review correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 22 | Release an SoC reservation when cancellation is already present after admission and before client dispatch; preserve post-dispatch retention | Hosting & SoC Engineer; route and route test only | Source `67789ca`; SEC05–06, DEP04 and T14 provider-failure behavior | Pending-admission cancellation releases once and skips client; post-dispatch cancellation retains lease |
+| 23 | Independently review the integrated route/test diff and reproduce relevant checks | Primary agent as Implementation Verifier; no implementation authorship | Completed writer handoff | Findings, source digest, exact checks and limits in verification.md |
+| 24 | Record and deliver reviewed correction | Primary agent; records/log and Git delivery only | Independent review and accurate existing Keith log | Delivery Agent commit/push, remote-head read-back; no deployment or merge |
+
+- [x] Hosting & SoC Engineer changed only the two assigned implementation paths and handed off deterministic pre-/post-dispatch cases.
+- [x] Independent review confirmed the report and reproduced focused/default tests, typecheck, lint and whitespace checks with no unresolved actionable finding.
+- [ ] Delivery Agent commit and push are pending; no deployment, merge, live provider call or remote environment mutation is in scope.
