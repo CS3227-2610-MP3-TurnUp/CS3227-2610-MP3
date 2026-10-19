@@ -19,3 +19,13 @@ Implement the accepted correction plan for three PR review reports in CHG-K-004 
 ## Results
 
 The Foundation Engineer updated the migration command classifier, direct URL validation, synthetic configuration tests, README and `.env.example`. The independent verifier initially found three stale test assertions; the engineer corrected them and the verifier reran 13 default tests successfully. Independent TypeScript, ESLint, synthetic Prisma config-loader and `pg` boundary checks passed without a reset or network connection. The final reviewed paths, digest, commands and limits are in [CHG-K-004 verification](../../changes/CHG-K-004-wp-001-foundation/verification.md). Frozen install was blocked by registry DNS and missing offline package cache; live Neon migration/recovery and a production build were not run. GitHub environment migration secrets require a private owner update before deployment; no secret value was handled here.
+
+# 03 - Make typecheck work from a clean checkout - 19 October 2026
+
+## Request
+
+Implement the accepted PR #17 correction for a standalone typecheck after frozen install, generating the ignored Prisma client and Next route types before TypeScript runs.
+
+## Results
+
+The Foundation Engineer updated `package.json` and the application setup text in `README.md`. An independent verifier ran the exact `corepack pnpm typecheck` from a clean source archive with no generated trees and cached dependencies, confirming Prisma and Next type output and a passing TypeScript check without application secrets or tracked-file changes. Lint, 13 default tests, Prisma validation, production build with copied cached dependencies, and whitespace check also passed. A fresh offline frozen install could not complete because `acorn@8.19.0` was missing from cache; no live provider or database action ran. Exact reviewed diff, checks and limits are in [CHG-K-004 verification](../../changes/CHG-K-004-wp-001-foundation/verification.md).
