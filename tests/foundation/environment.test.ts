@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import pg from "pg";
 import {
+  classifyMigrationIntent,
   readMigrationDatabaseConfig,
   readRuntimeDatabaseConfig,
   type EnvironmentSource,
@@ -12,12 +13,21 @@ const nonProductionEnvironment = {
   DATABASE_URL:
     "postgresql://synthetic:synthetic@ep-turnup-pooler.us-east-1.aws.neon.tech/turnup?sslmode=require",
   MIGRATION_DATABASE_URL:
-    "postgresql://synthetic:synthetic@ep-turnup.us-east-1.aws.neon.tech/turnup?sslmode=require",
+    "postgresql://synthetic:synthetic@ep-turnup.us-east-1.aws.neon.tech/turnup?sslmode=require&sslaccept=strict",
   SHADOW_DATABASE_URL:
-    "postgresql://synthetic:synthetic@ep-turnup-shadow.us-east-1.aws.neon.tech/turnup_shadow?sslmode=require",
+    "postgresql://synthetic:synthetic@ep-turnup-shadow.us-east-1.aws.neon.tech/turnup_shadow?sslmode=require&sslaccept=strict",
 } satisfies EnvironmentSource;
 
 describe("server database configuration", () => {
+  it("classifies migrate reset arguments without invoking the Prisma command", () => {
+    expect(classifyMigrationIntent(["migrate", "reset", "--force"])).toBe("reset");
+    expect(classifyMigrationIntent(["migrate", "dev"])).toBe("dev");
+    expect(classifyMigrationIntent(["migrate", "deploy"])).toBe("deploy");
+    expect(classifyMigrationIntent(["migrate", "status"])).toBe("status");
+    expect(classifyMigrationIntent(["migrate", "resolve"])).toBe("other");
+    expect(classifyMigrationIntent(["generate"])).toBe("other");
+  });
+
   it("accepts an explicitly classified Neon pooled runtime URL", () => {
     expect(readRuntimeDatabaseConfig(nonProductionEnvironment)).toMatchObject({
       turnupEnvironment: "development",
@@ -146,7 +156,10 @@ describe("server database configuration", () => {
 
     expect(() =>
       readMigrationDatabaseConfig(
-        { ...nonProductionEnvironment, MIGRATION_DATABASE_URL: nonProductionEnvironment.DATABASE_URL },
+        {
+          ...nonProductionEnvironment,
+          MIGRATION_DATABASE_URL: `${nonProductionEnvironment.DATABASE_URL}&sslaccept=strict`,
+        },
         "dev",
       ),
     ).toThrow("direct Neon endpoint");
@@ -164,6 +177,44 @@ describe("server database configuration", () => {
     );
   });
 
+  it("requires Prisma supported TLS mode and strict certificate validation on both direct URLs", () => {
+    const invalidTlsSuffixes = [
+      "?sslmode=require",
+      "?sslmode=require&sslaccept=accept_invalid_certs",
+      "?sslmode=require&sslaccept=unrecognized",
+      "?sslmode=verify-full&sslaccept=strict",
+      "?sslmode=prefer&sslaccept=strict",
+      "?sslaccept=strict",
+    ];
+
+    for (const suffix of invalidTlsSuffixes) {
+      const migrationUrl = `postgresql://synthetic:synthetic@ep-turnup.us-east-1.aws.neon.tech/turnup${suffix}`;
+      expect(() =>
+        readMigrationDatabaseConfig(
+          { ...nonProductionEnvironment, MIGRATION_DATABASE_URL: migrationUrl },
+          "deploy",
+        ),
+      ).toThrow("sslmode=require and sslaccept=strict");
+
+      const shadowUrl = `postgresql://synthetic:synthetic@ep-turnup-shadow.us-east-1.aws.neon.tech/turnup_shadow${suffix}`;
+      expect(() =>
+        readMigrationDatabaseConfig(
+          { ...nonProductionEnvironment, SHADOW_DATABASE_URL: shadowUrl },
+          "dev",
+        ),
+      ).toThrow("sslmode=require and sslaccept=strict");
+    }
+
+    const duplicateSslAcceptUrl =
+      "postgresql://synthetic:synthetic@ep-turnup.us-east-1.aws.neon.tech/turnup?sslmode=require&sslaccept=strict&sslaccept=accept_invalid_certs";
+    expect(() =>
+      readMigrationDatabaseConfig(
+        { ...nonProductionEnvironment, MIGRATION_DATABASE_URL: duplicateSslAcceptUrl },
+        "deploy",
+      ),
+    ).toThrow("duplicate query parameters");
+  });
+
   it("does not permit development migrations against production configuration", () => {
     const productionEnvironment: EnvironmentSource = {
       TURNUP_ENVIRONMENT: "production",
@@ -171,7 +222,7 @@ describe("server database configuration", () => {
       DATABASE_URL:
         "postgresql://synthetic:synthetic@ep-turnup-prod-pooler.us-east-1.aws.neon.tech/turnup?sslmode=require",
       MIGRATION_DATABASE_URL:
-        "postgresql://synthetic:synthetic@ep-turnup-prod.us-east-1.aws.neon.tech/turnup?sslmode=require",
+        "postgresql://synthetic:synthetic@ep-turnup-prod.us-east-1.aws.neon.tech/turnup?sslmode=require&sslaccept=strict",
     };
 
     expect(() => readMigrationDatabaseConfig(productionEnvironment, "dev")).toThrow(
@@ -180,5 +231,23 @@ describe("server database configuration", () => {
     expect(readMigrationDatabaseConfig(productionEnvironment, "deploy").databaseEnvironment).toBe(
       "production",
     );
+  });
+
+  it("rejects reset before reading the production migration URL and permits non-production reset without a shadow URL", () => {
+    const productionWithoutUrl: EnvironmentSource = {
+      TURNUP_ENVIRONMENT: "production",
+      DATABASE_ENVIRONMENT: "production",
+    };
+    expect(() => readMigrationDatabaseConfig(productionWithoutUrl, "reset")).toThrow(
+      "migrate reset is permitted only with non-production configuration",
+    );
+
+    const nonProductionWithoutShadow: EnvironmentSource = {
+      ...nonProductionEnvironment,
+      SHADOW_DATABASE_URL: undefined,
+    };
+    const resetConfig = readMigrationDatabaseConfig(nonProductionWithoutShadow, "reset");
+    expect(resetConfig.migrationDatabaseUrl).toBe(nonProductionEnvironment.MIGRATION_DATABASE_URL);
+    expect(resetConfig).not.toHaveProperty("shadowDatabaseUrl");
   });
 });

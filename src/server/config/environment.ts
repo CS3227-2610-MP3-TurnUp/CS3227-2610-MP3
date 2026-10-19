@@ -15,7 +15,25 @@ export interface MigrationDatabaseConfig {
 }
 
 export type EnvironmentSource = Record<string, string | undefined>;
-export type MigrationIntent = "dev" | "deploy" | "status" | "other";
+export type MigrationIntent = "dev" | "deploy" | "status" | "reset" | "other";
+
+export function classifyMigrationIntent(args: readonly string[]): MigrationIntent {
+  const [command, subcommand] = args;
+
+  if (command !== "migrate") {
+    return "other";
+  }
+
+  switch (subcommand) {
+    case "dev":
+    case "deploy":
+    case "status":
+    case "reset":
+      return subcommand;
+    default:
+      return "other";
+  }
+}
 
 const connectionOverrideParameters = new Set([
   "host",
@@ -64,15 +82,20 @@ export function readMigrationDatabaseConfig(
   intent: MigrationIntent,
 ): MigrationDatabaseConfig {
   const labels = readEnvironmentLabels(env);
+
+  if (intent === "reset" && labels.databaseEnvironment === "production") {
+    throw new Error("Prisma migrate reset is permitted only with non-production configuration.");
+  }
+
+  if (intent === "dev" && labels.databaseEnvironment !== "non-production") {
+    throw new Error("Prisma migrate dev is permitted only with non-production configuration.");
+  }
+
   const migrationDatabaseUrl = requireNeonUrl(
     env.MIGRATION_DATABASE_URL,
     "MIGRATION_DATABASE_URL",
     "direct",
   );
-
-  if (intent === "dev" && labels.databaseEnvironment !== "non-production") {
-    throw new Error("Prisma migrate dev is permitted only with non-production configuration.");
-  }
 
   if (intent === "dev") {
     const shadowDatabaseUrl = requireNeonUrl(
@@ -179,10 +202,20 @@ function requireNeonUrl(
     throw new Error(`${name} must not contain query parameters that override connection settings.`);
   }
 
-  if (
-    sslModes.length !== 1 ||
-    !["require", "verify-full"].includes(sslModes[0])
-  ) {
+  if (connectionMode === "direct") {
+    const sslAcceptModes = queryEntries
+      .filter(([parameter]) => parameter === "sslaccept")
+      .map(([, mode]) => mode);
+
+    if (
+      sslModes.length !== 1 ||
+      sslModes[0] !== "require" ||
+      sslAcceptModes.length !== 1 ||
+      sslAcceptModes[0] !== "strict"
+    ) {
+      throw new Error(`${name} must use sslmode=require and sslaccept=strict for Prisma TLS validation.`);
+    }
+  } else if (sslModes.length !== 1 || !["require", "verify-full"].includes(sslModes[0])) {
     throw new Error(`${name} must require verified TLS with sslmode=require or sslmode=verify-full.`);
   }
 
