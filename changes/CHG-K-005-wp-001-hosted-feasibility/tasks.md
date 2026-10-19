@@ -90,3 +90,18 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Hosting & SoC Engineer changed only the two assigned implementation paths and handed off deterministic pre-/post-dispatch cases.
 - [x] Independent review confirmed the report and reproduced focused/default tests, typecheck, lint and whitespace checks with no unresolved actionable finding.
 - [x] Delivery Agent committed the six reviewed code/evidence paths as `a609eab63d1b140032a97a8dd372d6c273768392` (`fix: release reservations on pre-dispatch cancellation`) and pushed `6-hosted-feasibility`. The agent reported remote-head read-back matched; local HEAD and upstream tracking status are aligned. No deployment or merge occurred.
+
+## 19 October 2026 pnpm 12 Vercel build correction
+
+Source `568c002` on merged `master`, failed Actions run `39274898676`; separate PR increment `fix-vercel-pnpm-install`. The primary agent writes `vercel.json`, `docs/wp-001-hosting-setup.md`, this change's records and `logs/keith/08-vercel-pnpm-install.md`. An independent Implementation Verifier reviews the completed executable config/guide change without authorship.
+
+| Order | Output | Actor | Evidence target |
+| --- | --- | --- | --- |
+| 25 | Skip Vercel's duplicate install after the same-job frozen pnpm install; explain recovery in the guide | Primary agent | Valid Vercel JSON and locked-install/build order; no package-manager drift |
+| 26 | Independently review the config/guide and relevant build behavior | Implementation Verifier | Findings, reproduced checks and hosted limits in verification.md |
+| 27 | Record this prompt's results, commit and open a new PR to `master` | Primary agent | Reviewed diff, commit and PR link; no deployment claim from local checks |
+
+- [x] Config and guide correction implemented from the merged `master` base.
+- [x] Frozen pnpm install, 91 tests, lint, typecheck, local production build, JSON/order and whitespace checks passed.
+- [x] Independent implementation review recorded in verification.md; no actionable finding or material recheck.
+- [ ] Reviewed change committed, pushed and PR opened against `master`.
