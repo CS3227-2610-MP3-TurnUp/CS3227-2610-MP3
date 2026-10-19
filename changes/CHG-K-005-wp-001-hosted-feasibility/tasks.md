@@ -105,3 +105,13 @@ Source `568c002` on merged `master`, failed Actions run `39274898676`; separate 
 - [x] Frozen pnpm install, 91 tests, lint, typecheck, local production build, JSON/order and whitespace checks passed.
 - [x] Independent implementation review recorded in verification.md; no actionable finding or material recheck.
 - [x] Reviewed implementation and initial evidence committed as `0ac06b98da2d8ccb300991ca97771618b88d59ec`, pushed to `fix-vercel-pnpm-install`, and [PR #19](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/19) opened against `master`. This delivery-status update is evidence only.
+
+
+## 20 October 2026 deployment output correction
+
+Source `d6b2360950bd310071e6ae5ea38db678c4fac21a`; exact primary-agent paths and independent-verifier handoff are in change.md. Keith owns the new planned PR increment and `logs/keith/09-vercel-deployment-output.md`. Current branch is retained; this assignment authorises no Git delivery or deployment.
+
+- [x] Inspect pinned Vercel source and reproduce single-document YAML rejection without modifying the lockfile.
+- [x] Separate only the exact known lockfile diagnostic from URL/status output; preserve command failure, metadata checks and staged promotion gates; remove redundant `--prod`.
+- [x] Add synthetic checks executing the actual upload/smoke shell scripts, including failed commands and malformed/duplicate output; document the bounded workaround and retry behavior.
+- [x] Final local checks and independent agent review completed with no actionable finding; findings/results/limits recorded in verification.md and the new increment log.

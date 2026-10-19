@@ -179,7 +179,7 @@ jobs:
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
             corepack pnpm dlx vercel@58.4.4 build --target=preview --token="$VERCEL_TOKEN"
           else
-            corepack pnpm dlx vercel@58.4.4 build --target=production --prod --token="$VERCEL_TOKEN"
+            corepack pnpm dlx vercel@58.4.4 build --target=production --token="$VERCEL_TOKEN"
           fi
       - name: Apply reviewed migrations to the matching database
         shell: bash
@@ -194,11 +194,11 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
-            deployment_url="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
+            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
           else
-            deployment_url="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --prod --skip-domain --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
+            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --skip-domain --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
           fi
-          node --input-type=module -e 'const url = new URL(process.argv[1]); if (url.protocol !== "https:" || !url.hostname.endsWith(".vercel.app") || url.username || url.password) process.exit(1);' "$deployment_url"
+          deployment_url="$(printf '%s\n' "$deployment_output" | node .github/scripts/read-vercel-output.mjs deployment-url)"
           printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
           printf 'Candidate URL: `%s`\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
@@ -268,7 +268,8 @@ jobs:
             deployment.meta?.turnupRef !== process.env.SOURCE_REF
           ) process.exit(3);
           NODE
-          status="$(corepack pnpm dlx vercel@58.4.4 --token="$VERCEL_TOKEN" curl / --deployment "$CANDIDATE_URL" --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
+          status_output="$(corepack pnpm dlx vercel@58.4.4 --token="$VERCEL_TOKEN" curl / --deployment "$CANDIDATE_URL" --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
+          status="$(printf '%s\n' "$status_output" | node .github/scripts/read-vercel-output.mjs http-status)"
           if [[ "$status" != "200" ]]; then
             echo "Production candidate HTTPS root smoke failed."
             exit 1
