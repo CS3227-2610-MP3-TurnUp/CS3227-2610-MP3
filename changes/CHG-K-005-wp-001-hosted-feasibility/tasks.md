@@ -30,4 +30,4 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 
 - [x] Gate and hosting integration complete, including durable strictest-limit policy and isolated gate database test.
 - [x] Integrated checks and independent verification recorded in verification.md.
-- [ ] Hosted PR updated.
+- [x] PR #18 updated with the shared admission gate correction, retargeted to `4-foundation-stack`, and implementation commit `bf186e58726dad9a78059a7cddfaa919355a8a12` pushed on `6-hosted-feasibility`. GitHub Actions run `39235464780` passed `pull-request-checks`; deployment, production-candidate verification and promotion jobs were skipped for the PR event.
