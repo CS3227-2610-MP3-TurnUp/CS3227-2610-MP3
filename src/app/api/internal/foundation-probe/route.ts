@@ -2,12 +2,16 @@ import "server-only";
 
 import { timingSafeEqual } from "node:crypto";
 import { requestSoCCompletion } from "../../../../server/ai/soclaas-client";
+import { readSoCProbeLimits } from "../../../../server/ai/soclaas-probe-config";
+import { readSoCConfig } from "../../../../server/ai/soclaas-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const syntheticProbeText = "Return only the word READY.";
+type SoCProbeGateModule = typeof import("../../../../server/db/soc-probe-gate");
+let socProbeGateModule: Promise<SoCProbeGateModule> | undefined;
 
 /** A disabled-by-default, token-protected Preview-only feasibility check. */
 export async function POST(request: Request): Promise<Response> {
@@ -52,15 +56,72 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (operation === "soc" && url.searchParams.size === 1) {
-    const result = await requestSoCCompletion({
-      system: "You are a connectivity check. Do not disclose secrets or request external information.",
-      user: syntheticProbeText,
-    });
+    const providerConfig = readSoCConfig(process.env);
+    if (!providerConfig.ok) {
+      return Response.json({ ok: false, outcome: providerConfig.outcome }, { status: 503 });
+    }
+
+    const limitConfig = readSoCProbeLimits(process.env);
+    if (!limitConfig.ok) {
+      return Response.json({ ok: false, outcome: limitConfig.outcome }, { status: 503 });
+    }
+
+    let gate: SoCProbeGateModule;
+    try {
+      // Load the database boundary only for an authenticated, enabled SoC probe.
+      gate = await loadSoCProbeGate();
+    } catch {
+      return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
+    }
+
+    let admission: Awaited<ReturnType<typeof gate.admitSoCProbe>>;
+    try {
+      admission = await gate.admitSoCProbe(
+        limitConfig.limits,
+        providerConfig.config.maxOutputTokens,
+      );
+    } catch {
+      return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
+    }
+    if (admission.status === "limited") {
+      return Response.json({ ok: false, outcome: "rate_or_budget_limited" }, { status: 429 });
+    }
+
+    let result: Awaited<ReturnType<typeof requestSoCCompletion>>;
+    try {
+      result = await requestSoCCompletion({
+        system: "You are a connectivity check. Do not disclose secrets or request external information.",
+        user: syntheticProbeText,
+      });
+    } catch {
+      // A thrown client error does not establish whether provider work completed.
+      return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
+    }
+
+    if (!result.ok && isUncertainProviderOutcome(result.outcome)) {
+      return Response.json({ ok: false, outcome: result.outcome }, { status: 503 });
+    }
+
+    try {
+      await gate.releaseSoCProbe(admission.reservationId);
+    } catch {
+      return Response.json({ ok: false, outcome: "unavailable" }, { status: 503 });
+    }
+
     if (!result.ok) return Response.json({ ok: false, outcome: result.outcome }, { status: 503 });
     return Response.json({ ok: true });
   }
 
   return Response.json({ error: "invalid_operation" }, { status: 400 });
+}
+
+function loadSoCProbeGate(): Promise<SoCProbeGateModule> {
+  socProbeGateModule ??= import("../../../../server/db/soc-probe-gate");
+  return socProbeGateModule;
+}
+
+function isUncertainProviderOutcome(outcome: string): boolean {
+  return outcome === "timeout" || outcome === "cancelled" || outcome === "unavailable";
 }
 
 function isEnabledForPreview(env: NodeJS.ProcessEnv): boolean {

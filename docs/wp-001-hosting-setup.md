@@ -1,6 +1,6 @@
 # WP-001 hosted setup guide
 
-This guide reflects the CHG-K-005 workflow and adapter in the reviewed worktree on 18 October 2026. It describes account configuration and bounded synthetic checks; it is not evidence that Vercel, Neon or SoCLaaS has been reached from the intended deployment. G04/G08 remain open until the account owner confirms eligibility, course/provider policy, key-visible models and limits, and actual hosted results.
+This guide reflects the CHG-K-005 workflow and adapter plus the 19 October 2026 shared SoCLaaS admission gate. It describes account configuration and bounded synthetic checks; it is not evidence that Vercel, Neon or SoCLaaS has been reached from the intended deployment. G04/G08 remain open until the account owner confirms eligibility, course/provider policy, key-visible models and limits, and actual hosted results.
 
 ## 1. Confirm account and course eligibility
 
@@ -8,7 +8,7 @@ Before creating or using hosted resources, confirm the intended course project i
 
 ## 2. Create isolated Neon resources
 
-Create independent Neon projects for Production and synthetic non-production use, as required by the selected foundation. Within the non-production project, isolate development and protected Preview with distinct branches/databases and roles (or separate non-production projects if those environments need independent controls). Never point local or Preview at Production. Select a region after confirming the current region is available to the account and appropriate for the expected users. The Neon [connection URI API](https://api-docs.neon.tech/reference/getconnectionuri) supports pooled connection URIs; the [connection pooling guide](https://neon.tech/docs/connect/connection-pooling) describes the pooler behavior.
+Create independent Neon projects for Production and synthetic non-production use, as required by the selected foundation. Within the non-production project, isolate development and protected Preview with distinct branches/databases and roles (or separate non-production projects if those environments need independent controls). All Preview deployments using the SoCLaaS probe must use the same synthetic Preview database and `DATABASE_URL` so the Neon gate provides one shared budget; do not use different branch-specific database URLs for individual Preview deployments. Never point local or Preview at Production. Select a region after confirming the current region is available to the account and appropriate for the expected users. The Neon [connection URI API](https://api-docs.neon.tech/reference/getconnectionuri) supports pooled connection URIs; the [connection pooling guide](https://neon.tech/docs/connect/connection-pooling) describes the pooler behavior.
 
 For each environment, configure:
 
@@ -83,8 +83,14 @@ Set values separately in Vercel's Preview and Production environments. Ensure Pr
 | `SOCLAAS_TIMEOUT_MS` | Explicit positive integer at or below `30000`. This is a local wait bound, not proof remote work or billing stopped. |
 | `FOUNDATION_PROBE_ENABLED` | Keep `false`/unset except during an authorized Preview-only check. Must remain disabled in Production. |
 | `FOUNDATION_PROBE_TOKEN` | Temporary Preview-only secret, at least 32 random bytes; absent in Production. |
+| `FOUNDATION_PROBE_SOC_MAX_ATTEMPTS` | Positive integer, Preview only. Set no higher than the remaining verified SoCLaaS request allowance for this probe activation. Admissions are cumulative until an operator-authorized quota reset; the application has no automatic window/reset. |
+| `FOUNDATION_PROBE_SOC_MAX_IN_FLIGHT` | Positive integer, Preview only. No higher than the verified provider/key concurrency allowance. Enforced across instances and deployments using Neon. |
+| `FOUNDATION_PROBE_SOC_MIN_INTERVAL_MS` | Positive integer, Preview only. At least the minimum spacing verified for this model/key. Admission time uses Neon database time across instances. |
+| `FOUNDATION_PROBE_SOC_OUTPUT_TOKEN_BUDGET` | Positive integer, Preview only. Cumulative reservation budget for this activation. For one possible call it must be at least `SOCLAAS_MAX_OUTPUT_TOKENS`; a lower value is a valid stricter limit that rejects every call. Each admitted call reserves the full per-request output cap, even if the provider later returns fewer tokens. |
 
 `MIGRATION_DATABASE_URL` belongs in the GitHub environment secret, not Vercel. `SHADOW_DATABASE_URL` is local only. The adapter makes one non-streaming request with no retry, no model fallback, fixed provider host and configured input/output/time bounds. A 429 is reported neutrally as `rate_or_budget_limited`. Its hard ceilings protect against accidental unbounded settings; they do not resolve G04 or establish provider quotas.
+
+All four probe limit variables must be explicit positive safe integers. Missing values make the authenticated SoC probe return `503 not_configured`; malformed values return `503 invalid_configuration`. Each valid value is submitted to the shared gate independently and ratchets the stored policy even if that request is denied. The gate returns `429 rate_or_budget_limited` when an admission condition is unmet: the cumulative attempt cap is spent, all in-flight slots are occupied, the minimum interval has not elapsed, or adding the full per-request output-token cap would exceed the cumulative budget. A budget below `SOCLAAS_MAX_OUTPUT_TOKENS` therefore rejects each new request; the ratcheted budget remains effective until the full operator quota reset.
 
 ## 5. First deployment and Preview checks
 
@@ -96,9 +102,9 @@ Vercel CLI `curl` is used to test protected deployment URLs. The command support
 
 ## 6. Temporary synthetic Preview probe
 
-Only after the Preview deployment is protected with Vercel Authentication, the Preview database is confirmed non-production, and G04 permits a bounded test:
+Only after the Preview deployment is protected with Vercel Authentication, the Preview database is confirmed non-production, and G04 permits a bounded test. Before enabling SoCLaaS, confirm the exact configured model is permitted for the key and course, then verify the key's request, concurrency, output-token, rate-window, cost and data-handling limits from authoritative current sources. Choose all four `FOUNDATION_PROBE_SOC_*` values explicitly from those verified limits for one probe activation. `maxAttempts` and `outputTokenBudget` are cumulative gate caps, not rolling-window limits; the gate does not infer or reset a provider quota window. If the verified limits or remaining allowance are unknown, leave the probe disabled. No example numeric values are safe defaults.
 
-1. Generate a random 32-byte-or-longer probe token, store it as Vercel **Preview** secret `FOUNDATION_PROBE_TOKEN`, and set Preview `FOUNDATION_PROBE_ENABLED=true`. Keep the token out of shell tracing, shell history, source, URL query strings and logs. `openssl rand -hex 32` can generate 32 random bytes encoded as hex; store the result directly in an approved secret manager before configuring Vercel.
+1. In Vercel **Preview** variables, set the four `FOUNDATION_PROBE_SOC_*` limits. Ensure the token is temporarily stored as a Vercel **Preview** secret `FOUNDATION_PROBE_TOKEN`; set Preview `FOUNDATION_PROBE_ENABLED=true` only when ready to test. Keep the token out of shell tracing, shell history, source, URL query strings and logs. `openssl rand -hex 32` can generate 32 random bytes encoded as hex; store the result directly in an approved secret manager before configuring Vercel. Keep all four limit variables and the enablement/token settings absent or disabled in Production.
 2. Use an authenticated Vercel CLI session linked to the project. Keep the original token in the approved secret manager and load it into the local process through that manager's protected injection mechanism. Vercel sensitive environment values are write-only; do not try to retrieve `FOUNDATION_PROBE_TOKEN` with `vercel env pull` or `vercel env run` ([environment variable docs](https://vercel.com/docs/environment-variables/manage-across-environments)). Disable shell tracing, do not paste the token into a command, and do not capture request headers in logs. Replace only the deployment URL and returned synthetic UUID; never add caller prompt, model or base URL values.
 
 ```sh
@@ -120,6 +126,41 @@ corepack pnpm dlx vercel@58.4.4 curl "/api/internal/foundation-probe?operation=p
 
 For persistence across redeploys, create the record, deploy the next reviewed Preview revision, then check the same UUID before deleting it. Record each probe-enabled deployment's environment, revision and URL privately so every URL can be removed afterward; do not record keys, connection strings, prompt payloads or raw provider error bodies. After checks, remove the Preview `FOUNDATION_PROBE_TOKEN` setting and set `FOUNDATION_PROBE_ENABLED=false` for future deployments, then deploy a reviewed Preview revision with the probe disabled. Vercel environment changes apply only to new deployments, so the old probe-enabled URLs retain their original settings ([environment variable behavior](https://vercel.com/docs/environment-variables)). Delete every probe-enabled deployment, including the initial check deployment and any redeploy used for persistence verification, with `vercel remove <deployment-url>` or the Vercel dashboard ([CLI removal docs](https://vercel.com/docs/cli/remove)). Verify each removed URL no longer serves the route and the new disabled deployment returns 404. Rotate the token in the approved secret manager, unset it from the local process, and do not leave the probe enabled for ordinary Preview traffic.
 
+Every probe-enabled Preview deployment must point to the same non-production Neon database. Vercel creates function invocations per request and scales instances with demand, so process-local counters cannot enforce a shared cap ([Functions documentation](https://vercel.com/docs/functions)). The gate is shared by all instances and deployments using that database and keeps cumulative attempt/output-token reservations across requests and redeployments. Each request with valid limit values ratchets the stored policy before it is admitted or rejected: the effective maximum attempts, maximum in-flight calls and output-token budget are the lowest configured values seen, while the effective minimum interval becomes the highest value seen. This policy persists across deployments. A later deployment with higher caps or a shorter interval cannot loosen it; older probe-enabled deployment URLs are subject to the same durable policy when they call the shared gate. When tightening settings, disable the probe and remove older probe-enabled deployment URLs before enabling the new deployment; its first valid request records the tighter settings even if the gate denies that request. A call rejected by any gate limit returns `429 rate_or_budget_limited` without contacting SoCLaaS. The gate reserves the full `SOCLAAS_MAX_OUTPUT_TOKENS` value before each call. A known completed call releases only its in-flight slot; attempts and output-token reservations remain spent. A timeout, cancellation, unavailable provider/transport result or unexpected adapter failure leaves the in-flight slot reserved because the local runtime cannot establish that remote work stopped.
+
+For an uncertain result, disable the probe, unset its token, remove every deployment that still has the probe enabled, and confirm from provider-side usage/activity that the request has ended. If provider-side cessation cannot be confirmed, leave the probe disabled and do not clear the lease. Wait for all probe handlers to finish. Verify the Neon console/connection is targeting the synthetic Preview database, then run the operator-only SQL below to clear stale in-flight leases. Because the probe is disabled and all handlers/provider work have ended, any remaining lease is stale. This repairs concurrency only: it leaves the stored policy (`max_attempts_limit`, `max_in_flight_limit`, `min_interval_ms`, `output_token_budget`), cumulative attempt/output-token counters and last-admission time unchanged. Never run the SQL while a handler or provider request may still be active.
+
+```sql
+BEGIN;
+DELETE FROM soc_probe_reservation WHERE gate_id = 1;
+UPDATE soc_probe_gate
+SET in_flight_count = (
+  SELECT COUNT(*)::BIGINT FROM soc_probe_reservation WHERE gate_id = 1
+)
+WHERE id = 1;
+COMMIT;
+```
+
+Only start a new probe allowance after verifying a changed provider quota/reset window and deliberately authorizing another bounded activation. First disable the probe, unset the token, remove every old probe-enabled deployment URL, and wait for handlers and provider work to cease. Deploy the reviewed version with the newly approved explicit limits, but keep the probe disabled. Then use a separate operator transaction to reset the cumulative counters and persisted strictest-policy fields together; do not include this reset in ordinary lease recovery. Enable the new deployment only after that reset. The first valid request then initializes the new policy from the new deployment's explicit settings:
+
+```sql
+BEGIN;
+DELETE FROM soc_probe_reservation WHERE gate_id = 1;
+UPDATE soc_probe_gate
+SET attempt_count = 0,
+    in_flight_count = 0,
+    reserved_output_tokens = 0,
+    last_admission_at = NULL,
+    max_attempts_limit = NULL,
+    max_in_flight_limit = NULL,
+    min_interval_ms = NULL,
+    output_token_budget = NULL
+WHERE id = 1;
+COMMIT;
+```
+
+Never add a public reset route. These operations apply only to the synthetic Preview database; do not run them against Production.
+
 The route ignores request bodies and accepts only the fixed persistence operations or a fixed synthetic SoC prompt. The SoC adapter is not a public anonymous proxy. Neither successful persistence calls nor this probe complete T14/T15/T28 or either end-user AI workflow.
 
 ## Configuration inventory
@@ -129,6 +170,7 @@ The route ignores request bodies and accepts only the fixed persistence operatio
 | GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`. |
 | GitHub environment secrets | `VERCEL_TOKEN` in `preview`, `production`, and `production-promotion`; `MIGRATION_DATABASE_URL` in `preview` and `production` only. |
 | Vercel Preview/Production runtime variables | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `SOCLAAS_BASE_URL`, `SOCLAAS_MODEL`, `SOCLAAS_MAX_INPUT_BYTES`, `SOCLAAS_MAX_OUTPUT_TOKENS`, `SOCLAAS_TIMEOUT_MS`, `SOCLAAS_API_KEY` (secret, after G04), `FOUNDATION_PROBE_ENABLED`, `FOUNDATION_PROBE_TOKEN` (temporary Preview secret only). |
+| Vercel Preview runtime variables, temporary probe only | `FOUNDATION_PROBE_SOC_MAX_ATTEMPTS`, `FOUNDATION_PROBE_SOC_MAX_IN_FLIGHT`, `FOUNDATION_PROBE_SOC_MIN_INTERVAL_MS`, `FOUNDATION_PROBE_SOC_OUTPUT_TOKEN_BUDGET`; explicit values from verified provider/key limits, no defaults. |
 | Local process via an approved secret manager (or optional ignored `.env.local`) | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `MIGRATION_DATABASE_URL`, `SHADOW_DATABASE_URL`, SoCLaaS settings if explicitly approved for a synthetic local check. Direct Prisma URLs use `sslmode=require&sslaccept=strict`. |
 
 No credential values belong in this inventory. Local checks and test doubles remain distinct from intended-host persistence across requests/redeploys and live SoCLaaS reachability; record unavailable access as unrun evidence, not a pass.

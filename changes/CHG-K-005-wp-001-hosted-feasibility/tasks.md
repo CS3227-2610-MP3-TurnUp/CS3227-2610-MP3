@@ -18,3 +18,16 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Hosted workflow/adapter/probe/guide implemented and local checks recorded in verification.md.
 - [x] Live checks explicitly recorded as unrun for missing account, project, database, key and permitted-model prerequisites.
 - [x] Independent review, four material fixes and recheck recorded in verification.md.
+
+## 19 October 2026 review correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 6 | Durable Neon reservation/release schema, helper, tests and example limit names | Application Foundation Engineer | Source `7d31df6`; SEC05 and selected CHG-K-002 design | Atomic multi-instance attempt, concurrency, interval and aggregate token admission; fail-closed database behavior |
+| 7 | Probe limit parsing, route integration, route tests and setup/recovery guide | Hosting & SoC Engineer | Foundation helper interface handoff | No provider fetch on rejection; conservative uncertain-outcome slot handling; no public reset |
+| 8 | Integrated checks, independent agent verification and corrections | Coordinator, then Implementation Verifier | Completed single-writer outputs | Exact results, findings and limits in verification.md |
+| 9 | Update hosted PR #18 | Delivery Agent | Reviewed implementation and verification evidence | Work branch push/PR update only; no merge or deployment branch push |
+
+- [x] Gate and hosting integration complete, including durable strictest-limit policy and isolated gate database test.
+- [x] Integrated checks and independent verification recorded in verification.md.
+- [ ] Hosted PR updated.
