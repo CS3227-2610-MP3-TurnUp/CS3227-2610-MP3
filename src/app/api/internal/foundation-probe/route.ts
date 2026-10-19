@@ -109,6 +109,9 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     if (!result.ok) return Response.json({ ok: false, outcome: result.outcome }, { status: 503 });
+    if (result.text.trim() !== "READY") {
+      return Response.json({ ok: false, outcome: "invalid_response" }, { status: 503 });
+    }
     return Response.json({ ok: true });
   }
 

@@ -89,6 +89,67 @@ describe("internal foundation probe route", () => {
     expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
   });
 
+  it("accepts the READY sentinel with surrounding whitespace", async () => {
+    enablePreview();
+    mocked.requestSoCCompletion.mockResolvedValue({ ok: true, text: " \nREADY\t " });
+
+    const response = await POST(
+      request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
+  });
+
+  it.each([
+    ["refusal", "I cannot help with that request."],
+    ["extra completion text", "READY. The check is complete."],
+    ["partial sentinel", "REA"],
+  ])("rejects %s without exposing provider text and releases its completed lease", async (_label, text) => {
+    enablePreview();
+    mocked.requestSoCCompletion.mockResolvedValue({ ok: true, text });
+
+    const response = await POST(
+      request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
+    );
+
+    expect(response.status).toBe(503);
+    const body = await response.text();
+    expect(body).toBe(JSON.stringify({ ok: false, outcome: "invalid_response" }));
+    expect(body).not.toContain(text);
+    expect(mocked.releaseSoCProbe).toHaveBeenCalledTimes(1);
+    expect(mocked.releaseSoCProbe).toHaveBeenCalledWith("synthetic-reservation");
+  });
+
+  it("does not respond to a mismatched completion until its completed lease is released", async () => {
+    enablePreview();
+    mocked.requestSoCCompletion.mockResolvedValue({ ok: true, text: "not READY" });
+
+    let finishRelease!: () => void;
+    mocked.releaseSoCProbe.mockImplementation(
+      () => new Promise<void>((resolve) => {
+        finishRelease = resolve;
+      }),
+    );
+
+    let responseSettled = false;
+    const pendingResponse = POST(
+      request("/api/internal/foundation-probe?operation=soc", `Bearer ${token}`),
+    ).then((response) => {
+      responseSettled = true;
+      return response;
+    });
+
+    await vi.waitFor(() => expect(mocked.releaseSoCProbe).toHaveBeenCalledTimes(1));
+    expect(responseSettled).toBe(false);
+    finishRelease();
+
+    const response = await pendingResponse;
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, outcome: "invalid_response" });
+  });
+
   it("returns only a classified safe provider failure", async () => {
     enablePreview();
     mocked.requestSoCCompletion.mockResolvedValue({ ok: false, outcome: "rate_or_budget_limited" });

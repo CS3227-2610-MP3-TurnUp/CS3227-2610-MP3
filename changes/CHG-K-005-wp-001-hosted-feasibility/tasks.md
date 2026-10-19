@@ -31,3 +31,14 @@ No secrets, production private data, public anonymous provider proxy, account/ev
 - [x] Gate and hosting integration complete, including durable strictest-limit policy and isolated gate database test.
 - [x] Integrated checks and independent verification recorded in verification.md.
 - [x] PR #18 updated with the shared admission gate correction, retargeted to `4-foundation-stack`, and implementation commit `bf186e58726dad9a78059a7cddfaa919355a8a12` pushed on `6-hosted-feasibility`. GitHub Actions run `39235464780` passed `pull-request-checks`; deployment, production-candidate verification and promotion jobs were skipped for the PR event.
+
+## 19 October 2026 completion-sentinel correction
+
+| Order | Output | Sole writer / actor | Dependency | Evidence target |
+| --- | --- | --- | --- | --- |
+| 10 | Exact probe completion check and deterministic cases | Hosting & SoC Engineer | Source `e743363e`; fixed `READY` prompt, SEC03/06, DEP04, T14 | Only normalized sentinel succeeds; mismatch is safe `invalid_response`; completed lease releases |
+| 11 | Independent review and material-fix recheck | Implementation Verifier | Completed route/tests | Findings, exact checks and hosted limits in verification.md |
+| 12 | Record and deliver PR #18 correction | Coordinator, then Delivery Agent | Independent verification | Keith log entry and work-branch PR update; no merge/deploy |
+
+- [x] Sentinel correction and independent review recorded in verification.md.
+- [ ] PR #18 updated with the reviewed correction.
