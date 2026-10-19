@@ -1,0 +1,117 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { delimiter, dirname, join, resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const workflow = readFileSync(resolve(".github/workflows/vercel-deploy.yml"), "utf8");
+const parser = resolve(".github/scripts/read-vercel-output.mjs");
+const candidate = "https://turnup-synthetic.vercel.app";
+const diagnostic = `Error while parsing config file: "${resolve("pnpm-lock.yaml")}"`;
+
+function stepScript(name: string) {
+  const start = workflow.indexOf(`      - name: ${name}\n`);
+  if (start < 0) throw new Error(`Missing workflow step: ${name}`);
+  const run = workflow.indexOf("        run: |\n", start);
+  if (run < 0) throw new Error(`Missing workflow script: ${name}`);
+  const lines = workflow.slice(run + "        run: |\n".length).split("\n");
+  const end = lines.findIndex((line) => line.length > 0 && !line.startsWith("          "));
+  return lines.slice(0, end < 0 ? undefined : end)
+    .map((line) => line.replace(/^ {10}/, ""))
+    .join("\n");
+}
+
+function runStep(name: string, stdout: string, exitCode = 0, target = "production") {
+  const directory = mkdtempSync(join(tmpdir(), "turnup-vercel-output-"));
+  const outputFile = join(directory, "output");
+  const summaryFile = join(directory, "summary");
+  try {
+    const result = spawnSync("bash", ["-c", `
+corepack() { printf '%s' "$CLI_STDOUT"; return "$CLI_EXIT"; }
+# Metadata fetch is covered separately by vercel-api-scope.test.ts.
+node() {
+  if [[ "$1" == "--input-type=module" ]]; then cat >/dev/null; return 0; fi
+  command node "$@"
+}
+${stepScript(name)}
+`], {
+      encoding: "utf8",
+      env: {
+        PATH: `${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ""}`,
+        NODE_ENV: "test",
+        CLI_STDOUT: stdout,
+        CLI_EXIT: String(exitCode),
+        DEPLOYMENT_TARGET: target,
+        VERCEL_TOKEN: "synthetic-token",
+        CANDIDATE_URL: candidate,
+        GITHUB_SHA: "synthetic-sha",
+        GITHUB_REF_NAME: "master",
+        GITHUB_OUTPUT: outputFile,
+        GITHUB_STEP_SUMMARY: summaryFile,
+      },
+    });
+    let output = "";
+    try { output = readFileSync(outputFile, "utf8"); } catch { /* Failed steps produce no output. */ }
+    return { ...result, output };
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+describe("Vercel output handling in the executable workflow steps", () => {
+  for (const target of ["preview", "production"]) {
+    it.each([candidate, `${diagnostic}\n${candidate}\n`])(`captures only the ${target} deployment URL`, (stdout) => {
+      const result = runStep("Upload checked prebuilt output", stdout, 0, target);
+      expect(result.status).toBe(0);
+      expect(result.output).toBe(`candidate_url=${candidate}\n`);
+    });
+
+    it(`preserves a failed ${target} deploy even if it prints a valid URL`, () => {
+      const result = runStep("Upload checked prebuilt output", candidate, 7, target);
+      expect(result.status).toBe(7);
+      expect(result.output).toBe("");
+    });
+  }
+
+  it.each([
+    "", diagnostic, `${candidate}\n${candidate}`,
+    "https://user:synthetic-secret@turnup-synthetic.vercel.app",
+    "https://turnup-synthetic.vercel.app/extra",
+    "https://turnup-synthetic.vercel.app?token=synthetic-secret",
+    "https://turnup-synthetic.vercel.app.evil.example",
+    `Unexpected diagnostic\n${candidate}`,
+    `Error while parsing config file: "other.yaml"\n${candidate}`,
+  ])("rejects absent, ambiguous, unsafe or unexpected upload output: %s", (stdout) => {
+    const result = runStep("Upload checked prebuilt output", stdout);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toBe("");
+    expect(result.stderr).not.toContain("synthetic-secret");
+  });
+
+  it.each(["200", `${diagnostic}\n200`])("accepts the smoke response independently of the lockfile diagnostic: %s", (stdout) => {
+    const result = runStep("Check candidate project, production target and source revision", stdout);
+    expect(result.status).toBe(0);
+    expect(result.output).toBe(`candidate_url=${candidate}\n`);
+  });
+
+  it.each(["", "503", "200\n200", "unexpected\n200"])("blocks promotion after a failed or malformed smoke response: %s", (stdout) => {
+    const result = runStep("Check candidate project, production target and source revision", stdout);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toBe("");
+  });
+
+  it("preserves a failed curl exit even if it prints 200", () => {
+    const result = runStep("Check candidate project, production target and source revision", "200", 22);
+    expect(result.status).toBe(22);
+    expect(result.output).toBe("");
+  });
+
+  it("routes the known diagnostic to stderr and supports CRLF output", () => {
+    const result = spawnSync(process.execPath, [parser, "deployment-url"], {
+      input: `${diagnostic}\r\n${candidate}\r\n`, encoding: "utf8",
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe(`${candidate}\n`);
+    expect(result.stderr).toContain("known diagnostic");
+  });
+});
