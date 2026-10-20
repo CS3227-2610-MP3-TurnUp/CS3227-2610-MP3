@@ -17,3 +17,5 @@ Darryl’s subsequent approval authorises the planned implementation/checks on h
 20 October2026 UI refinement: Darryl requested FoC-Team-12 user-service inline credential editing. Parent owns two UI paths and shared records; planv1.3 records reference inspection, local-only confirmation and unchanged server/session policy. No FoC service code, recovery feature or dependency is introduced.
 
 20 October2026 delivery authorisation: Darryl requested local branch rename to preview/WP-002 and logical commits of the combined WP-002 work. This explicitly supersedes the earlier no-commit boundary; push/PR/issue mutation/merge/deployment remain unauthorised. Historical source/branch records above remain provenance.
+
+20 October2026 remote delivery: Darryl explicitly authorised push and PR creation. [PR#23](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/23) is open from preview/WP-002 into master, superseding the earlier no-push boundary for this delivery only. No merge/manual deployment/issue mutation or hosted-success claim.
