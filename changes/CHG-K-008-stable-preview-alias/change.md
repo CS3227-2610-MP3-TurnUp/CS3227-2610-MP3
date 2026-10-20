@@ -1,6 +1,7 @@
 # CHG-K-008 — Stable Preview alias
 
-Status: implemented and locally verified; PR publication pending.
+Status: complete for scoped implementation, local verification and publication.
+PR: [#24](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/24). Live Preview checks remain unrun.
 
 ## Intent and source
 

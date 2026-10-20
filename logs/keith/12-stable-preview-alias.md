@@ -24,3 +24,11 @@ Local full suite passed 126/126 tests in nine files, full lint passed, workflow 
 and shell syntax checks passed, and 16 local Markdown targets resolved. Independent
 agent verification reproduced the relevant checks and returned no actionable
 defects. No live alias or shareable-link persistence result is claimed.
+
+Committed implementation as `264e996` and pushed the dedicated branch. Created and
+read back normal [PR #24](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/24) against master with only the ten scoped paths.
+Initial PR checks were pending; deployment jobs were skipped. Recorded publication
+in the change evidence; the final GitHub check outcome remains visible on the PR.
+Next: integrate the workflow into a protected Preview branch, run it, then verify
+the same hostname and complete sharing link across a second deployment. A master
+merge follows the existing Production workflow; no merge was performed here.

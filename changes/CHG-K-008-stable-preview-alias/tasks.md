@@ -10,7 +10,7 @@ and returns findings; primary agent records them, avoiding overlapping writers.
 - [x] Update operational contract and setup guidance, preserving isolation.
 - [x] Execute local shell/static regression checks and record exact results.
 - [x] Independent agent review; disposition findings and recheck material fixes.
-- [ ] Commit scoped paths, push authorised branch, create/read back normal PR.
+- [x] Commit scoped paths, push authorised branch, create/read back normal PR [#24](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/24).
 
 ## Handoff
 

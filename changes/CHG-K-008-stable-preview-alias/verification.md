@@ -1,6 +1,6 @@
 # CHG-K-008 — Verification
 
-Source: `0c7d5ad`; reviewed implementation snapshot will be recorded below.
+Source: `0c7d5ad`; reviewed implementation snapshot is recorded below.
 Human owner: Keith. Primary agent authors implementation; independent verifier
 has no authorship. Scope: DEP01–03, DEV01–03, SEC02/06, partial T13/T15/T28.
 
@@ -62,3 +62,14 @@ reassignment across Preview uploads, authentication on the plain hostname and
 shareable-link persistence require a separately authorised Preview run after the
 workflow is integrated. All allowed Preview branches share one alias; latest
 successful assignment wins. CLI failure may leave an uploaded deployment present.
+
+## Delivery
+
+Committed reviewed implementation as `264e99631592bacd9f4302724130b80a476489b5`
+(`ci: keep a stable Preview deployment alias`) and pushed the isolated branch
+without force. Created normal [PR #24](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/24), base master, head
+chg-k-008-preview-alias. GitHub readback confirmed open/non-draft state, exact head,
+title, body and ten scoped changed paths. Initial Actions run `39463015684` has
+PR checks pending and deployment/verification/promotion jobs skipped. No merge or
+deployment occurred. This delivery record is an evidence-only follow-up; reviewed
+implementation blobs are unchanged. Final CI outcome can be read on the PR.
