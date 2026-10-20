@@ -64,7 +64,15 @@ dedicated lowercase `*.vercel.app` hostname, for example
 `turnup-team-preview.vercel.app`. Use a hostname only, without `https://`, a path,
 query string or trailing slash. Never use a Production hostname or an alias owned
 by another project. No DNS purchase is needed for an available `vercel.app` alias.
-The workflow validates this value before build/migration/upload and uses the
+The workflow validates syntax and checks the project's complete paginated
+Production-domain list before build/migration/upload, then rechecks that list
+immediately before alias assignment. A collision or failed/malformed lookup blocks
+Preview. The read-only lookup uses the existing environment token and account/project
+scope; no additional hostname variable is needed. It uses Vercel's
+[Production-domain filter](https://vercel.com/docs/rest-api/projects/retrieve-project-domains-by-project-by-id-or-name).
+Domain settings must not be changed concurrently with alias assignment: the API
+check and CLI mutation are separate operations, not an atomic provider-side guard.
+The workflow uses the
 pinned CLI's [`alias set`](https://vercel.com/docs/cli/alias) after a successful
 Preview upload. It records both the unique candidate URL and **Stable Preview
 URL** in the Actions summary. An alias failure fails the job; the uploaded

@@ -26,3 +26,16 @@ findings/checks only in verification.md via primary agent. Log owner Keith:
 Next bounded runtime task: run the integrated workflow from an authorised protected
 `preview/*` branch, verify stable target across two uploads and authentication/
 complete sharing-link behaviour. No such deployment is performed by this increment.
+
+## Follow-up tasks: Production hostname collision
+
+Source: `65b845f`, existing PR #24. Same primary writer/log; extend allowed paths
+with `.github/scripts/check-preview-alias.mjs` and
+`tests/hosting/preview-alias-safety.test.ts`. SEC06/DEP02–03; T13/T15/T28 portions.
+
+- [x] Verify original syntax-only acceptance and reconcile contract/scenario.
+- [x] Implement paginated project Production-domain checks before deployment work
+  and immediately before assignment; fail closed on lookup errors.
+- [x] Reproduce collision, later-page collision, metadata failure and allowed alias
+  checks; lint, shell/YAML checks and independent agent recheck.
+- [ ] Commit/push scoped correction to existing PR and read back delivery.

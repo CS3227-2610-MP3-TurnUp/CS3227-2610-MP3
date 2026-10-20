@@ -44,7 +44,11 @@ Preview upload succeeds, then retain its unique candidate URL/revision, assign t
 fixed hostname to that candidate and report the stable URL after assignment
 succeeds. Missing/malformed alias configuration stops Preview before deployment
 work; upload or alias failure fails the job without a stable-address success claim.
-Production requires no Preview alias and does not assign it. All permitted Preview
+Given PREVIEW_ALIAS equals a current Production hostname (including a later page
+of the project's Production-domain list), then reject before build/migration/upload
+and never issue alias assignment. Failed/malformed/pagination-incomplete lookups
+also block Preview. Recheck immediately before assignment in case configuration
+changed during the build. Production requires no Preview alias and does not assign it. All permitted Preview
 branches share the most recently assigned target. Method: execute workflow shells
 with a synthetic CLI, including inert hostile configuration; separately verify
 hosted reassignment across two deployments and protection on the plain hostname.

@@ -26,12 +26,16 @@ is unchanged. Prerequisites CHG-K-005/006 are integrated in the source revision.
 ## Scope and acceptance
 
 Allowed paths: `.github/workflows/vercel-deploy.yml`,
-`tests/hosting/preview-alias.test.ts`, `tests/hosting/vercel-output.test.ts`, `docs/wp-001-hosting-setup.md`,
+`tests/hosting/preview-alias.test.ts`, `tests/hosting/preview-alias-safety.test.ts`,
+`.github/scripts/check-preview-alias.mjs`, `tests/hosting/vercel-output.test.ts`, `docs/wp-001-hosting-setup.md`,
 `specs/shared/deployment-and-retention.md`,
 `specs/verification/acceptance-scenarios.md`, this change directory and the owner log.
 
 - Read `PREVIEW_ALIAS` from the selected GitHub environment; validate a dedicated
   lowercase single-label `*.vercel.app` hostname before Preview build/migrations.
+  Reject project Production-domain collisions using complete paginated read-only
+  metadata before deployment work and again before alias assignment. Metadata
+  failures block Preview. No new configuration variable or provider mutation.
 - After successful Preview upload and strict URL parsing, assign the configured
   alias with the pinned Vercel CLI. Report the stable URL only after CLI success.
 - Production never assigns the Preview alias and requires no alias variable.
@@ -54,3 +58,14 @@ availability. Live routing, protection, share-token persistence and the user's
 saved GitHub variable remain unverified. Steps for the first authorised Preview
 run are in the hosting guide. No product decision or existing issue scope is
 changed; issue reconciliation is not applicable. See tasks.md and verification.md.
+
+## Follow-up: Production hostname collision
+
+Keith reported that the original syntax-only check allowed the project's existing
+Production hostname. Verified against the shell and Vercel alias assignment docs:
+this is a real configuration-isolation defect missed by the initial agent review.
+Continue CHG-K-008 on the same isolated branch/PR. Added read-only project-scoped
+Production-domain validation with production=true, pagination, timeouts, fixed
+CLI diagnostics and a bounded fail-closed scan. The correction changes no product
+rule or account setting. The accepted operational target requires validation before
+build/migration/upload and revalidation just before alias mutation.

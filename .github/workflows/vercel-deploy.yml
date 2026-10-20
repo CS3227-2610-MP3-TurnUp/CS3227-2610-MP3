@@ -111,6 +111,11 @@ jobs:
           echo "Deployment target: $DEPLOYMENT_TARGET"
           echo "Source revision: $GITHUB_SHA"
           printf 'target=%s\n' "$DEPLOYMENT_TARGET" >> "$GITHUB_OUTPUT"
+      - name: Reject Production hostnames before Preview deployment work
+        if: env.DEPLOYMENT_TARGET == 'preview'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node .github/scripts/check-preview-alias.mjs
       - name: Require an initialized production deployment before Preview
         if: env.DEPLOYMENT_TARGET == 'preview'
         shell: bash
@@ -208,6 +213,8 @@ jobs:
           echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
           printf 'Candidate URL: `%s`\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            # Recheck after the build in case domain configuration changed meanwhile.
+            node .github/scripts/check-preview-alias.mjs
             corepack pnpm dlx vercel@58.4.4 alias set \
               "$deployment_url" "$PREVIEW_ALIAS" \
               --token="$VERCEL_TOKEN"

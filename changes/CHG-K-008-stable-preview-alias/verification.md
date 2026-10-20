@@ -73,3 +73,56 @@ title, body and ten scoped changed paths. Initial Actions run `39463015684` has
 PR checks pending and deployment/verification/promotion jobs skipped. No merge or
 deployment occurred. This delivery record is an evidence-only follow-up; reviewed
 implementation blobs are unchanged. Final CI outcome can be read on the PR.
+
+## Follow-up: Production-hostname isolation and PR typecheck
+
+Source correction: `65b845f` plus the current CHG-K-008 working snapshot. The
+reported collision is valid: a current Production `*.vercel.app` hostname passes
+the original syntax regex and the upload shell passes it directly to alias set.
+Vercel's [CLI reference](https://vercel.com/docs/cli/alias) documents reassignment;
+its [project-domain API](https://vercel.com/docs/rest-api/projects/retrieve-project-domains-by-project-by-id-or-name)
+provides production=true filtering and paginated results. No live destructive
+reproduction was attempted. The initial review missed this DEP02/03 defect.
+
+Correction: `.github/scripts/check-preview-alias.mjs` scans the current project's
+Production domains (100 per page, at most 20 pages, 10-second per-fetch deadline),
+rejects a collision and fails closed for HTTP/network/JSON/schema/pagination errors.
+It uses the existing token and team/personal scope, never prints raw responses or
+provider errors, and runs before deployment work and again before alias assignment.
+There are no new GitHub configuration values. Provider domain changes still need
+coordination because checking and assigning are separate, non-atomic operations.
+
+The user also supplied the failed PR typecheck: Next's ProcessEnv requires NODE_ENV
+in subprocess env. Corrected the original alias fixture and both new safety-test
+subprocess environments to use NODE_ENV=test. Initial local checks had not run
+full typechecking; that verification gap is corrected here.
+
+| Follow-up command/check | Actual result |
+| --- | --- |
+| Node 24.21.0, `node node_modules/vitest/vitest.mjs run` | 152/152 tests passed in 10 files. Covers Production collision (including later pages and normalized DNS spelling), allowed alias, HTTP 401/403/404/429/500, malformed/unavailable metadata, pagination limits, account scoping, inert hostile configuration, fixed diagnostics, recheck failure and Production no-op. |
+| Same Node PATH, `node node_modules/eslint/bin/eslint.js .` | Passed full lint. |
+| `corepack pnpm typecheck` | Wrapper could not create external Corepack cache (EPERM); no checks executed by this invocation. |
+| Same Node PATH, `node node_modules/prisma/build/index.js generate`, `node node_modules/next/dist/bin/next typegen`, `node node_modules/typescript/bin/tsc --noEmit` | All passed; same installed command sequence as package typecheck. |
+| Same Node PATH, `node node_modules/prisma/build/index.js validate` | Passed. |
+| Ruby YAML parse and Open3 bash -n on every workflow run block | YAML parsed; all 20 shell blocks passed. |
+| `git diff --check` | Passed. |
+
+Independent agent `verify_preview_alias` rechecked the correction against `65b845f`
+without authorship or implementation edits: no actionable defects. It independently
+passed full TypeScript checking using author-generated outputs, 152/152 tests, full
+lint, YAML/20 shell blocks and whitespace. Additional CLI-wrapper tests injected
+network/JSON/HTTP failures via synthetic fetch: exit 1, empty stdout and fixed stderr
+only. Reviewed blobs: guard `44ee71d5ad7fa372f5841790e5792473e1fc3e49`, workflow
+`235aaa8324479133a7bf1efdbe71237a0d3cc11c`, safety tests
+`c3d179f98f636b629d2945cd31466b90f4fa8d9e`, alias tests
+`76569562008a4a65ff46f182aa455324b837b827`, output tests
+`d04cf5393dfb292aeae893651d748aca578da108`. No unresolved follow-up findings.
+
+| Finding | Consequence | Disposition |
+| --- | --- | --- |
+| Production alias collision (high impact, DEP02/03) | Misconfigured Preview could replace Production hostname routing | Corrected with paginated API guard and regression tests; independently rechecked. |
+| Missing NODE_ENV (CI failure) | Required PR TypeScript check fails on test subprocess env | Corrected in all affected fixtures; full tsc now passes independently. |
+
+Live provider requests, alias mutations,
+deployment and sharing-token checks remain unrun. Updated allowed paths include
+the safety script and its synthetic regression tests; no product feature changed.

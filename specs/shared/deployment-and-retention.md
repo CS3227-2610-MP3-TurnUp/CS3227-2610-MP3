@@ -23,7 +23,13 @@ Keith selected the [CLI deployment route](../../changes/CHG-K-002-wp-001-foundat
 Keith assigned a stable Preview address on 21 October 2026. For the CLI workflow,
 DEP01/DEP03 retain each upload's unique candidate URL/revision and additionally
 assign the configured dedicated `PREVIEW_ALIAS` after a successful Preview upload.
-Missing/malformed Preview alias configuration blocks before deployment work;
+Missing/malformed Preview alias configuration blocks before deployment work.
+The alias must not match any current project Production domain: check the complete
+paginated Production-domain list before deployment work and again immediately
+before alias assignment. An unavailable/malformed/incomplete lookup fails closed;
+no Production-hostname reassignment is permitted by this Preview path. Concurrent
+provider domain-setting changes require operational coordination because checking
+and assigning are separate provider requests;
 failed alias assignment fails the job without claiming the stable URL was updated.
 All permitted Preview branches share this address; the last successful assignment
 determines its target. Production does not assign it. Keep deployment protection

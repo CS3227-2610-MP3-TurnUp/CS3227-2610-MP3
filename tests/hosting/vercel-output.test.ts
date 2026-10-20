@@ -36,6 +36,7 @@ corepack() {
 }
 # Metadata fetch is covered separately by vercel-api-scope.test.ts.
 node() {
+  if [[ "$1" == ".github/scripts/check-preview-alias.mjs" ]]; then return 0; fi
   if [[ "$1" == "--input-type=module" ]]; then cat >/dev/null; return 0; fi
   command node "$@"
 }

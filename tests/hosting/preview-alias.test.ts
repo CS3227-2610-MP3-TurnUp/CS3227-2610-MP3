@@ -23,6 +23,12 @@ function execute(name: string, overrides: Record<string, string> = {}) {
   writeFileSync(callsFile, "");
   writeFileSync(summaryFile, "");
   const stub = `
+node() {
+  if [[ "$1" == ".github/scripts/check-preview-alias.mjs" ]]; then
+    return "\${MOCK_SAFETY_EXIT:-0}"
+  fi
+  command node "$@"
+}
 corepack() {
   if [[ "$*" == *" deploy "* ]]; then
     printf '%s\\n' '${candidate}'
@@ -40,6 +46,7 @@ corepack() {
     const result = spawnSync("bash", ["-c", stub + shellFor(name)], {
       encoding: "utf8",
       env: {
+        NODE_ENV: "test",
         PATH: process.env.PATH,
         DEPLOYMENT_TARGET: "preview",
         PREVIEW_ALIAS: alias,
@@ -116,6 +123,18 @@ describe("stable Preview alias workflow", () => {
     const result = execute(uploadStep, { MOCK_ALIAS_EXIT: "13" });
     expect(result.status).toBe(13);
     expect(result.summary).toContain("Candidate URL:");
+    expect(result.summary).not.toContain("Stable Preview URL:");
+  });
+
+  it("checks Production domains before deployment work and again before alias assignment", () => {
+    const preflight = workflow.indexOf("- name: Reject Production hostnames before Preview deployment work");
+    expect(preflight).toBeGreaterThan(0);
+    expect(preflight).toBeLessThan(workflow.indexOf("- name: Require an initialized production deployment before Preview"));
+    expect(workflow.slice(preflight, workflow.indexOf("- name: Require an initialized", preflight)))
+      .toContain("if: env.DEPLOYMENT_TARGET == 'preview'");
+    const result = execute(uploadStep, { MOCK_SAFETY_EXIT: "14" });
+    expect(result.status).toBe(14);
+    expect(result.calls).toBe("");
     expect(result.summary).not.toContain("Stable Preview URL:");
   });
 
