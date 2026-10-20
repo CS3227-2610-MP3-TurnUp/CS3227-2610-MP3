@@ -123,3 +123,15 @@ Darryl asked to assess the PR checker's remarks, fix those that apply and push t
 - Read-only GitHub environment configuration found Preview currently lacks `PREVIEW_ORIGIN`; the next Preview workflow run will fail before upload until the value is added. No secret/Vercel setting/deployment/database was read or changed.
 - Parent checks passed: focused executable workflow30/30, focused lint/typecheck, full186/186 deterministic tests across17files, productionbuild and whitespace. Required independent non-author review initially found a missing test-only `NODE_ENV` typecheck failure; after correction it independently reproduced TypeScript, workflow checks and direct signup/login response-failure handling with no unresolved actionable defect. Exact details and limits are appended to CHG-D-003 verification.
 - Existing local-only agent definitions and unrelated docs/agent-usage.md remain uncommitted. No recovery, migration, session-policy, Production or hosted-success claim is added.
+
+# 10 - Restore Preview Deployment Link - 21 October 2026
+
+## Request
+
+Darryl reported that the required `PREVIEW_ORIGIN` guard was failing GitHub Actions before a Preview deployment link could be produced, and instructed correction of that immediate deployment problem.
+
+## Results
+
+- Parent removed the required-alias block. With no `PREVIEW_ORIGIN`, the protected Preview workflow now proceeds normally and publishes a clearly labelled **Open candidate** link from the validated deployment URL. It does not assign an alias or imply registration will work at that generated host. A configured valid alias still produces **Open Preview**; malformed configured aliases still fail before upload.
+- Parent ran focused workflow31/31, typecheck, lint, full187/187 across17files, productionbuild and whitespace. Required independent reviewer caught and parent corrected an initially unreachable fallback test; reviewer rechecked focused workflow, TypeScript, lint, whitespace and executed fallback behavior with no unresolved actionable finding. Exact evidence is appended to CHG-D-003 verification.
+- No Vercel/GitHub configuration, database, migration, account or Production action occurred. The resulting push will trigger the normal Preview deployment; hosted authentication remains separately unverified.

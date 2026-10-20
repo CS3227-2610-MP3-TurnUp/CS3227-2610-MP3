@@ -18,3 +18,5 @@ The initial planning-only approval turn dispatched no implementation/audit. Subs
 - [x] Added shared client/server credential input validation with field-associated submit errors, private allowlisted auth failure stages and validated clickable Preview/deployment links. Fresh180 deterministic tests, focused lint, productionbuild, local UI/error checks and non-author review are recorded in the21 October addendum. Hosted root cause remains unverified.
 
 - [x] Corrected applicable PR checker findings: Preview links now publish a workflow-assigned configured stable alias, and malformed/transport authentication responses retain generic public availability feedback. Focused workflow and application checks are recorded in the dated verification addendum.
+
+- [x] Removed the new required-alias deployment block after Darryl reported it prevented the needed Preview link. Absent aliases now publish an explicitly limited candidate link; configured aliases retain the stable Preview link. Fresh workflow/full checks and independent review are recorded in verification.

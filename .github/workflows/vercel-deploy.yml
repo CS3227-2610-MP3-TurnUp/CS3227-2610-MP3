@@ -97,7 +97,7 @@ jobs:
               ;;
             *) echo "Branch and deployment target do not match."; exit 1 ;;
           esac
-          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+          if [[ "$DEPLOYMENT_TARGET" == "preview" && -n "$PREVIEW_ORIGIN" ]]; then
             node --input-type=module <<'NODE'
           const configured = process.env.PREVIEW_ORIGIN ?? "";
           try {
@@ -221,10 +221,14 @@ jobs:
           printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
-            preview_alias="${PREVIEW_ORIGIN#https://}"
-            corepack pnpm dlx vercel@58.4.4 alias set "$deployment_url" "$preview_alias" --token="$VERCEL_TOKEN"
-            printf 'preview_url=%s\n' "$PREVIEW_ORIGIN" >> "$GITHUB_OUTPUT"
-            printf '### Preview ready\n\n[Open Preview](%s)\n' "$PREVIEW_ORIGIN" >> "$GITHUB_STEP_SUMMARY"
+            if [[ -n "$PREVIEW_ORIGIN" ]]; then
+              preview_alias="${PREVIEW_ORIGIN#https://}"
+              corepack pnpm dlx vercel@58.4.4 alias set "$deployment_url" "$preview_alias" --token="$VERCEL_TOKEN"
+              printf 'preview_url=%s\n' "$PREVIEW_ORIGIN" >> "$GITHUB_OUTPUT"
+              printf '### Preview ready\n\n[Open Preview](%s)\n' "$PREVIEW_ORIGIN" >> "$GITHUB_STEP_SUMMARY"
+            else
+              printf '### Preview candidate uploaded\n\n[Open candidate](%s)\n\nThis generated deployment URL may not accept authentication POSTs until a matching stable Preview alias is configured.\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+            fi
           else
             printf 'Production candidate uploaded (not yet promoted): [Open candidate](%s)\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
           fi

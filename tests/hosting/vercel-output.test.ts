@@ -22,7 +22,7 @@ function stepScript(name: string) {
     .join("\n");
 }
 
-function runStep(name: string, stdout: string, exitCode = 0, target = "production") {
+function runStep(name: string, stdout: string, exitCode = 0, target = "production", configuredPreviewOrigin = previewOrigin) {
   const directory = mkdtempSync(join(tmpdir(), "turnup-vercel-output-"));
   const outputFile = join(directory, "output");
   const summaryFile = join(directory, "summary");
@@ -56,7 +56,7 @@ ${stepScript(name)}
         GITHUB_REF_NAME: "master",
         GITHUB_OUTPUT: outputFile,
         GITHUB_STEP_SUMMARY: summaryFile,
-        PREVIEW_ORIGIN: previewOrigin,
+        PREVIEW_ORIGIN: configuredPreviewOrigin,
       },
     });
     let output = "";
@@ -69,9 +69,22 @@ ${stepScript(name)}
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+
 }
 
 describe("Vercel output handling in the executable workflow steps", () => {
+  it("publishes a generated Preview candidate when no stable alias is configured", () => {
+    const result = runStep("Upload checked prebuilt output", candidate, 0, "preview", "");
+    expect(result.status).toBe(0);
+    expect(result.output).toBe(`candidate_url=${candidate}\n`);
+    expect(result.summary).toContain(`[Open candidate](${candidate})`);
+    expect(result.summary).toContain("may not accept authentication POSTs");
+    expect(result.args).toEqual([
+      "pnpm", "dlx", "vercel@58.4.4", "deploy", "--prebuilt", "--target=preview", "--token=synthetic-token",
+      "--meta", "turnupCommit=synthetic-sha", "--meta", "turnupRef=master", "--meta", "turnupTarget=preview",
+    ]);
+  });
+
   for (const target of ["preview", "production"]) {
     it.each([candidate, `${diagnostic}\n${candidate}\n`])(`captures only the ${target} deployment URL`, (stdout) => {
       const result = runStep("Upload checked prebuilt output", stdout, 0, target);
@@ -108,7 +121,7 @@ describe("Vercel output handling in the executable workflow steps", () => {
     expect(result.stderr).not.toContain("synthetic-secret");
   });
 
-  it.each(["", "http://preview.turnup.example", "https://preview.turnup.example/path", "https://user:pass@preview.turnup.example", "https://preview.turnup.example:8443"])("blocks a malformed Preview origin before deployment: %s", (origin) => {
+  it.each(["http://preview.turnup.example", "https://preview.turnup.example/path", "https://user:pass@preview.turnup.example", "https://preview.turnup.example:8443"])("blocks a malformed configured Preview origin before deployment: %s", (origin) => {
     const directory = mkdtempSync(join(tmpdir(), "turnup-trust-"));
     try {
       const result = spawnSync("bash", ["-c", stepScript("Confirm trusted branch and exact deployment target")], {
@@ -137,6 +150,25 @@ describe("Vercel output handling in the executable workflow steps", () => {
           NODE_ENV: "test",
           DEPLOYMENT_TARGET: "preview", REF_PROTECTED: "true", VERCEL_ORG_ID: "team_synthetic", VERCEL_PROJECT_ID: "prj_synthetic",
           PREVIEW_ORIGIN: previewOrigin, GITHUB_REF: "refs/heads/preview/test", GITHUB_EVENT_NAME: "push", GITHUB_SHA: "synthetic-sha",
+          GITHUB_OUTPUT: output,
+        },
+      });
+      expect(result.status).toBe(0);
+      expect(readFileSync(output, "utf8")).toBe("target=preview\n");
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("accepts an absent Preview alias before deployment", () => {
+    const directory = mkdtempSync(join(tmpdir(), "turnup-trust-"));
+    try {
+      const output = join(directory, "output");
+      const result = spawnSync("bash", ["-c", stepScript("Confirm trusted branch and exact deployment target")], {
+        encoding: "utf8",
+        env: {
+          PATH: `${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ""}`,
+          NODE_ENV: "test",
+          DEPLOYMENT_TARGET: "preview", REF_PROTECTED: "true", VERCEL_ORG_ID: "team_synthetic", VERCEL_PROJECT_ID: "prj_synthetic",
+          PREVIEW_ORIGIN: "", GITHUB_REF: "refs/heads/preview/test", GITHUB_EVENT_NAME: "push", GITHUB_SHA: "synthetic-sha",
           GITHUB_OUTPUT: output,
         },
       });
