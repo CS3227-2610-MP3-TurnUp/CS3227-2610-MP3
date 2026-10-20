@@ -182,3 +182,16 @@ Darryl requested a seamless account UI with optional Name/Phone using the existi
 - Parent used the UI iteration guidance and updated StudentProfileForm to saved-value/Not set rows, individual Edit actions, one profile editor, Save/Cancel, success confirmation and focus restoration. Optional removal/server validation/session policy remain unchanged. Conflict reload refreshes the counterpart/version while retaining the active draft. Updated accounts/scoped T16 targets and change tasks/evidence.
 - Scoped lint/TypeScript and11/11 existing account tests passed. Synthetic mocked browser checks covered cancellation, validation, canonical saves, blank removal and stale retry preserving the latest other field; desktop/mobile visuals and320/375/1280 overflow checked. Temporary test route removed and browser reset/closed; no new real account/profile/database mutation.
 - Independent non-author reviewer reproduced relevant checks and actual-source state transitions, with no actionable defects. Exact reviewed digest, checks and limitations are in CHG-D-003 verification. Changes remain local, available through the running local server; no commit/push/deployment. Existing unrelated/local/generated changes preserved.
+
+# 15 - Commit Inline Profile and Adopt Account Dropdown - 21 October 2026
+
+## Request
+
+Darryl asked to commit the inline Student profile change and match FoC-Team-12 account navigation with a top-right profile icon/dropdown containing Profile and Log out.
+
+## Results
+
+- Committed the reviewed inline-profile slice/evidence as626e029. Read FoC user-service frontend App.tsx702-728 and styles71-83; used their native disclosure/avatar/username/chevron/dropdown presentation with TurnUp tokens and44px controls, excluding FoC roles/services/auth implementation.
+- Added shared AccountMenu and integrated Student/Organiser/account headers, replacing the standalone logout and redundant landing-page settings link. Profile goes to /account; Log out reuses the existing server-revocation POST and only redirects after success. Escape returns trigger focus, outside pointer/focus-leave close it, and narrow screens visually hide username while preserving its accessible label. Canonical presentation/scenario and change records updated; no server/schema/session-policy change.
+- Parent scoped lint/TypeScript passed;24 existing auth/account tests across3files and whitespace passed. Browser temporary fixture used real menu/logout components with synthetic username/mocked responses: Enter/Tab/Profile href, Escape/focus, outside/tab-out dismissal, failed logout alert and retry/success to /login, desktop/mobile visuals and320/375/1280 overflow all checked. Fixture removed, viewport reset, tab closed. No real account/DB/hosted action. Screenshot saved outside repository as account-menu.png.
+- Independent implementation review/check results recorded in change verification. Navigation is prepared as a separate logical commit; no push/deployment. Existing unrelated and locally generated edits preserved.

@@ -66,6 +66,8 @@ Verification: complete relevant T01/02/16/18/20/32 and coverage in [acceptance s
 
 ### Credential settings presentation — 20 October 2026
 
+21 October2026 account navigation update: authenticated Student, Organiser and account-settings headers share the FoC-derived top-right avatar/username dropdown with Profile linking to /account and Log out using the existing server revocation action. Escape closes it and restores trigger focus; outside clicks and focus leaving close it. Mobile retains an accessible account trigger while visually hiding the username. This changes navigation presentation only, with no role switch, credential or server access-policy change.
+
 Darryl requested the FoC-Team-12 user-service inline editing design. Show compact Username/Edit and masked Password/Change rows, expanding only the selected editor with Save/Cancel. Password editing includes Current, New and Confirm new password; the client compares NFC-normalised confirmation locally and does not send it to the server. Cancel clears secret fields/visibility and restores focus; a successful username edit returns to the canonical summary without re-login. These presentation choices supersede the initial no-confirm recommendation; credential bounds, current-password checks, session policy and recovery scope are unchanged. See [plan v1.3](../../docs/plans/wp-002-credentials-profile-plan.md#foc-account-ui-adaptation--v13-20-october-2026).
 
 A local confirmation mismatch hides but retains password inputs for correction without a network request; actual server submissions clear them. Cancel/switching editors clear secrets and visibility. No confirmation value enters the server contract or durable browser storage.

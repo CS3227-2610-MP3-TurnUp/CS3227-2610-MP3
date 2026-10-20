@@ -22,3 +22,5 @@ The initial planning-only approval turn dispatched no implementation/audit. Subs
 - [x] Removed the new required-alias deployment block after Darryl reported it prevented the needed Preview link. Absent aliases now publish an explicitly limited candidate link; configured aliases retain the stable Preview link. Fresh workflow/full checks and independent review are recorded in verification.
 
 - [x] Matched optional Student Name/Phone to compact inline credential rows with Edit/Save/Cancel, field save confirmations, focus/draft handling and version-safe conflict reload. Scoped browser and independent checks are recorded in the21 October inline-profile addendum; no new hosted/persistence claim.
+
+- [x] Committed inline profile refinement, then adopted the FoC-derived shared avatar menu on authenticated Student/Organiser/account headers with Profile navigation and existing server logout. Keyboard/outside dismissal, responsive bounds and logout feedback checks recorded in verification.

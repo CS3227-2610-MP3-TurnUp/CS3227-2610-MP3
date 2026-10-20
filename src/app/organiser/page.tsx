@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoutButton } from "../../components/auth/logout-button";
+import { AccountMenu } from "../../components/account/account-menu";
 import { requireRole } from "../../server/auth/guards";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function OrganiserPage() {
     <h1>{access.status === "denied" ? "Access unavailable" : "Account access is unavailable"}</h1>
     <p>{access.status === "denied" ? "This page is for Organiser accounts." : "Please try again later."}</p><Link href="/login">Go to login</Link>
   </section></main>;
-  return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/">TurnUp</Link><LogoutButton /></header>
+  return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/">TurnUp</Link><AccountMenu username={access.user.username} /></header>
     <section className="card"><p className="eyebrow">Organiser account</p><h1>Welcome, {access.user.username}</h1>
-      <p>You are logged in as an Organiser.</p><p><Link href="/account">Account settings</Link></p><p className="muted">Event preparation and publication are coming in a later update.</p></section></main>;
+      <p>You are logged in as an Organiser.</p><p className="muted">Event preparation and publication are coming in a later update.</p></section></main>;
 }

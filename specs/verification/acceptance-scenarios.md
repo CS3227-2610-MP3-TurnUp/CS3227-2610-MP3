@@ -130,4 +130,6 @@ For the FoC-derived inline settings presentation, scoped T32 browser/component c
 
 Scoped T16 profile presentation checks cover optional Name/Phone summary rows, individual Edit/Save/Cancel, discard on Cancel/switch, successful-save confirmation, focus restoration, blank removal, failed-save draft retention and stale reload retaining the active draft while refreshing the counterpart/version before retry. No password or re-login is required for profile saves.
 
+Scoped T32 account-navigation checks cover the authenticated header avatar dropdown on Student/Organiser/settings, Profile destination, keyboard toggle/Escape/focus return, outside/focus-leave dismissal, responsive bounds and logout pending/failure/success behavior through the existing POST endpoint. Navigation does not grant role access or change session rules.
+
 Registration feedback extension: T32 checks invalid fields prevent browser requests and focus associated errors; valid input still reaches server security checks and preserves generic dependency failure behavior. Synthetic diagnostic checks verify fixed stage/code fields and absence of private error/credential/configuration content. DEP03 workflow checks exercise clickable validated Preview output without labelling an unpromoted Production candidate live.

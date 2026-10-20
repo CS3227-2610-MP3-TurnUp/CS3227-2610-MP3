@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function LogoutButton() {
+export function LogoutButton({ className = "secondary" }: { className?: string } = {}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   async function logout() {
+    if (pending) return;
     setPending(true); setError("");
     try {
       const response = await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
@@ -17,6 +18,6 @@ export function LogoutButton() {
     } catch { setError("Logout could not be completed. Please try again."); }
     finally { setPending(false); }
   }
-  return <div><button className="secondary" type="button" onClick={logout} disabled={pending}>{pending ? "Logging out…" : "Log out"}</button>
+  return <div><button className={className} type="button" onClick={logout} disabled={pending}>{pending ? "Logging out…" : "Log out"}</button>
     {error && <p className="error-panel" role="alert">{error}</p>}</div>;
 }
