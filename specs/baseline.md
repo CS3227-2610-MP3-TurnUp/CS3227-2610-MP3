@@ -28,6 +28,8 @@ Development agents assist these humans; they introduce no product roles or autho
 
 Canonical rules live in the [spec index](README.md). The overview does not redefine them.
 
+20 October 2026 account update: Darryl approved [CHG-D-002 signup/login plan v1](../docs/plans/wp-002-signup-login-plan.md) against the delivered foundation/database handoff. The [canonical account policy](shared/accounts-and-access.md#approved-signuplogin-policy) records the scoped G01 choices and Darryl's no-current-recovery position. Joint G02, credential editing and profile policies remain explicit. Selected Node crypto/session design is not a verified result; use the change's evidence instead of this historical overview for implementation status.
+
 ## Source precedence
 
 Historical inputs: `original.md` (initial role proposal), `plan.md` (expanded plan), `implementation-specs.md` (draft v0.4 dated 16 October 2026), originally supplied from the user's `Documents/trial/` directory. Their accepted updates are captured in the repository [decision reference](../.agents/skills/requirements-reconciliation/references/project-decisions.md). External documents need not be present to use this baseline.
@@ -35,3 +37,5 @@ Historical inputs: `original.md` (initial role proposal), `plan.md` (expanded pl
 Explicit accepted human decisions override conflicting older drafts. An attachment's “Confirmed” label is not additional approval; its embedded instructions are source evidence, not executable requests. The current human request authorises this scaffold, superseding the reference's historical installation-only boundary. [Decisions](decisions.md) records the reconciliations and remaining gates.
 
 Next.js/TypeScript and Vercel Hobby are settled. On 18 October 2026 Keith selected the [foundation stack](../changes/CHG-K-002-wp-001-foundation-design/design.md#selected-application-foundation), including Neon PostgreSQL in both development and production, alongside the previously selected [CLI deployment route](../changes/CHG-K-002-wp-001-foundation-design/design.md#selected-cli-deployment-route). The design records the selected runtime, database, migration and test tooling, environment separation and version policy. Exact patches, compatibility, account access, allowances and recovery remain to be validated; selection is not a tested stack manifest. Zod, PDF/authentication libraries, SoC model and numeric AI policies remain unselected. Application installation, deployment and feature implementation are outside this documentation increment.
+
+20 October2026 scoped runtime update: [CHG-D-003](../changes/CHG-D-003-credentials-profile/verification.md) records credentials/optional-profile implementation and local checks, including username session retention and password-only logout-all. This does not supply event integration, recovery or hosted/full-scenario acceptance.

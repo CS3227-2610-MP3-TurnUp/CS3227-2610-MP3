@@ -2,6 +2,8 @@
 
 Planned work under B1/D12; no implementation or passing runtime evidence is implied. Read the [common planning rules and ownership](../implementation-plan.md), the [task reading map](../README.md#task-reading-map), applicable [decision gates](../decisions.md) (G01/G02/G08) and the relevant [integration handoff](../integration-handoffs.md). Exact file writers and change IDs remain per-change assignments.
 
+20 October 2026: Darryl approved [signup/login plan v1](../../docs/plans/wp-002-signup-login-plan.md), allocated [CHG-D-002](../../changes/CHG-D-002-signup-login/change.md), and authorised its bounded implementation. The foundation/database handoff from K-006 is delivered. Signup/login/session policy is now canonical; credential/profile policy is now accepted under [CHG-D-003](../../changes/CHG-D-003-credentials-profile/change.md) after Darryl’s guidance-check/approval instruction; its implementation now has scoped local evidence in CHG-D-003 verification. Recovery remains separately planned future work and joint G02 remains open. This is neither approval of the whole package nor evidence of passing product tests. Actual check limits belong in change verification.
+
 ## Scope and dependencies
 
 | Order / roadmap work package | Human ownership | Scope and requirement package | Depends on / observable completion |

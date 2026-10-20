@@ -46,7 +46,7 @@ export async function checkPreviewAlias(env, fetchImpl = fetch) {
 }
 
 // Print only fixed diagnostics: provider bodies/errors may contain private data.
-if (process.argv[1]?.endsWith("/check-preview-alias.mjs")) {
+if (process.argv[1]?.replaceAll("\\", "/").endsWith("/check-preview-alias.mjs")) {
   try {
     await checkPreviewAlias(process.env);
   } catch {

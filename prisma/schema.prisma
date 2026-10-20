@@ -8,7 +8,7 @@ datasource db {
 }
 
 // Synthetic-only persistence fixture used by an explicitly protected hosting check.
-// Product account, event, registration, and message models belong to later packages.
+// Product records remain separate from this synthetic fixture.
 model FoundationProbe {
   id        String   @id @db.Uuid
   marker    String   @unique @db.Uuid
@@ -44,4 +44,46 @@ model SoCProbeReservation {
 
   @@index([createdAt])
   @@map("soc_probe_reservation")
+}
+
+enum AccountRole {
+  STUDENT
+  ORGANISER
+}
+
+model User {
+  id           String      @id @db.Uuid
+  username     String      @unique @db.VarChar(32)
+  passwordHash String      @map("password_hash")
+  credentialVersion Int    @default(0) @map("credential_version")
+  studentName String?      @map("student_name")
+  studentPhone String?     @map("student_phone")
+  profileVersion Int       @default(0) @map("profile_version")
+  role         AccountRole
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  sessions     Session[]
+
+  @@map("app_user")
+}
+
+model Session {
+  tokenDigest String   @id @map("token_digest") @db.Char(64)
+  userId      String   @map("user_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_session")
+}
+
+model AuthThrottle {
+  key       String   @id @db.VarChar(160)
+  count     Int
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("auth_throttle")
 }
