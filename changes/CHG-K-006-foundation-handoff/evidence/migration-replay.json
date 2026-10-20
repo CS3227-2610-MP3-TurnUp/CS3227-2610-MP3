@@ -1,0 +1,55 @@
+{
+  "source": "05e1b42c69ce57d389172a5b0c290d08ff0c729e",
+  "created": [
+    "turnup_k006_replay_efee8ce1",
+    "turnup_k006_upgrade_efee8ce1",
+    "turnup_k006_shadow_efee8ce1"
+  ],
+  "checks": [
+    {
+      "step": "fresh replay",
+      "exit": 0,
+      "applied": 2,
+      "codes": []
+    },
+    {
+      "step": "fresh replay status",
+      "exit": 0,
+      "applied": 0,
+      "codes": []
+    },
+    {
+      "step": "shadow replay and schema synchronization",
+      "exit": 0,
+      "applied": 0,
+      "codes": []
+    },
+    {
+      "step": "first-migration upgrade baseline",
+      "exit": 0,
+      "applied": 1,
+      "codes": []
+    },
+    {
+      "step": "second-migration upgrade",
+      "exit": 0,
+      "applied": 1,
+      "codes": []
+    },
+    {
+      "step": "upgraded migration status",
+      "exit": 0,
+      "applied": 0,
+      "codes": []
+    },
+    {
+      "step": "replay and upgrade data invariants",
+      "passed": true
+    }
+  ],
+  "removed": [
+    "turnup_k006_shadow_efee8ce1",
+    "turnup_k006_upgrade_efee8ce1",
+    "turnup_k006_replay_efee8ce1"
+  ]
+}

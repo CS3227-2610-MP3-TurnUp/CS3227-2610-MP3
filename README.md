@@ -4,7 +4,7 @@ An event sharing platform with separate Student and Organiser workflows in one N
 
 Students discover events, register, and ask event questions. Organisers prepare, review, and publish event information, manage registration forms, and reply privately. Proposal assistance processes PDFs temporarily; Student AI uses only the current approved public information.
 
-The repository includes a runnable Next.js foundation, synthetic-only probe persistence, and a shared SoC admission gate. Product workflows and hosted integrations will be implemented in their assigned changes.
+The repository includes a runnable Next.js foundation, synthetic-only probe persistence, a shared SoC admission gate and the Vercel deployment workflow. The Production foundation deployment succeeded at `05e1b42`; non-production migration, hosted persistence and recovery checks passed; the separately gated SoC check remains pending, as recorded in [CHG-K-006](changes/CHG-K-006-foundation-handoff/verification.md). Product workflows remain unimplemented.
 
 ## Application setup
 
@@ -25,6 +25,7 @@ The destructive shared SoC gate integration test is excluded from ordinary `test
 - [Contributing](CONTRIBUTING.md) and [agent guidance](AGENTS.md): shared execution workflow.
 - [Change records](changes/README.md): bounded work and actual verification evidence.
 - [Agent usage tracking](docs/agent-usage.md): local Python collection, multi-agent token/credit reports, and contributor exports.
+- [Foundation verification and handoff](docs/wp-001-foundation-handoff.md): private non-production configuration, replay/upgrade, hosted persistence, recovery and separately gated SoC checks.
 - [UI guidelines](docs/ui-guidelines.md): shared visual tokens, components and responsive defaults; [screen patterns](docs/ui-screen-patterns.md) apply them to TurnUp workflows.
 
 ## Repository layout
