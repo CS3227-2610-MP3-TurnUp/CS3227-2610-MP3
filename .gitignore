@@ -5,10 +5,14 @@ __pycache__/
 
 # Node.js application build output and dependencies
 node_modules/
+.pnpm-store/
 .next/
 out/
 coverage/
 *.tsbuildinfo
+
+# Local concurrent checkouts
+/.worktrees/
 
 # Local app credentials and deployment metadata
 .env*

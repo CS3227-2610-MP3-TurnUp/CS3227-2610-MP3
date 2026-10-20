@@ -1,0 +1,16 @@
+{
+  "source": "05e1b42c69ce57d389172a5b0c290d08ff0c729e",
+  "projectId": "wispy-queen-37021878",
+  "branchId": "br-delicate-frost-az7boyvm",
+  "branchName": "chg-k-006-gate-test",
+  "database": "turnup_soc_probe_gate_test",
+  "migrationsApplied": 2,
+  "liveDatabaseSuite": {
+    "passed": 8,
+    "failed": 0
+  },
+  "providerCalls": 0,
+  "cleanup": "branch deleted; branch list contains only main, dev/keith and preview",
+  "cleanupVerifiedUTC": "2026-10-20T04:26:31.530Z",
+  "privateEnvironmentFileRemoved": true
+}

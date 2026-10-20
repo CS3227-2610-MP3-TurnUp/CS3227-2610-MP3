@@ -1,6 +1,6 @@
 # Specifications
 
-Baseline **B1 · 16 October 2026**, with the **17 October 2026 ownership update D12**: agreed product target, with recommendations/open gates labelled. Application implementation and runtime verification are pending.
+Baseline **B1 · 16 October 2026**, with the **17 October 2026 ownership update D12**: agreed product target, with recommendations/open gates labelled. WP-001 foundation/workflow implementation and a successful Production deployment now have scoped evidence; [CHG-K-006](../changes/CHG-K-006-foundation-handoff/verification.md) records database handoff evidence and the remaining provider prerequisites. Product features and complete acceptance scenarios remain unimplemented/unverified.
 
 Read [baseline](baseline.md), complete relevant [decisions/gates](decisions.md), then the affected contracts/capabilities and full [acceptance scenarios](verification/acceptance-scenarios.md). Use the task reading map below. [Implementation plan](implementation-plan.md) assigns ordered work without changing behaviour.
 
