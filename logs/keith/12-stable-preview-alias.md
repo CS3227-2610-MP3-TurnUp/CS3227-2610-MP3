@@ -73,3 +73,8 @@ The independent verifier re-ran TypeScript checking, 152 tests, full lint and
 workflow syntax checks with no actionable defects. It also tested the actual CLI
 wrapper against synthetic provider/network/JSON errors and confirmed fixed,
 non-sensitive failure output. No live provider/API mutation was used.
+
+Committed and pushed both corrections as `9ecf96d` to the existing CHG-K-008 branch;
+PR #24 readback confirmed the new head. Updated its description to reflect the
+current checks and limits. No new configuration variable is required; no live
+Production/domain/deployment operation was performed.

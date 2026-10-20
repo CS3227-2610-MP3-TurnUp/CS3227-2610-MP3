@@ -38,4 +38,4 @@ with `.github/scripts/check-preview-alias.mjs` and
   and immediately before assignment; fail closed on lookup errors.
 - [x] Reproduce collision, later-page collision, metadata failure and allowed alias
   checks; lint, shell/YAML checks and independent agent recheck.
-- [ ] Commit/push scoped correction to existing PR and read back delivery.
+- [x] Commit/push scoped correction to existing PR and read back delivery (`9ecf96d`).

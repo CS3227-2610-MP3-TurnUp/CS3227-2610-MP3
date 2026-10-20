@@ -126,3 +126,9 @@ only. Reviewed blobs: guard `44ee71d5ad7fa372f5841790e5792473e1fc3e49`, workflow
 Live provider requests, alias mutations,
 deployment and sharing-token checks remain unrun. Updated allowed paths include
 the safety script and its synthetic regression tests; no product feature changed.
+
+Correction delivery: committed `9ecf96d02dde6142279ff2913c8fc34ab8bf5f74`
+(`fix: reject Production hostnames for Preview`), pushed without force to the same
+branch, and confirmed PR #24 reports that head. Updated the PR description with
+the current guard, TypeScript fix and 152-test evidence. GitHub-hosted checks are
+separate from the passed local checks. This delivery update changes evidence only.
