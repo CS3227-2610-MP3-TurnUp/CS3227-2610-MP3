@@ -37,6 +37,24 @@ B1 targets; **all application/runtime evidence pending**. Integration means dete
 | T31 · PAR06/08/12 | Unregistered Student asks; then ambiguous/off-topic input or provider failure | Published-event access works without registration; clarification/no spam, honest outage/direct-question option; no registration effect. Integration/AI evaluation/browser. |
 | T32 · SHR02/03/05 | Invalid login, logout/expiry and username/password changes | Protected access denied as appropriate; UUID/relationships stable and duplicate username rejected; G01-approved reauthentication/revocation policy enforced. Integration/browser. |
 
+## Stable Preview routing checks (T15 foundation; CHG-K-008)
+
+Given the trusted CLI deployment workflow and a dedicated `PREVIEW_ALIAS`, when a
+Preview upload succeeds, then retain its unique candidate URL/revision, assign the
+fixed hostname to that candidate and report the stable URL after assignment
+succeeds. Missing/malformed alias configuration stops Preview before deployment
+work; upload or alias failure fails the job without a stable-address success claim.
+Given PREVIEW_ALIAS equals a current Production hostname (including a later page
+of the project's Production-domain list), then reject before build/migration/upload
+and never issue alias assignment. Failed/malformed/pagination-incomplete lookups
+also block Preview. Recheck immediately before assignment in case configuration
+changed during the build. Production requires no Preview alias and does not assign it. All permitted Preview
+branches share the most recently assigned target. Method: execute workflow shells
+with a synthetic CLI, including inert hostile configuration; separately verify
+hosted reassignment across two deployments and protection on the plain hostname.
+Verify complete shareable-link persistence separately; local routing tests do not
+establish access persistence or pass the complete T15 journey.
+
 ## Coverage
 
 Each canonical ID maps below; mapping is a planned method, never proof of execution. Detailed gates remain in [decisions](../decisions.md).

@@ -36,6 +36,7 @@ corepack() {
 }
 # Metadata fetch is covered separately by vercel-api-scope.test.ts.
 node() {
+  if [[ "$1" == ".github/scripts/check-preview-alias.mjs" ]]; then return 0; fi
   if [[ "$1" == "--input-type=module" ]]; then cat >/dev/null; return 0; fi
   command node "$@"
 }
@@ -49,6 +50,7 @@ ${stepScript(name)}
         CLI_EXIT: String(exitCode),
         CLI_ARGUMENTS: argumentsFile,
         DEPLOYMENT_TARGET: target,
+        PREVIEW_ALIAS: "turnup-synthetic-preview.vercel.app",
         VERCEL_TOKEN: "synthetic-token",
         CANDIDATE_URL: candidate,
         GITHUB_SHA: "synthetic-sha",

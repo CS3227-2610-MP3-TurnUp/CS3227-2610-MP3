@@ -59,6 +59,42 @@ Add these **variables** in each environment used by a Vercel CLI job, including 
 | `VERCEL_ORG_ID` | Vercel `orgId` from the linked project: `team_` for a team; `usr_` or a 24-character alphanumeric user ID for a personal account. |
 | `VERCEL_PROJECT_ID` | Vercel `projectId`. |
 
+In the **preview** GitHub environment only, also add `PREVIEW_ALIAS`: an available,
+dedicated lowercase `*.vercel.app` hostname, for example
+`turnup-team-preview.vercel.app`. Use a hostname only, without `https://`, a path,
+query string or trailing slash. Never use a Production hostname or an alias owned
+by another project. No DNS purchase is needed for an available `vercel.app` alias.
+The workflow validates syntax and checks the project's complete paginated
+Production-domain list before build/migration/upload, then rechecks that list
+immediately before alias assignment. A collision or failed/malformed lookup blocks
+Preview. The read-only lookup uses the existing environment token and account/project
+scope; no additional hostname variable is needed. It uses Vercel's
+[Production-domain filter](https://vercel.com/docs/rest-api/projects/retrieve-project-domains-by-project-by-id-or-name).
+Domain settings must not be changed concurrently with alias assignment: the API
+check and CLI mutation are separate operations, not an atomic provider-side guard.
+The workflow uses the
+pinned CLI's [`alias set`](https://vercel.com/docs/cli/alias) after a successful
+Preview upload. It records both the unique candidate URL and **Stable Preview
+URL** in the Actions summary. An alias failure fails the job; the uploaded
+deployment may already exist, so inspect the failure before retrying.
+
+This is one shared Preview address: successful deployments from any permitted
+`preview/*` branch can move it. It points to the last successfully assigned
+deployment, not necessarily the newest commit across different branches. Use one
+agreed integration Preview branch when a predictable shared testing version is
+needed. Individual candidate URLs remain available for revision-specific checks.
+Production uploads and promotion do not read or assign this alias.
+
+Keep **All Deployments** authentication enabled. Alias assignment changes routing,
+not access permissions. After the first successful assignment, open the stable
+address and create a shareable link through Vercel's Share menu if supported for
+that alias. Keep the complete link private and out of GitHub variables, logs and
+PRs. Verify in a signed-out browser that the plain hostname remains protected and
+that the same complete sharing link opens the intended revision after another
+Preview deployment. Stable sharing-token persistence has not been established
+by local tests; a routing alias alone does not guarantee it. Hobby's one-link
+limit is documented in [shareable links](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/sharable-links).
+
 Add these **secrets** separately to `preview` and `production`; add only `VERCEL_TOKEN` to `production-promotion`:
 
 | Secret | Value |
@@ -184,7 +220,7 @@ The route ignores request bodies and accepts only the fixed persistence operatio
 
 | Location | Names |
 | --- | --- |
-| GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`. |
+| GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`, `PREVIEW_ALIAS` (hostname only, never a sharing token). |
 | GitHub environment secrets | `VERCEL_TOKEN` in `preview`, `production`, and `production-promotion`; `MIGRATION_DATABASE_URL` in `preview` and `production` only. |
 | Vercel Preview/Production runtime variables | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `SOCLAAS_BASE_URL`, `SOCLAAS_MODEL`, `SOCLAAS_MAX_INPUT_BYTES`, `SOCLAAS_MAX_OUTPUT_TOKENS`, `SOCLAAS_TIMEOUT_MS`, `SOCLAAS_API_KEY` (secret, after G04), `FOUNDATION_PROBE_ENABLED`, `FOUNDATION_PROBE_TOKEN` (temporary Preview secret only). |
 | Vercel Preview runtime variables, temporary probe only | `FOUNDATION_PROBE_SOC_MAX_ATTEMPTS`, `FOUNDATION_PROBE_SOC_MAX_IN_FLIGHT`, `FOUNDATION_PROBE_SOC_MIN_INTERVAL_MS`, `FOUNDATION_PROBE_SOC_OUTPUT_TOKEN_BUDGET`; explicit values from verified provider/key limits, no defaults. |
