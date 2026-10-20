@@ -56,6 +56,7 @@ On20 October2026 Darryl directed a UI/UX guidance check followed by plan approva
 - Profile full save supplies both fields plus expected version; validate/commit atomically. Invalid/stale requests change neither field. Stale409 preserves safe client input; canonical no-op changes no version. Null/blank independently removes each field. Private/no-store responses; reject unknown/protected identity/role fields, server derives self. Organisers cannot access current Student profiles. Common Identity and public/AI projections exclude profile data.
 - Profile changes affect current defaults only; future registration shares only explicitly confirmed event snapshots and never rewrites earlier submissions. WP-004 must verify real integration later.
 - Settings follow approved compact UI: persistent optional labels, name/tel autofill, accessible labelled eye controls, conditional concise field-associated errors, safe-value preservation and cleared passwords. Recovery implementation remains excluded.
+- Student profile follows the credential rows: saved Name/Phone or “Not set”, individual Edit actions and one expanded profile editor at a time, with explicit Save/Cancel and save confirmation. Cancel/switch discards the active draft and Cancel/save restores focus to its Edit action. Each save retains the other saved field and the version check; conflict reload retains the active draft while refreshing the other field/version. Profile edits require no password confirmation or re-login.
 
 ## Recovery and deferred policies
 

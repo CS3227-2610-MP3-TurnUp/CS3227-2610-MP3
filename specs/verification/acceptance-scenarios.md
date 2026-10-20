@@ -128,4 +128,6 @@ CHG-D-003 applies the [approved policy](../shared/accounts-and-access.md#approve
 
 For the FoC-derived inline settings presentation, scoped T32 browser/component checks cover collapsed summaries, one editor at a time, Cancel clearing secrets/restoring focus, local NFC-equivalent confirmation/mismatch, conditional associated errors, username save staying signed in and password-only login redirection. Presentation alone does not pass the complete T32 scenario.
 
+Scoped T16 profile presentation checks cover optional Name/Phone summary rows, individual Edit/Save/Cancel, discard on Cancel/switch, successful-save confirmation, focus restoration, blank removal, failed-save draft retention and stale reload retaining the active draft while refreshing the counterpart/version before retry. No password or re-login is required for profile saves.
+
 Registration feedback extension: T32 checks invalid fields prevent browser requests and focus associated errors; valid input still reaches server security checks and preserves generic dependency failure behavior. Synthetic diagnostic checks verify fixed stage/code fields and absence of private error/credential/configuration content. DEP03 workflow checks exercise clickable validated Preview output without labelling an unpromoted Production candidate live.

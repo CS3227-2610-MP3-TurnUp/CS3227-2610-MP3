@@ -147,3 +147,38 @@ Darryl asked to pull the teammate's current mainline stable-deployment-link work
 - Fetched current `master` through merged PR#24 and integrated its stable Preview alias implementation. Two overlapping workflow/guide conflicts were resolved in favour of the reviewed mainline implementation, replacing the temporary candidate-link workaround. The Preview GitHub environment now has the required non-secret `PREVIEW_ALIAS` variable.
 - Corrected Windows-only integration details: normalized the workflow's line endings for executable test discovery and made the alias checker recognise Windows script paths. Reconciled the overlapping output test with the workflow it now tests.
 - Fresh complete checks passed:217/217 tests across19files, TypeScript, productionbuild and whitespace. Existing local-only agent definitions and unrelated agent-usage documentation remain uncommitted. The pending push triggers Preview; hosted deployment/authentication remains unverified until that run completes.
+
+# 12 - Diagnose Repeated Hosted Configuration Failure - 21 October 2026
+
+## Request
+
+Darryl supplied Vercel variables and repeated configuration-stage authentication failures after rerunning Actions.
+
+## Results
+
+- Screenshots show the intended Preview origin/source/environment values and enabled system-variable access. Earlier advice identifying that toggle as the cause was unsupported and corrected.
+- Authenticated GitHub run/job inspection established PR-event run 39472688154 had been rerun four times and its deploy job was skipped; push-event Preview deployment run 39472680805 remained at attempt 1. Thus those reruns never deployed the newly saved settings. Handoff is the exact push-event run URL, not another variable edit.
+- Parent briefly implemented allowlisted configuration-check diagnostics, with 28 focused tests, scoped lint and TypeScript passing; independent verifier found no defects and reproduced equivalent configuration acceptance. Parent removed the experiment after identifying the workflow selection issue; no application/spec change remains, and no commit/push/manual deployment/database operation was performed. Authentication success still requires a fresh actual Preview deployment and retry; no hosted-success claim.
+
+# 13 - Restore Local Database Access - 21 October 2026
+
+## Request
+
+Darryl asked to start the local app and investigate why local authentication returned account-access unavailable.
+
+## Results
+
+- Local configuration checks passed without exposing values; server logs showed admission/DEPENDENCY_FAILURE. A read-only development/non-production database connection failed EACCES inside the sandbox, then succeeded outside it and confirmed auth_throttle exists.
+- Parent stopped the restricted server and restarted the same local app with approved network access. A single randomly named synthetic nonexistent-account login returned the expected generic401 instead of503, demonstrating database admission and authentication are reachable. No account created or real credentials submitted; this probe writes short-lived throttle counters under the ordinary admission policy. Server remains running on localhost:3000. No source/env change, migration, commit, push or hosted deployment occurred.
+
+# 14 - Match Student Profile to Inline Credential Editing - 21 October 2026
+
+## Request
+
+Darryl requested a seamless account UI with optional Name/Phone using the existing inline credential-editing and confirmation format.
+
+## Results
+
+- Parent used the UI iteration guidance and updated StudentProfileForm to saved-value/Not set rows, individual Edit actions, one profile editor, Save/Cancel, success confirmation and focus restoration. Optional removal/server validation/session policy remain unchanged. Conflict reload refreshes the counterpart/version while retaining the active draft. Updated accounts/scoped T16 targets and change tasks/evidence.
+- Scoped lint/TypeScript and11/11 existing account tests passed. Synthetic mocked browser checks covered cancellation, validation, canonical saves, blank removal and stale retry preserving the latest other field; desktop/mobile visuals and320/375/1280 overflow checked. Temporary test route removed and browser reset/closed; no new real account/profile/database mutation.
+- Independent non-author reviewer reproduced relevant checks and actual-source state transitions, with no actionable defects. Exact reviewed digest, checks and limitations are in CHG-D-003 verification. Changes remain local, available through the running local server; no commit/push/deployment. Existing unrelated/local/generated changes preserved.
