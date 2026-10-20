@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
+import { authInputErrors, type AuthInputErrors } from "../../lib/auth-input";
 
 export function AuthForm({ mode }: { mode: "signup" | "login" }) {
   const [username, setUsername] = useState("");
@@ -9,6 +10,8 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<AuthInputErrors>({});
+  const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const signup = mode === "signup";
@@ -16,10 +19,16 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
-    setPending(true);
     setError("");
     setShowPassword(false);
     const password = passwordRef.current?.value ?? "";
+    const invalid = authInputErrors(username, password);
+    setFieldErrors(invalid);
+    if (invalid.username || invalid.password) {
+      requestAnimationFrame(() => (invalid.username ? usernameRef : passwordRef).current?.focus());
+      return;
+    }
+    setPending(true);
     if (passwordRef.current) passwordRef.current.value = "";
     try {
       const response = await fetch(`/api/auth/${mode}`, {
@@ -41,7 +50,7 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
     <section className="auth-card" aria-labelledby="account-title">
       <h1 id="account-title" className="auth-title">{signup ? "Create your account" : "Log in"}</h1>
       <p className="auth-switch">{signup ? "Already have an account? " : "New to TurnUp? "}<Link href={signup ? "/login" : "/signup"}>{signup ? "Log in" : "Create an account"}</Link></p>
-      <form onSubmit={submit} aria-busy={pending}>
+      <form onSubmit={submit} aria-busy={pending} noValidate>
         {error && <div className="error-panel" role="alert" ref={errorRef} tabIndex={-1}>{error}</div>}
         {signup && <fieldset className="auth-role" disabled={pending}>
           <legend>Account role</legend>
@@ -58,14 +67,17 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
         </fieldset>}
         <div className="field">
           <label htmlFor="username">Username</label>
-          <input id="username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false}
-            required maxLength={128} value={username} onChange={(event) => setUsername(event.target.value)} disabled={pending} />
+          <input id="username" ref={usernameRef} name="username" autoComplete="username" autoCapitalize="none" spellCheck={false}
+            required value={username} onChange={(event) => setUsername(event.target.value)} disabled={pending}
+            aria-invalid={!!fieldErrors.username || undefined} aria-describedby={fieldErrors.username ? "username-error" : undefined} />
+          {fieldErrors.username && <p id="username-error" className="field-error">{fieldErrors.username}</p>}
         </div>
         <div className="field">
           <label htmlFor="password">Password</label>
           <div className="auth-password-control">
             <input id="password" name="password" type={showPassword ? "text" : "password"} ref={passwordRef} autoComplete={signup ? "new-password" : "current-password"}
-              autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={pending} />
+              autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={pending}
+              aria-invalid={!!fieldErrors.password || undefined} aria-describedby={fieldErrors.password ? "password-error" : undefined} />
             <button className="auth-password-toggle" type="button" aria-controls="password" aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((visible) => !visible)} disabled={pending}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
@@ -78,6 +90,7 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
               </svg>
             </button>
           </div>
+          {fieldErrors.password && <p id="password-error" className="field-error">{fieldErrors.password}</p>}
         </div>
         <p className="auth-recovery">Keep your login details safe. Account recovery is not available yet.</p>
         <button className="primary" disabled={pending} type="submit">{pending ? "Please wait…" : signup ? "Create account" : "Log in"}</button>

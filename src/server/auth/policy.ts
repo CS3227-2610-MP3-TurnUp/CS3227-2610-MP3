@@ -1,4 +1,6 @@
 import "server-only";
+import { authInputErrors, canonicalUsername } from "../../lib/auth-input";
+export { canonicalUsername } from "../../lib/auth-input";
 
 export type AccountRole = "STUDENT" | "ORGANISER";
 export type Credentials = { username: string; password: string; role?: AccountRole };
@@ -19,10 +21,6 @@ export const COMMON_PASSWORDS = new Set([
   "correct horse battery staple", "aaaaaaaaaaaaaaa", "000000000000000",
 ]);
 
-export function canonicalUsername(value: string): string {
-  return value.trim().replace(/[A-Z]/g, (letter) => letter.toLowerCase());
-}
-
 export function parseCredentials(input: unknown, signup: boolean): Credentials {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new AuthError(400, "Enter a valid username and password.");
@@ -34,14 +32,10 @@ export function parseCredentials(input: unknown, signup: boolean): Credentials {
     throw new AuthError(400, "Only the displayed account fields are accepted.");
   }
   const username = canonicalUsername(data.username);
-  if (!/^[a-z0-9_]{3,32}$/.test(username)) {
-    throw new AuthError(400, "Use 3–32 letters, numbers or underscores for your username.");
-  }
+  const errors = authInputErrors(data.username, data.password);
+  if (errors.username) throw new AuthError(400, errors.username);
   const password = data.password.normalize("NFC");
-  const length = Array.from(password).length;
-  if (length < 15 || length > 128) {
-    throw new AuthError(400, "Use a password with 15–128 characters. Spaces are allowed.");
-  }
+  if (errors.password) throw new AuthError(400, errors.password);
   if (signup && COMMON_PASSWORDS.has(password.toLowerCase())) {
     throw new AuthError(400, "Choose a less common password or a longer unique passphrase.");
   }

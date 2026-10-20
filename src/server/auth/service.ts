@@ -42,20 +42,29 @@ export async function authenticate(db: PrismaClient, action: "signup" | "login",
 
 export async function handleAuth(request: Request, action: "signup" | "login" | "logout"): Promise<NextResponse> {
   const responseHeaders = { "Cache-Control": "no-store, private", "Vary": "Cookie", "X-Content-Type-Options": "nosniff" };
+  let stage = "configuration";
   try {
     const config = authConfig();
+    stage = "origin";
     requireOrigin(request, config);
     const previous = presentedToken(request.headers, config);
     // Import only on a request, after security validation. Builds need no DB credentials.
     if (action === "logout") {
+      stage = "database_initialisation";
       const { prisma } = await import("../db/client");
+      stage = "logout";
       await revokeSession(prisma, previous);
       return NextResponse.json({ redirect: "/login" }, { headers: { ...responseHeaders, "Set-Cookie": sessionCookie(config) } });
     }
+    stage = "trusted_source";
     const source = trustedSource(request, config);
+    stage = "input";
     const credentials = parseCredentials(await boundedJson(request), action === "signup");
+    stage = "database_initialisation";
     const { prisma } = await import("../db/client");
+    stage = "admission";
     await admitAttempt(prisma, action, credentials.username, source, config.secret);
+    stage = "authentication";
     const result = await authenticate(prisma, action, credentials, previous);
     return NextResponse.json({ redirect: result.redirect }, {
       status: action === "signup" ? 201 : 200,
@@ -63,6 +72,12 @@ export async function handleAuth(request: Request, action: "signup" | "login" | 
     });
   } catch (error) {
     const expected = error instanceof AuthError;
+    if (!expected || error.status >= 500) {
+      // Fixed fields only: never log the error object/message, request, identity,
+      // password, source IP, cookie, database metadata or configuration values.
+      const code = expected ? "AUTH_UNAVAILABLE" : "DEPENDENCY_FAILURE";
+      console.error(JSON.stringify({ event: "auth_unavailable", action, stage, code }));
+    }
     return NextResponse.json({ error: expected ? error.message : "Account access is unavailable. Please try again later." }, {
       status: expected ? error.status : 503, headers: responseHeaders,
     });

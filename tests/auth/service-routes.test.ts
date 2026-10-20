@@ -29,6 +29,7 @@ function request(body: unknown, override: Record<string, string> = {}, cookie?: 
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("AUTH_ORIGIN", origin);
   vi.stubEnv("AUTH_THROTTLE_SECRET", "ab".repeat(32));
   vi.stubEnv("AUTH_SOURCE_MODE", "local");
@@ -44,7 +45,7 @@ beforeEach(() => {
   fixture.verify.mockResolvedValue(true);
   fixture.admit.mockResolvedValue(undefined);
 });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("account service", () => {
   it("creates UUID/hash/account/session inside one transaction and replaces only presented session", async () => {
@@ -98,6 +99,29 @@ describe("account service", () => {
 });
 
 describe("HTTP auth routes", () => {
+  it("logs only a fixed private failure stage, without error, credential or configuration values", async () => {
+    vi.stubEnv("AUTH_ORIGIN", "");
+    expect((await signup(request(credentials))).status).toBe(503);
+    expect(console.error).toHaveBeenLastCalledWith(JSON.stringify({ event: "auth_unavailable", action: "signup", stage: "configuration", code: "AUTH_UNAVAILABLE" }));
+    vi.stubEnv("AUTH_ORIGIN", origin);
+    fixture.admit.mockRejectedValueOnce(new Error(`private postgres://user:secret@host ${credentials.password}`));
+    const response = await signup(request(credentials));
+    expect(await response.json()).toEqual({ error: "Account access is unavailable. Please try again later." });
+    expect(console.error).toHaveBeenLastCalledWith(JSON.stringify({ event: "auth_unavailable", action: "signup", stage: "admission", code: "DEPENDENCY_FAILURE" }));
+    fixture.hash.mockRejectedValueOnce(new Error("private hash diagnostic"));
+    expect((await signup(request(credentials))).status).toBe(503);
+    expect(console.error).toHaveBeenLastCalledWith(JSON.stringify({ event: "auth_unavailable", action: "signup", stage: "authentication", code: "DEPENDENCY_FAILURE" }));
+    const logs = JSON.stringify(vi.mocked(console.error).mock.calls);
+    for (const value of [credentials.username, credentials.password, "postgres://", "private hash", "secret@", "passwordHash"]) expect(logs).not.toContain(value);
+  });
+  it("distinguishes absent trusted ingress from configuration failures and does not log normal rejections", async () => {
+    expect((await signup(request(credentials, { origin: "http://foreign.example" }))).status).toBe(403);
+    expect(console.error).not.toHaveBeenCalled();
+    vi.stubEnv("AUTH_SOURCE_MODE", "vercel"); vi.stubEnv("VERCEL", "1"); vi.stubEnv("TURNUP_ENVIRONMENT", "preview"); vi.stubEnv("AUTH_ORIGIN", "https://turnup.example");
+    expect((await signup(request(credentials, { origin: "https://turnup.example" }))).status).toBe(503);
+    expect(console.error).toHaveBeenLastCalledWith(JSON.stringify({ event: "auth_unavailable", action: "signup", stage: "trusted_source", code: "AUTH_UNAVAILABLE" }));
+    expect(fixture.admit).not.toHaveBeenCalled();
+  });
   it("signs up with only required fields and returns no password/hash/token/user identity", async () => {
     const response = await signup(request({ ...credentials, username: " ALICE " }));
     expect(response.status).toBe(201);
