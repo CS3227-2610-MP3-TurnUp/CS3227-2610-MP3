@@ -77,12 +77,12 @@ setting, client code, tracked file or diagnostics. Missing/invalid origin, sourc
 secret configuration fails closed. Do not configure `VERCEL=1` yourself on local or
 untrusted ingress to make source headers appear trustworthy.
 
-Strict Origin checking requires a stable Preview alias for authentication. If configured,
-the GitHub Preview environment variable `PREVIEW_ORIGIN` must be that exact HTTPS origin and
-Vercel Preview `AUTH_ORIGIN` must match it. The workflow then assigns the alias and publishes
-**Open Preview**. Without it, Preview still deploys and publishes an **Open candidate** link,
-but that generated host may reject authentication POSTs. Test platform source attribution on
-the intended deployment before claiming hosted authentication evidence.
+Strict Origin checking requires the stable Preview alias. Configure the GitHub Preview
+environment variable `PREVIEW_ALIAS` as a dedicated lowercase `*.vercel.app` hostname, with
+no scheme or path, and set Vercel Preview `AUTH_ORIGIN` to `https://<PREVIEW_ALIAS>`. The
+workflow validates that the alias is not a Production hostname, assigns it after a successful
+Preview upload, and records the stable Preview URL in the Actions summary. Test platform
+source attribution on that address before claiming hosted authentication evidence.
 
 Usernames are canonical lowercase ASCII letters/digits/underscores (3–32 characters),
 globally unique across roles. Passwords use NFC, 15–128 Unicode code points, with spaces
@@ -200,7 +200,6 @@ These stages narrow investigation rather than establishing the exact root cause.
 No raw error, credential, identity, request, IP, cookie or configuration value is logged.
 Public responses stay generic. Check Vercel function logs privately; never paste secrets.
 
-After a successful Preview upload, GitHub Actions publishes **Open candidate** in the run
-summary. When a stable Preview alias is configured, it assigns that alias and instead
-publishes **Open Preview** in the run summary and as the deployment environment URL.
-Production uploads remain explicitly labelled candidates until promotion succeeds.
+After a successful Preview upload, GitHub Actions records the unique candidate URL and the
+stable Preview URL in the run summary. Production uploads remain explicitly labelled
+candidates until promotion succeeds.

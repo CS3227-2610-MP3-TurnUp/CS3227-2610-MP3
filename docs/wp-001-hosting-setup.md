@@ -59,12 +59,41 @@ Add these **variables** in each environment used by a Vercel CLI job, including 
 | `VERCEL_ORG_ID` | Vercel `orgId` from the linked project: `team_` for a team; `usr_` or a 24-character alphanumeric user ID for a personal account. |
 | `VERCEL_PROJECT_ID` | Vercel `projectId`. |
 
-Optionally set `PREVIEW_ORIGIN` in the `preview` environment to the exact HTTPS stable
-Preview alias, with no path, port, query, fragment or trailing slash. Set Vercel Preview
-`AUTH_ORIGIN` to exactly the same value. When present, the workflow assigns that alias to
-every checked Preview candidate and publishes **Open Preview**. When absent, the workflow
-still deploys and publishes an **Open candidate** link, which may not accept authentication
-POSTs; malformed configured values fail before upload.
+In the **preview** GitHub environment only, also add `PREVIEW_ALIAS`: an available,
+dedicated lowercase `*.vercel.app` hostname, for example
+`turnup-team-preview.vercel.app`. Use a hostname only, without `https://`, a path,
+query string or trailing slash. Never use a Production hostname or an alias owned
+by another project. No DNS purchase is needed for an available `vercel.app` alias.
+The workflow validates syntax and checks the project's complete paginated
+Production-domain list before build/migration/upload, then rechecks that list
+immediately before alias assignment. A collision or failed/malformed lookup blocks
+Preview. The read-only lookup uses the existing environment token and account/project
+scope; no additional hostname variable is needed. It uses Vercel's
+[Production-domain filter](https://vercel.com/docs/rest-api/projects/retrieve-project-domains-by-project-by-id-or-name).
+Domain settings must not be changed concurrently with alias assignment: the API
+check and CLI mutation are separate operations, not an atomic provider-side guard.
+The workflow uses the
+pinned CLI's [`alias set`](https://vercel.com/docs/cli/alias) after a successful
+Preview upload. It records both the unique candidate URL and **Stable Preview
+URL** in the Actions summary. An alias failure fails the job; the uploaded
+deployment may already exist, so inspect the failure before retrying.
+
+This is one shared Preview address: successful deployments from any permitted
+`preview/*` branch can move it. It points to the last successfully assigned
+deployment, not necessarily the newest commit across different branches. Use one
+agreed integration Preview branch when a predictable shared testing version is
+needed. Individual candidate URLs remain available for revision-specific checks.
+Production uploads and promotion do not read or assign this alias.
+
+Keep **All Deployments** authentication enabled. Alias assignment changes routing,
+not access permissions. After the first successful assignment, open the stable
+address and create a shareable link through Vercel's Share menu if supported for
+that alias. Keep the complete link private and out of GitHub variables, logs and
+PRs. Verify in a signed-out browser that the plain hostname remains protected and
+that the same complete sharing link opens the intended revision after another
+Preview deployment. Stable sharing-token persistence has not been established
+by local tests; a routing alias alone does not guarantee it. Hobby's one-link
+limit is documented in [shareable links](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/sharable-links).
 
 Add these **secrets** separately to `preview` and `production`; add only `VERCEL_TOKEN` to `production-promotion`:
 
@@ -94,8 +123,6 @@ Set values separately in Vercel's Preview and Production environments. Ensure Pr
 | `TURNUP_ENVIRONMENT` | `preview` in Preview; `production` in Production. |
 | `DATABASE_ENVIRONMENT` | `non-production` in Preview; `production` in Production. |
 | `DATABASE_URL` | The corresponding pooled Neon runtime URL. |
-| `AUTH_ORIGIN` | Exact HTTPS stable Preview alias in Preview; exact Production browser origin in Production. The Preview value must equal the protected GitHub `PREVIEW_ORIGIN` variable. |
-| `AUTH_SOURCE_MODE` | `vercel` in both hosted environments. |
 | `SOCLAAS_API_KEY` | Secret in Vercel only, never `NEXT_PUBLIC_*`; leave unset until provider/course policy and key permissions are confirmed. |
 | `SOCLAAS_BASE_URL` | Exact fixed value `https://soclaas-api.comp.nus.edu.sg/v1`. |
 | `SOCLAAS_MODEL` | Exact model ID confirmed in the key-visible SoCLaaS model catalogue and approved for the course. No default/fallback is selected by the application. |
@@ -117,7 +144,7 @@ All four probe limit variables must be explicit positive safe integers. Missing 
 
 Keep the Vercel project protected and avoid a manual/dashboard/Git-triggered first deployment. After environment variables/secrets are in place, dispatch `Vercel prebuilt deployment` from protected `master` with target `production`. This intentionally creates the first Production deployment with `--skip-domain`, runs migrations after the target build, checks the same candidate, then waits at `production-promotion`. Confirm candidate metadata and smoke result, approve the environment job under the repository's normal release process, and let the workflow promote the exact URL. If any step fails, do not set `VERCEL_PROJECT_INITIALIZED`; inspect the failed stage and recover the database/app deliberately before retrying.
 
-Once the Production bootstrap is complete, set the Preview initialization variable to `true` and push the reviewed synthetic-check revision to a protected one-segment Preview branch such as `preview/check`. The workflow refuses to deploy Preview if the project lacks a ready Production deployment. It pulls generic Preview settings, builds the Preview target, migrates the isolated Preview database and uploads the prebuilt artifact. Without `PREVIEW_ORIGIN`, it publishes an **Open candidate** link; with a configured alias, it assigns and publishes that alias as **Open Preview**. This order means a failed build does not alter the database; a failed migration blocks upload. If upload fails after a migration succeeds, the database may be ahead of the previous app version: use only reviewed backward-compatible migrations and follow a documented forward repair or application rollback plan. Do not run automatic destructive down-migrations.
+Once the Production bootstrap is complete, set the Preview initialization variable to `true` and push the reviewed synthetic-check revision to a protected one-segment Preview branch such as `preview/check`. The workflow refuses to deploy Preview if the project lacks a ready Production deployment. It pulls generic Preview settings, builds the Preview target, migrates the isolated Preview database, and uploads the prebuilt artifact. This order means a failed build does not alter the database; a failed migration blocks upload. If upload fails after a migration succeeds, the database may be ahead of the previous app version: use only reviewed backward-compatible migrations and follow a documented forward repair or application rollback plan. Do not run automatic destructive down-migrations.
 
 Vercel CLI `curl` is used to test protected deployment URLs. The workflow authenticates this command through the existing step-scoped `VERCEL_TOKEN` environment variable. Do not pass `--token` to `curl` in CLI 58.4.4: its [curl argument parser](https://github.com/vercel/vercel/blob/vercel%4058.4.4/packages/cli/src/commands/curl/shared.ts) forwards that flag to system curl, which rejects it, even when the flag precedes the subcommand. The pinned [CLI entry point](https://github.com/vercel/vercel/blob/vercel%4058.4.4/packages/cli/src/index.ts) supports environment token authentication without adding it to raw command arguments. The command supports deployment-specific requests and automatically obtains Deployment Protection bypass for authenticated CLI access ([CLI docs](https://vercel.com/docs/cli/curl)). The production root smoke verifies an HTTP response only; it is not the T15 user journey or persistence/provider evidence.
 
@@ -193,7 +220,7 @@ The route ignores request bodies and accepts only the fixed persistence operatio
 
 | Location | Names |
 | --- | --- |
-| GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`, optional `PREVIEW_ORIGIN`. |
+| GitHub environment variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; Preview additionally `VERCEL_PROJECT_INITIALIZED`, `PREVIEW_ALIAS` (hostname only, never a sharing token). |
 | GitHub environment secrets | `VERCEL_TOKEN` in `preview`, `production`, and `production-promotion`; `MIGRATION_DATABASE_URL` in `preview` and `production` only. |
 | Vercel Preview/Production runtime variables | `TURNUP_ENVIRONMENT`, `DATABASE_ENVIRONMENT`, `DATABASE_URL`, `SOCLAAS_BASE_URL`, `SOCLAAS_MODEL`, `SOCLAAS_MAX_INPUT_BYTES`, `SOCLAAS_MAX_OUTPUT_TOKENS`, `SOCLAAS_TIMEOUT_MS`, `SOCLAAS_API_KEY` (secret, after G04), `FOUNDATION_PROBE_ENABLED`, `FOUNDATION_PROBE_TOKEN` (temporary Preview secret only). |
 | Vercel Preview runtime variables, temporary probe only | `FOUNDATION_PROBE_SOC_MAX_ATTEMPTS`, `FOUNDATION_PROBE_SOC_MAX_IN_FLIGHT`, `FOUNDATION_PROBE_SOC_MIN_INTERVAL_MS`, `FOUNDATION_PROBE_SOC_OUTPUT_TOKEN_BUDGET`; explicit values from verified provider/key limits, no defaults. |

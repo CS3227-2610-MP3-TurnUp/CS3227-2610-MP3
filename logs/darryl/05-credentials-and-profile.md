@@ -135,3 +135,15 @@ Darryl reported that the required `PREVIEW_ORIGIN` guard was failing GitHub Acti
 - Parent removed the required-alias block. With no `PREVIEW_ORIGIN`, the protected Preview workflow now proceeds normally and publishes a clearly labelled **Open candidate** link from the validated deployment URL. It does not assign an alias or imply registration will work at that generated host. A configured valid alias still produces **Open Preview**; malformed configured aliases still fail before upload.
 - Parent ran focused workflow31/31, typecheck, lint, full187/187 across17files, productionbuild and whitespace. Required independent reviewer caught and parent corrected an initially unreachable fallback test; reviewer rechecked focused workflow, TypeScript, lint, whitespace and executed fallback behavior with no unresolved actionable finding. Exact evidence is appended to CHG-D-003 verification.
 - No Vercel/GitHub configuration, database, migration, account or Production action occurred. The resulting push will trigger the normal Preview deployment; hosted authentication remains separately unverified.
+
+# 11 - Integrate Stable Preview Alias - 21 October 2026
+
+## Request
+
+Darryl asked to pull the teammate's current mainline stable-deployment-link work into `preview/WP-002` so GitHub Actions can use it.
+
+## Results
+
+- Fetched current `master` through merged PR#24 and integrated its stable Preview alias implementation. Two overlapping workflow/guide conflicts were resolved in favour of the reviewed mainline implementation, replacing the temporary candidate-link workaround. The Preview GitHub environment now has the required non-secret `PREVIEW_ALIAS` variable.
+- Corrected Windows-only integration details: normalized the workflow's line endings for executable test discovery and made the alias checker recognise Windows script paths. Reconciled the overlapping output test with the workflow it now tests.
+- Fresh complete checks passed:217/217 tests across19files, TypeScript, productionbuild and whitespace. Existing local-only agent definitions and unrelated agent-usage documentation remain uncommitted. The pending push triggers Preview; hosted deployment/authentication remains unverified until that run completes.

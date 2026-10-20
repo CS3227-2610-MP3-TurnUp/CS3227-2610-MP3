@@ -37,6 +37,24 @@ B1 targets; **complete application scenarios remain pending**. Scoped foundation
 | T31 · PAR06/08/12 | Unregistered Student asks; then ambiguous/off-topic input or provider failure | Published-event access works without registration; clarification/no spam, honest outage/direct-question option; no registration effect. Integration/AI evaluation/browser. |
 | T32 · SHR02/03/05 | Unknown/wrong credentials, forged cookie or role/user fields; logout then token replay; clock reaches 30-minute idle or 8-hour absolute expiry; concurrent login/signup admissions and expired windows; foreign/missing/null Origin, oversized request or database/configuration failure; later username/password changes | Unknown/wrong credentials share a public error and equivalent verification work. Signup/login creates a fresh cookie-bound token; only its digest persists. Logout, exact expiry boundaries and invalid tokens deny protected access. Cross-role calls disclose no private data. Persistent admission limits enforce the approved policy across instances; failures/CSRF rejection create no authentication or partial account. Safe username/role input survives errors, passwords/tokens do not echo. Forgotten-credential help truthfully reports no current recovery without a bypass; joint G02 remains separately open. Credential edits preserve UUID/history and follow the approved credential/profile G01 policy, with scoped implementation evidence in CHG-D-003 and full integration still separate. Controlled-clock, concurrency, failure-injection and browser checks; record only implemented/tested portions. |
 
+## Stable Preview routing checks (T15 foundation; CHG-K-008)
+
+Given the trusted CLI deployment workflow and a dedicated `PREVIEW_ALIAS`, when a
+Preview upload succeeds, then retain its unique candidate URL/revision, assign the
+fixed hostname to that candidate and report the stable URL after assignment
+succeeds. Missing/malformed alias configuration stops Preview before deployment
+work; upload or alias failure fails the job without a stable-address success claim.
+Given PREVIEW_ALIAS equals a current Production hostname (including a later page
+of the project's Production-domain list), then reject before build/migration/upload
+and never issue alias assignment. Failed/malformed/pagination-incomplete lookups
+also block Preview. Recheck immediately before assignment in case configuration
+changed during the build. Production requires no Preview alias and does not assign it. All permitted Preview
+branches share the most recently assigned target. Method: execute workflow shells
+with a synthetic CLI, including inert hostile configuration; separately verify
+hosted reassignment across two deployments and protection on the plain hostname.
+Verify complete shareable-link persistence separately; local routing tests do not
+establish access persistence or pass the complete T15 journey.
+
 ## Coverage
 
 Each canonical ID maps below; mapping is a planned method, never proof of execution. Detailed gates remain in [decisions](../decisions.md).

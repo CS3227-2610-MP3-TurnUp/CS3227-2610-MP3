@@ -18,6 +18,25 @@ Vercel function storage is not the durable application store. Originals/fulltext
 
 Keith selected the [CLI deployment route](../../changes/CHG-K-002-wp-001-foundation-design/design.md#selected-cli-deployment-route) on 18 October 2026 under G08. That design governs the organization-repository build/deployment path and its environment, credential and migration boundaries. The [CHG-K-005 hosted feasibility increment](../../changes/CHG-K-005-wp-001-hosted-feasibility/change.md) implements the workflow and server-only probe; CHG-K-006 carries current Production workflow evidence, distinct passed non-production runtime persistence/replay/recovery checks and the incomplete provider handoff. A successful Production run does not establish all account/resource isolation facts or policy/course eligibility, and does not waive DEP02/03 or SEC06. Preserve revision, build-artifact, environment/target, deployment URL, required-check and migration/recovery evidence through the [integration handoffs](../integration-handoffs.md).
 
+## Stable Preview routing (CHG-K-008)
+
+Keith assigned a stable Preview address on 21 October 2026. For the CLI workflow,
+DEP01/DEP03 retain each upload's unique candidate URL/revision and additionally
+assign the configured dedicated `PREVIEW_ALIAS` after a successful Preview upload.
+Missing/malformed Preview alias configuration blocks before deployment work.
+The alias must not match any current project Production domain: check the complete
+paginated Production-domain list before deployment work and again immediately
+before alias assignment. An unavailable/malformed/incomplete lookup fails closed;
+no Production-hostname reassignment is permitted by this Preview path. Concurrent
+provider domain-setting changes require operational coordination because checking
+and assigning are separate provider requests;
+failed alias assignment fails the job without claiming the stable URL was updated.
+All permitted Preview branches share this address; the last successful assignment
+determines its target. Production does not assign it. Keep deployment protection
+and DEP02 environment isolation intact. Routing does not establish persistent
+shareable-link access; hosted routing/protection/sharing checks remain separate
+evidence in [CHG-K-008](../../changes/CHG-K-008-stable-preview-alias/verification.md).
+
 ## Retention targets
 
 | Data | Accepted target | Open operational detail |
