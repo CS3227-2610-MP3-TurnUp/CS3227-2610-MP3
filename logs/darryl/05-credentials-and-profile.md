@@ -110,3 +110,16 @@ Darryl authorised client field validation/highlighting, private server failure d
 - Required independent non-author reviewer checks and exact reviewed snapshot are appended to change verification. Existing176/15 evidence remains historical; no new SQL/live access or hosted-success claim. User-confirmed only Keith has Vercel settings access. These changes make the failure diagnosable after deployment; they do not themselves prove its cause or repair it. Local-only agent edits and unrelated docs/agent-usage.md preserved.
 
 Independent review completed with no actionable findings: reviewer reproduced60focusedtests, lint/types and actual form-state checks; exact nine-file snapshot and limits are in verification. Continuing authorised PR#23 delivery in two logical fix batches: registration feedback/private diagnostics, then discoverable Preview links with consolidated evidence. Product checks are complete; the hosted valid-credentials cause remains unknown until Keith can inspect function logs.
+
+# 09 - Correct Applicable PR Checker Findings - 21 October 2026
+
+## Request
+
+Darryl asked to assess the PR checker's remarks, fix those that apply and push the changes for the active WP-002 PR#23 increment.
+
+## Results
+
+- Both P2 findings applied. Authentication now retains a successful API rejection reason but uses the generic account-unavailable feedback for thrown transport failures, non-JSON/malformed responses and invalid success redirects. The Preview workflow validates a non-secret `PREVIEW_ORIGIN`, assigns its stable alias only after a checked upload, then publishes that exact alias as **Open Preview** and the deployment environment URL. The Vercel Preview `AUTH_ORIGIN` remains an operator-configured equal value; this change cannot read or prove that runtime configuration.
+- Read-only GitHub environment configuration found Preview currently lacks `PREVIEW_ORIGIN`; the next Preview workflow run will fail before upload until the value is added. No secret/Vercel setting/deployment/database was read or changed.
+- Parent checks passed: focused executable workflow30/30, focused lint/typecheck, full186/186 deterministic tests across17files, productionbuild and whitespace. Required independent non-author review initially found a missing test-only `NODE_ENV` typecheck failure; after correction it independently reproduced TypeScript, workflow checks and direct signup/login response-failure handling with no unresolved actionable defect. Exact details and limits are appended to CHG-D-003 verification.
+- Existing local-only agent definitions and unrelated docs/agent-usage.md remain uncommitted. No recovery, migration, session-policy, Production or hosted-success claim is added.

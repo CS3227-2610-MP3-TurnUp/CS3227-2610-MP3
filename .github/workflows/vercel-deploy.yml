@@ -63,6 +63,7 @@ jobs:
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
       VERCEL_PROJECT_INITIALIZED: ${{ vars.VERCEL_PROJECT_INITIALIZED }}
+      PREVIEW_ORIGIN: ${{ vars.PREVIEW_ORIGIN }}
     outputs:
       candidate_url: ${{ steps.upload.outputs.candidate_url }}
       target: ${{ steps.trust-check.outputs.target }}
@@ -96,6 +97,23 @@ jobs:
               ;;
             *) echo "Branch and deployment target do not match."; exit 1 ;;
           esac
+          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            node --input-type=module <<'NODE'
+          const configured = process.env.PREVIEW_ORIGIN ?? "";
+          try {
+            const origin = new URL(configured);
+            if (
+              configured !== origin.origin ||
+              origin.protocol !== "https:" ||
+              origin.username || origin.password || origin.port ||
+              origin.pathname !== "/" || origin.search || origin.hash
+            ) throw new Error();
+          } catch {
+            console.error("PREVIEW_ORIGIN must be the exact HTTPS Preview alias origin, with no path, port, query, fragment or credentials.");
+            process.exit(1);
+          }
+          NODE
+          fi
           if [[ -z "$VERCEL_ORG_ID" || -z "$VERCEL_PROJECT_ID" ]]; then
             echo "Vercel project variables are missing."
             exit 1
@@ -203,8 +221,10 @@ jobs:
           printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
-            printf 'preview_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
-            printf '### Preview ready\n\n[Open Preview](%s)\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+            preview_alias="${PREVIEW_ORIGIN#https://}"
+            corepack pnpm dlx vercel@58.4.4 alias set "$deployment_url" "$preview_alias" --token="$VERCEL_TOKEN"
+            printf 'preview_url=%s\n' "$PREVIEW_ORIGIN" >> "$GITHUB_OUTPUT"
+            printf '### Preview ready\n\n[Open Preview](%s)\n' "$PREVIEW_ORIGIN" >> "$GITHUB_STEP_SUMMARY"
           else
             printf 'Production candidate uploaded (not yet promoted): [Open candidate](%s)\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
           fi

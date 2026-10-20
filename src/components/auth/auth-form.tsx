@@ -15,6 +15,12 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
   const passwordRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const signup = mode === "signup";
+  const unavailable = "Account access is unavailable. Please try again.";
+
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() => errorRef.current?.focus());
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,14 +41,15 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
         method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, ...(signup ? { role } : {}) }),
       });
-      const data = await response.json() as { error?: string; redirect?: string };
-      if (!response.ok) throw new Error(data.error || "Account access is unavailable. Please try again.");
-      if (data.redirect !== "/student" && data.redirect !== "/organiser") throw new Error("Account access is unavailable. Please try again.");
+      let data: { error?: unknown; redirect?: unknown };
+      try { data = await response.json(); } catch { showError(unavailable); return; }
+      if (!response.ok) {
+        showError(typeof data.error === "string" && data.error ? data.error : unavailable);
+        return;
+      }
+      if (data.redirect !== "/student" && data.redirect !== "/organiser") { showError(unavailable); return; }
       window.location.assign(data.redirect);
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Account access is unavailable. Please try again.");
-      requestAnimationFrame(() => errorRef.current?.focus());
-    } finally { setPending(false); }
+    } catch { showError(unavailable); } finally { setPending(false); }
   }
 
   return <main className="auth-shell">

@@ -77,11 +77,12 @@ setting, client code, tracked file or diagnostics. Missing/invalid origin, sourc
 secret configuration fails closed. Do not configure `VERCEL=1` yourself on local or
 untrusted ingress to make source headers appear trustworthy.
 
-Strict Origin checking means a generated Preview deployment URL does **not** automatically
-work. Open the exact configured origin, such as an assigned stable branch alias, or
-explicitly update the deployment's origin configuration and redeploy when its public
-origin changes. Other aliases and hosts will reject POSTs. Test platform source attribution
-on the intended deployment before claiming hosted authentication evidence.
+Strict Origin checking requires one stable Preview alias. Configure the GitHub Preview
+environment variable `PREVIEW_ORIGIN` to that exact HTTPS origin and set Vercel Preview
+`AUTH_ORIGIN` to the same value. The protected workflow assigns that alias to each uploaded
+candidate before it publishes **Open Preview**. A missing or malformed value fails before
+deployment; other aliases and generated deployment hosts reject POSTs. Test platform source
+attribution on the intended deployment before claiming hosted authentication evidence.
 
 Usernames are canonical lowercase ASCII letters/digits/underscores (3–32 characters),
 globally unique across roles. Passwords use NFC, 15–128 Unicode code points, with spaces
@@ -199,6 +200,6 @@ These stages narrow investigation rather than establishing the exact root cause.
 No raw error, credential, identity, request, IP, cookie or configuration value is logged.
 Public responses stay generic. Check Vercel function logs privately; never paste secrets.
 
-After a future successful Preview upload, GitHub Actions publishes an **Open Preview**
-link in the run summary and the validated Preview URL in its deployment environment.
+After a successful Preview upload, GitHub Actions assigns the configured stable alias then
+publishes **Open Preview** in the run summary and as the deployment environment URL.
 Production uploads remain explicitly labelled candidates until promotion succeeds.

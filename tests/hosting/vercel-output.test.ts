@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 const workflow = readFileSync(resolve(".github/workflows/vercel-deploy.yml"), "utf8");
 const parser = resolve(".github/scripts/read-vercel-output.mjs");
 const candidate = "https://turnup-synthetic.vercel.app";
+const previewOrigin = "https://preview.turnup.example";
 const diagnostic = `Error while parsing config file: "${resolve("pnpm-lock.yaml")}"`;
 
 function stepScript(name: string) {
@@ -29,7 +30,7 @@ function runStep(name: string, stdout: string, exitCode = 0, target = "productio
   try {
     const result = spawnSync("bash", ["-c", `
 corepack() {
-  printf '%s\\n' "$@" > "$CLI_ARGUMENTS"
+  printf '%s\\n' "$@" >> "$CLI_ARGUMENTS"
   [[ "$VERCEL_TOKEN" == "synthetic-token" ]] || return 90
   printf '%s' "$CLI_STDOUT"
   return "$CLI_EXIT"
@@ -55,11 +56,13 @@ ${stepScript(name)}
         GITHUB_REF_NAME: "master",
         GITHUB_OUTPUT: outputFile,
         GITHUB_STEP_SUMMARY: summaryFile,
+        PREVIEW_ORIGIN: previewOrigin,
       },
     });
     let output = "";
     try { output = readFileSync(outputFile, "utf8"); } catch { /* Failed steps produce no output. */ }
-    const args = readFileSync(argumentsFile, "utf8").trimEnd().split("\n");
+    let args: string[] = [];
+    try { args = readFileSync(argumentsFile, "utf8").trimEnd().split("\n"); } catch { /* Some steps do not invoke the CLI. */ }
     let summary = "";
     try { summary = readFileSync(summaryFile, "utf8"); } catch { /* Failed steps may produce no summary. */ }
     return { ...result, output, args, summary };
@@ -73,8 +76,13 @@ describe("Vercel output handling in the executable workflow steps", () => {
     it.each([candidate, `${diagnostic}\n${candidate}\n`])(`captures only the ${target} deployment URL`, (stdout) => {
       const result = runStep("Upload checked prebuilt output", stdout, 0, target);
       expect(result.status).toBe(0);
-      expect(result.output).toBe(`candidate_url=${candidate}\n${target === "preview" ? `preview_url=${candidate}\n` : ""}`);
-      expect(result.summary).toContain(target === "preview" ? `[Open Preview](${candidate})` : `[Open candidate](${candidate})`);
+      expect(result.output).toBe(`candidate_url=${candidate}\n${target === "preview" ? `preview_url=${previewOrigin}\n` : ""}`);
+      expect(result.summary).toContain(target === "preview" ? `[Open Preview](${previewOrigin})` : `[Open candidate](${candidate})`);
+      if (target === "preview") expect(result.args).toEqual([
+        "pnpm", "dlx", "vercel@58.4.4", "deploy", "--prebuilt", "--target=preview", "--token=synthetic-token",
+        "--meta", "turnupCommit=synthetic-sha", "--meta", "turnupRef=master", "--meta", "turnupTarget=preview",
+        "pnpm", "dlx", "vercel@58.4.4", "alias", "set", candidate, "preview.turnup.example", "--token=synthetic-token",
+      ]);
       if (target === "production") expect(result.summary).toContain("not yet promoted");
     });
 
@@ -98,6 +106,43 @@ describe("Vercel output handling in the executable workflow steps", () => {
     expect(result.status).not.toBe(0);
     expect(result.output).toBe("");
     expect(result.stderr).not.toContain("synthetic-secret");
+  });
+
+  it.each(["", "http://preview.turnup.example", "https://preview.turnup.example/path", "https://user:pass@preview.turnup.example", "https://preview.turnup.example:8443"])("blocks a malformed Preview origin before deployment: %s", (origin) => {
+    const directory = mkdtempSync(join(tmpdir(), "turnup-trust-"));
+    try {
+      const result = spawnSync("bash", ["-c", stepScript("Confirm trusted branch and exact deployment target")], {
+        encoding: "utf8",
+        env: {
+          PATH: `${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ""}`,
+          NODE_ENV: "test",
+          DEPLOYMENT_TARGET: "preview", REF_PROTECTED: "true", VERCEL_ORG_ID: "team_synthetic", VERCEL_PROJECT_ID: "prj_synthetic",
+          PREVIEW_ORIGIN: origin, GITHUB_REF: "refs/heads/preview/test", GITHUB_EVENT_NAME: "push", GITHUB_SHA: "synthetic-sha",
+          GITHUB_OUTPUT: join(directory, "output"),
+        },
+      });
+      expect(result.status).not.toBe(0);
+      expect(result.stdout + result.stderr).toContain("PREVIEW_ORIGIN must be the exact HTTPS Preview alias origin");
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("accepts the configured Preview alias before deployment", () => {
+    const directory = mkdtempSync(join(tmpdir(), "turnup-trust-"));
+    try {
+      const output = join(directory, "output");
+      const result = spawnSync("bash", ["-c", stepScript("Confirm trusted branch and exact deployment target")], {
+        encoding: "utf8",
+        env: {
+          PATH: `${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ""}`,
+          NODE_ENV: "test",
+          DEPLOYMENT_TARGET: "preview", REF_PROTECTED: "true", VERCEL_ORG_ID: "team_synthetic", VERCEL_PROJECT_ID: "prj_synthetic",
+          PREVIEW_ORIGIN: previewOrigin, GITHUB_REF: "refs/heads/preview/test", GITHUB_EVENT_NAME: "push", GITHUB_SHA: "synthetic-sha",
+          GITHUB_OUTPUT: output,
+        },
+      });
+      expect(result.status).toBe(0);
+      expect(readFileSync(output, "utf8")).toBe("target=preview\n");
+    } finally { rmSync(directory, { recursive: true, force: true }); }
   });
 
   it.each(["200", `${diagnostic}\n200`])("accepts the smoke response independently of the lockfile diagnostic: %s", (stdout) => {
