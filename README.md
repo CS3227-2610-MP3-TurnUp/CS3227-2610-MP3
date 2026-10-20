@@ -186,3 +186,19 @@ cases cover old-password/old-name login, competing saves, queued logout/expiry a
 rollback; unexpected database failures must not count as expected denials. This suite
 does not reset a database or access providers. Code/test generation alone supplies no
 live database, hosted or complete T20 evidence.
+
+## Authentication failure diagnostics
+
+If signup/login/logout returns a server-unavailable response, the function log emits a
+structured `auth_unavailable` event with only `action`, `stage` and a fixed `code`.
+The `configuration` stage points to auth origin/source/secret/runtime settings;
+`trusted_source` points to validated ingress attribution; `database_initialisation`
+points to runtime database configuration/client initialisation; `admission` points to
+persistent attempt-limit access; `authentication` covers hash/account/session work.
+These stages narrow investigation rather than establishing the exact root cause.
+No raw error, credential, identity, request, IP, cookie or configuration value is logged.
+Public responses stay generic. Check Vercel function logs privately; never paste secrets.
+
+After a future successful Preview upload, GitHub Actions publishes an **Open Preview**
+link in the run summary and the validated Preview URL in its deployment environment.
+Production uploads remain explicitly labelled candidates until promotion succeeds.

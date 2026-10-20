@@ -14,3 +14,5 @@ Source/paths/policies: [approved v1.1](../../docs/plans/wp-002-credentials-profi
 The initial planning-only approval turn dispatched no implementation/audit. Subsequent explicit approval authorised the execution now recorded above; standalone specification audit remains unassigned. No whole WP-002/T20/hosted pass implied.
 
 - [x] Adopted Darryl-requested FoC compact inline credential design, reconciled planv1.3/confirmation presentation, independently reviewed source/component behavior, and exercised local responsive/focus/cancel UI. See the dated verification addendum for exact checks and limits.
+
+- [x] Added shared client/server credential input validation with field-associated submit errors, private allowlisted auth failure stages and validated clickable Preview/deployment links. Fresh180 deterministic tests, focused lint, productionbuild, local UI/error checks and non-author review are recorded in the21 October addendum. Hosted root cause remains unverified.

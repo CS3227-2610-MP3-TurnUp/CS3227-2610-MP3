@@ -60,7 +60,9 @@ ${stepScript(name)}
     let output = "";
     try { output = readFileSync(outputFile, "utf8"); } catch { /* Failed steps produce no output. */ }
     const args = readFileSync(argumentsFile, "utf8").trimEnd().split("\n");
-    return { ...result, output, args };
+    let summary = "";
+    try { summary = readFileSync(summaryFile, "utf8"); } catch { /* Failed steps may produce no summary. */ }
+    return { ...result, output, args, summary };
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -71,7 +73,9 @@ describe("Vercel output handling in the executable workflow steps", () => {
     it.each([candidate, `${diagnostic}\n${candidate}\n`])(`captures only the ${target} deployment URL`, (stdout) => {
       const result = runStep("Upload checked prebuilt output", stdout, 0, target);
       expect(result.status).toBe(0);
-      expect(result.output).toBe(`candidate_url=${candidate}\n`);
+      expect(result.output).toBe(`candidate_url=${candidate}\n${target === "preview" ? `preview_url=${candidate}\n` : ""}`);
+      expect(result.summary).toContain(target === "preview" ? `[Open Preview](${candidate})` : `[Open candidate](${candidate})`);
+      if (target === "production") expect(result.summary).toContain("not yet promoted");
     });
 
     it(`preserves a failed ${target} deploy even if it prints a valid URL`, () => {

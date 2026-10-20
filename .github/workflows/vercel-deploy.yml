@@ -51,6 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
+      url: ${{ steps.upload.outputs.preview_url }}
     concurrency:
       group: vercel-${{ (github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production')) && 'production' || 'preview' }}
       cancel-in-progress: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.target == 'production') }}
@@ -201,7 +202,12 @@ jobs:
           deployment_url="$(printf '%s\n' "$deployment_output" | node .github/scripts/read-vercel-output.mjs deployment-url)"
           printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           echo "Uploaded checked $DEPLOYMENT_TARGET candidate for revision $GITHUB_SHA."
-          printf 'Candidate URL: `%s`\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
+            printf 'preview_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
+            printf '### Preview ready\n\n[Open Preview](%s)\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf 'Production candidate uploaded (not yet promoted): [Open candidate](%s)\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+          fi
           if [[ "$DEPLOYMENT_TARGET" == "production" ]]; then
             echo "Candidate was uploaded with --skip-domain; promotion waits for candidate verification and the protected production-promotion environment."
           fi
