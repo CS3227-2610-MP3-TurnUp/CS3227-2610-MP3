@@ -49,6 +49,7 @@ ${stepScript(name)}
         CLI_EXIT: String(exitCode),
         CLI_ARGUMENTS: argumentsFile,
         DEPLOYMENT_TARGET: target,
+        PREVIEW_ALIAS: "turnup-synthetic-preview.vercel.app",
         VERCEL_TOKEN: "synthetic-token",
         CANDIDATE_URL: candidate,
         GITHUB_SHA: "synthetic-sha",
