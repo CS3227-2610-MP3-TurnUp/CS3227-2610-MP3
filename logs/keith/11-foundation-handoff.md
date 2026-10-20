@@ -62,3 +62,13 @@ Commit all relevant CHG-K-006 files using the repository commit conventions, wit
 ## Results
 
 Grouped the reviewed work into cache/worktree ignore rules and the foundation handoff documentation/evidence. Committed the ignore rules as `4e4cbc4`. Prepared the handoff with its existing validation and independent-review evidence, corrected the stale gate-retirement task text and an internal handoff reference, and recorded the new local-commit authority. Preserved ignored private/generated files and the five unrelated modified logs in the main checkout. No push, history rewrite or remote issue/PR change is part of this request.
+
+# 05 - Publish the foundation handoff pull request - 20 October 2026
+
+## Request
+
+Use a delivery agent to push CHG-K-006 and create a pull request; advise whether to target Preview or Production.
+
+## Results
+
+Inspected the committed final diff and found documentation, sanitized evidence and `.gitignore` only, with no application or workflow changes. Pushed branch `6-foundation-handoff` without force at `5a490ed` and opened [PR #22](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/22), base `master`, head `6-foundation-handoff`. GitHub readback confirmed the open PR title, base, head and description. The PR description states previous verification and the remaining G04/full-product limitations. No tests were rerun for the evidence-only delivery update. A normal PR into `master` is the repository path; `preview/*` is a deployment test route. Merge was not performed, and merging to protected `master` follows the Production workflow. Exact delivery metadata is recorded in [verification](../../changes/CHG-K-006-foundation-handoff/verification.md).
