@@ -16,6 +16,7 @@
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:db": "vitest run --config tests/foundation/vitest.database.config.ts",
+    "test:auth:db": "vitest run --config tests/auth/vitest.database.config.ts",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate:dev": "prisma migrate dev",
