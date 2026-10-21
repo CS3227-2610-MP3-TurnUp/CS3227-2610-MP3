@@ -203,3 +203,11 @@ Public responses stay generic. Check Vercel function logs privately; never paste
 After a successful Preview upload, GitHub Actions records the unique candidate URL and the
 stable Preview URL in the run summary. Production uploads remain explicitly labelled
 candidates until promotion succeeds.
+
+## Organiser event preparation (WP-003)
+
+The original Organiser-only flow is implemented locally: own-event search/sort, incomplete private drafts, exact preview/approval, immutable publication/replacement, withdrawal/republication, final cancellation and never-published deletion. Student discovery/registration, custom forms, roster and AI remain deferred. Times use Singapore entry/display and UTC storage; accepted bounds/policies are in [domain contracts](specs/shared/domain-and-data-contracts.md#accepted-wp-003-bounds-and-timing--21-october-2026).
+
+The checked-in additive20261021000000_events migration must be applied to an assigned verified database before using event routes. No hosted migration/deployment is claimed by this local implementation. See the [WP-003 plan/run notes](docs/plans/wp-003-publication-plan.md) and [verification](changes/CHG-K-009-wp-003-publication/verification.md).
+
+Normal checks remain lint/typecheck/test/db:validate/build. For isolated SQL checks, run `RUN_LOCAL_EVENT_SQL=1 corepack pnpm exec vitest run --config tests/events/vitest.database.config.ts`. This explicitly opted-in diagnostic uses Prisma's already locked development PGlite/socket dependencies, fresh in-memory PostgreSQL, a loopback-only single connection and synthetic records; it never uses configured hosted URLs. It proves real Prisma/service/JSONB/rollback behaviour locally, not Neon concurrency, hosted persistence or full browser acceptance.

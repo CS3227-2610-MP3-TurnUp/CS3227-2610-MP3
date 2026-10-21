@@ -1,6 +1,6 @@
 # WP-003 - Manual event preparation and publication
 
-Planned work under B1/D12; no implementation or passing runtime evidence is implied. Read the [common planning rules and ownership](../implementation-plan.md), the [task reading map](../README.md#task-reading-map), applicable [decision gates](../decisions.md) (G03/G05/G07/G08) and the relevant [integration handoff](../integration-handoffs.md). Exact file writers and change IDs remain per-change assignments.
+Original scope implemented locally under B1/D12 in [CHG-K-009](../../changes/CHG-K-009-wp-003-publication/verification.md); hosted event migration, live concurrency and consumer-dependent acceptance remain pending. Read the [common planning rules and ownership](../implementation-plan.md), the [task reading map](../README.md#task-reading-map), applicable [decision gates](../decisions.md) (G03/G05/G07/G08) and the relevant [integration handoff](../integration-handoffs.md). Exact file writers and change IDs remain per-change assignments.
 
 ## Scope and dependencies
 
@@ -22,3 +22,7 @@ Planned work under B1/D12; no implementation or passing runtime evidence is impl
 | WP-003 | T05–07/T22–25/T29; chat/registration-dependent portions with their packages |
 
 Read each applicable scenario's complete Given/When/Then and method, including coverage and evaluation guidance. Partial package evidence does not pass an entire scenario.
+
+## Assigned original-scope implementation — 21 October 2026
+
+Keith assigned CHG-K-009 at integrated WP-002 revision5402461. [Change](../../changes/CHG-K-009-wp-003-publication/change.md), [plan](../../docs/plans/wp-003-publication-plan.md) and [verification](../../changes/CHG-K-009-wp-003-publication/verification.md) identify exact outputs/evidence. [Accepted event bounds/timing](../shared/domain-and-data-contracts.md#accepted-wp-003-bounds-and-timing--21-october-2026) resolve only dependent Organiser G03/G05 portions. Student discovery/details remain WP-004; no Student ownership transfer. Registration/chat-dependent capacity-floor, flags, registrant notices and history checks remain consumer integration work. Zero-question publication is required; no form editor or Join action is included.
