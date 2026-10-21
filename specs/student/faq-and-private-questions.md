@@ -26,3 +26,6 @@ Model outcomes: answered, partially answered, unanswered, needs clarification, o
 Idempotency binds actor/event/operation/payload; Students' threads never merge. Refresh-based inboxes need no real-time service. Neither proposal/private replies nor other events are retrieval sources. Retain necessary question context only; user text may contain personal values. Emergency stored-message suppression remains G07.
 
 Verification: T06/09–14/18/27/31. Live quality checks need labelled fixtures/model/prompt/configuration and actual context inspection.
+
+## Conversational replies - approved22 October2026
+Darryl approved natural short phrasing with event facts grounded in cited source. Existing PAR07 exact quotes remain available in expandable sources. Subjective questions acknowledge preference without guaranteeing enjoyment; missing information is honestly unknown. Source/revision/schema checks continue; they do not prove semantic entailment of paraphrases. Live quality evaluation remains pending. No extra source/history/private context or inbox effects authorised.

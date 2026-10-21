@@ -36,7 +36,7 @@ Generated public candidates remain editable and separate from private findings. 
 
 ## Student FAQ and private replies
 
-Use restrained panels, shared typography and consistent controls. Clearly identify the selected event; present relevant verified public quotes/sections in an evidence block rather than visually authoritative unsupported AI prose. Separate supported content, unanswered portions and forwarding status. Code-derived capacity/state is labelled as current application information, not a model prediction.
+Use restrained panels, shared typography and consistent controls. Clearly identify the selected event; present short conversational replies supported by verified public quotes/sections under an expandable View sources disclosure. Subjective questions acknowledge personal preference; absent facts stay unknown. Do not present generated prose as a verified event fact merely because it has citations. Separate supported content, unanswered portions and forwarding status. Code-derived capacity/state is labelled as current application information, not a model prediction.
 
 Use distinct notices for clarification, out-of-scope input, unsupported public information, provider failure, failed forwarding and unavailable/changed source. Show sent only after commit. My Questions and the Organiser inbox use separate private thread panels, pending/answered labels and clearly identified human replies; refresh on open/manual refresh. Do not imply instant typing/push delivery. No private reply, proposal or submitted answer appears as shared chatbot evidence.
 
