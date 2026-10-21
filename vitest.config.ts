@@ -8,7 +8,8 @@ export default defineConfig({
       "tests/hosting/**/*.test.ts",
       "src/server/ai/**/*.test.ts",
       "tests/auth/**/*.test.ts",
+      "tests/events/**/*.test.ts",
     ],
-    exclude: ["tests/foundation/**/*.integration.test.ts", "tests/auth/**/*.integration.test.ts"],
+    exclude: ["tests/foundation/**/*.integration.test.ts", "tests/auth/**/*.integration.test.ts", "tests/events/**/*.integration.test.ts"],
   },
 });
