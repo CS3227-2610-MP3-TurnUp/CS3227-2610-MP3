@@ -22,3 +22,11 @@ Planned work under B1/D12; no implementation or passing runtime evidence is impl
 | WP-006 | T02/T06/T09–14/T18/T27/T31 |
 
 Read each applicable scenario's complete Given/When/Then and method, including coverage and evaluation guidance. Partial package evidence does not pass an entire scenario.
+
+## Independent component slice — CHG-D-005
+
+Darryl approved the [synthetic component plan](../../docs/plans/wp-006-student-ai-components-plan.md) on 21 October 2026. The isolated slice implements a reusable chat panel, strict source/quotation validator, request/source state handling and unlinked development-only simulation harness. Exact checks and limits belong in [verification](../../changes/CHG-D-005-student-ai-components/verification.md). These components do not implement a live Student FAQ, publication access, provider integration, private forwarding or an inbox. All full-package acceptance targets above remain integration targets; quotation provenance does not establish semantic answer quality.
+
+## Local provider bridge — CHG-D-006
+
+Darryl approved the [local integration plan](../../docs/plans/wp-006-student-ai-local-provider-plan.md) on21 October2026. The bounded bridge reuses the server-only completion client, resolves server-owned synthetic sources, validates output on server/client and gates development-only loopback inference behind a persisted operator allowance. Real publication/Student-role/inbox integration and permission/budget/handling/hosted evidence remain pending; copying a private key does not arm inference. Exact results belong in [verification](../../changes/CHG-D-006-student-ai-local-provider/verification.md), not a whole-package completion claim.
