@@ -1,6 +1,6 @@
 # Student discovery and registration
 
-Owner: Darryl (Student); reviewer: Keith (Organiser). B1 target, unimplemented. Historical PAR means Student.
+Owner: Darryl (Student); reviewer: Keith (Organiser). B1 target; D007 discovery implementation/checks are tracked separately from pending registration. Historical PAR means Student.
 
 | ID | Observable requirement |
 | --- | --- |
@@ -18,3 +18,11 @@ One Student account represents one place; no waitlist/approval queue. Organisers
 New joins/rejoins use current form; existing registrations retain captured wording/place, without forced new answers/disqualification. Availability during typing is advisory; server decides at final submission. Answer correction cannot create a second seat.
 
 Verification: T08/16–20/23/24/30; post-start/history/rescheduling details require G05 before dependent implementation.
+
+## Approved Student discovery — 22 October 2026
+
+Darryl approved WP-004 plan v1.0 under CHG-D-007. Default Upcoming includes current PUBLISHED events with start strictly after database time. Started/past includes current PUBLISHED events with start at or before that time, including after end. Both title-search filters order ascending by approved start then event UUID; titles/search use approved content, never saved private drafts. Search is NFC-normalised, trimmed, case-insensitive, at most150 Unicode code points and contains no control characters. Requests cannot select another owner, role or historical publication. Current published details remain readable after start/end; this choice grants no registration/FAQ operation.
+
+Opening/reloading a page or manually refreshing rereads the current approved representation. No realtime subscription is promised. A detected replacement/withdrawal during a read fails without returning the old content. Loading, empty results, unavailable event, changed-source conflict and technical failure are distinct; failure must not look like an empty collection. No private drafts/profile/submission data appear in these responses.
+
+D007 initially implements discovery/details only. Until real registration persistence is integrated, remaining places and own registration state are explicitly unavailable, with no active registration control. Advertised capacity must never be labelled remaining capacity. PAR02's live state/count portion and PAR03–05/13–15 remain pending; this bounded delivery does not change those requirements.

@@ -22,3 +22,7 @@ Planned work under B1/D12; no implementation or passing runtime evidence is impl
 | WP-004 | T08/T17–21/T23/T24/T30; optional-profile integration T16/T20 |
 
 Read each applicable scenario's complete Given/When/Then and method, including coverage and evaluation guidance. Partial package evidence does not pass an entire scenario.
+
+## D007 approved increment — 22 October 2026
+
+Darryl approved [plan v1.0](../../docs/plans/wp-004-student-registration-plan.md) and allocated CHG-D-007 against merged WP-003/master `1f0aa87`. Student-only discovery/current details are ready for local implementation with unavailable live registration counts/state; the full PAR02/registration package remains incomplete. Shared form publication/capacity-floor/schema/migration and Organiser roster stay with Keith; dependent work waits for exact shared-contract and database handoffs. Main-agent verification is explicitly assigned for this increment, with prior independent evidence preserved. See [D007 verification](../../changes/CHG-D-007-student-discovery-registration/verification.md) for actual checks rather than assuming runtime success from approval.

@@ -134,3 +134,15 @@ textarea[aria-invalid="true"], input[aria-invalid="true"] { border-color: var(--
 .event-publication, .event-preview { max-width: 58rem; }
 .event-footer { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--tu-line); }
 @media (prefers-reduced-motion: reduce) { .event-card { transition: none; } }
+
+/* Student published-event discovery and details. */
+.student-discovery-filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 1rem; align-items: end; margin-bottom: 1.5rem; }
+.student-discovery-filters > .field-help { grid-column: 1 / -1; }
+.student-event-card { min-width: 0; overflow-wrap: anywhere; }
+.student-event-location { white-space: pre-wrap; }
+.student-event-link { color: var(--tu-action); text-decoration: underline; text-underline-offset: 0.2em; }
+.student-event-details { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.student-event-details > * { min-width: 0; overflow-wrap: anywhere; }
+.student-event-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.student-registration-notice h2 { margin-top: 0; }
+@media (max-width: 48rem) { .student-event-details, .student-discovery-filters { grid-template-columns: minmax(0, 1fr); } }
