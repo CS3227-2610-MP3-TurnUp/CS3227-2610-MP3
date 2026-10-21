@@ -1,6 +1,6 @@
 # Organiser event management
 
-Owner: Keith (Organiser); reviewer: Darryl (Student). B1 target, unimplemented. Depends on [accounts](../shared/accounts-and-access.md), [contracts](../shared/domain-and-data-contracts.md), [privacy](../shared/ai-and-privacy.md).
+Owner: Keith (Organiser); reviewer: Darryl (Student). B1 target; original WP-003 scope implemented locally in [CHG-K-009](../../changes/CHG-K-009-wp-003-publication/verification.md), with hosted migration and registration/chat-dependent checks pending. Depends on [accounts](../shared/accounts-and-access.md), [contracts](../shared/domain-and-data-contracts.md), [privacy](../shared/ai-and-privacy.md).
 
 | ID | Observable requirement |
 | --- | --- |
@@ -17,3 +17,5 @@ Owner: Keith (Organiser); reviewer: Darryl (Student). B1 target, unimplemented. 
 [Contracts](../shared/domain-and-data-contracts.md) define required fields/approval/lifecycle once. Discard Saved Draft, Cancel Editing and Cancel Event have distinct effects/labels. Provider failure leaves manual completion available. Date edge cases remain [G05](../decisions.md).
 
 Verification: T05–07/14/22–25/29. Role ownership includes UI/server/tests with shared publication-contract review.
+
+21 October2026 accepted presentation refinement: follow the [canonical view/editor/preview and card rules](../shared/domain-and-data-contracts.md#organiser-event-presentation--accepted-refinement-21-october-2026) for ORG01/08–13/18. ORG10 timing now permits an earlier future replacement under the scoped G05 amendment; registration-dependent checks remain deferred. See CHG-K-009 verification for actual results.

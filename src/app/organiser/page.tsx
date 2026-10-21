@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EventDashboard } from "../../components/events/dashboard";
 import { AccountMenu } from "../../components/account/account-menu";
 import { requireRole } from "../../server/auth/guards";
 
@@ -12,6 +13,5 @@ export default async function OrganiserPage() {
     <p>{access.status === "denied" ? "This page is for Organiser accounts." : "Please try again later."}</p><Link href="/login">Go to login</Link>
   </section></main>;
   return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/">TurnUp</Link><AccountMenu username={access.user.username} /></header>
-    <section className="card"><p className="eyebrow">Organiser account</p><h1>Welcome, {access.user.username}</h1>
-      <p>You are logged in as an Organiser.</p><p className="muted">Event preparation and publication are coming in a later update.</p></section></main>;
+    <EventDashboard /></main>;
 }
