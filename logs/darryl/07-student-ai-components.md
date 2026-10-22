@@ -1204,3 +1204,223 @@ Prepared two logical commits:conversational chat components/evidence/UI with tes
   "usage_updates": []
 }
 ```
+
+# 19 - Plan Real Publication Source Prerequisite - 22 October 2026
+
+## Request
+
+Darryl asks inspection of KeithWP003at1f0aa87 and bounded WP006integration plan preserving currentwork.Scopeauthenticated source loading/revision/withdraw/cancel,no inference.Main only;present plan before code.No provider calls,allowancechanges,commit,push/deploy.
+
+## Results
+
+Read-only git/source/contracts/evidence inspection;no tests repeated.Plan saved at docs/plans/wp-006-publication-source-integration-plan.md. Worktree6d5d250 remains;no prerequisitemerge performed.Reader returns Studentonly current published snapshot but generic404;consumer must project/recheck.Size mismatch32768serialized vs48000publictext bytes,G05post-start andemptyform support explicit.Private env lacks DB/auth prerequisites;no credentials accessed/copied.Main-only plan,no independentreview needed/claimed.Codexusage telemetry unavailable/null.Approval pending.No code/config/schema changes.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 19,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "54024616eb2c5dd93dcdee458fd66b53c03354b2",
+  "captured_at": "2026-10-21T19:16:56.2394124+00:00",
+  "delegation": "Main-only read-only prerequisite inspection and plan;no agents or implementation.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Inspect exact WP003merge1f0aa87 against WP0066d5d250,identify authenticated source/lifecycle/migration gaps,write bounded approval plan.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Plan prepared;reader/migration present atmaster only.Gaps:generic404,final recheck,eventVersionvs publication identity,32KiBvs48KBbounds,G05post-start,emptyform,targetconfig.No merge/tests/provider/allowance edits/commit/push/deploy.Plan/log only;approval pending.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped usage and exact runtime turn mapping unavailable; root turn active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```
+
+# 20 - Implement Publication Source Prerequisite - 22 October 2026
+
+## Request
+
+Darryl approved planv1 for source-only publication integration.Main only,including approved scoped bounds and lifecycle decisions.No provider calls,allowance edits,externalDB migration,commit,push/deploy.
+
+## Results
+
+In progress.Main solewriter;prior evidence reused except affected integrated checks.New work self-verified only by explicit override.No claim of independent review.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 20,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "54024616eb2c5dd93dcdee458fd66b53c03354b2",
+  "captured_at": "2026-10-22T03:21:54.8433471+08:00",
+  "delegation": "Main agent only;user explicitly approved source-only publication plan,no subagents.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Integrate exact1f0aa87 without commit;implement authenticated publication projection/final recheck/dev inspection;offline and disposableSQL checks;preserve currentwork.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Approved source-only slice implemented against uncommitted1f0aa87merge;112integratedtests plus19affectedrechecks and5realdisposableSQLtests passed.Finaltypes/lintpass,productionbuild/newroute404checks passed before UUID-onlyfinalfix.Main-only review;no agents/provider/allowance/externalDB/commit/push/deploy.Interactive assigned DB/auth/migration prerequisites remain.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped usage and exact runtime turn mapping unavailable; root turn active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```
+
+Entry20 final results: implemented approved real-publication prerequisite;3mergeconflictsresolved,both featurecommits retained. New sourceprojection/lifecycle/API/page/clientloader plus disabledcomposer.No need to alter corestate eventtypes;separate inspection reducer clears content. Currentcode has main-onlyverification;earlierindependenthashes retainedashistorical.112targetedtests,19affectedrechecks,5disposableSQLpass;types/lint/build/localproduction404checkedwith documented timing.Fixture/cookie/syntax failures corrected,not hidden.Interactive DB/authsetup and eventmigration confirmation remain pending.No originalcredentials copied,no provider/allowance operations,no agents,commit,push/deploy.Owneddevserver restoredsession43558 on3001. Detailedpaths/hashes/commands/limits/manualchecklist inD006verification/delivery.Codextoken telemetry unavailable/null;no estimates or providerusage fabricated.
+
+# 21 - Plan Real Published Event Q&A - 22 October 2026
+
+## Request
+
+Darryl requests the smallest real-publication Q&A integration plan in the existing WP-006 worktree, preserving Prisma/discovery fixes and all other work. Main agent only. Inspect publication/provider contracts and private local limits; propose exact files, checks and hosted prerequisites before implementation. No provider calls, allowance changes, database writes, commit, push or deployment.
+
+## Results
+
+Prepared [real-publication Q&A plan v1.0](../../docs/plans/wp-006-real-publication-qa-plan.md) under the existing D005/D006 increment. Inspected current HEAD32d62e3 and preserved dirty/index state;Keith1f0aa87 is already an ancestor and WP004prerequisites are present. Proposed local-only authenticated answer route,server-only trusted-source adapter,current-public-form projection,corner chat on the real event page,final session/publication/evidence rechecks and clear failure states. Retains32768byte source ceiling and future-start-onlyFAQ;no new policy/limit adopted. Exact paths/checks/hosted dependencies in plan;D006records updated as proposed only. Safe private metadata:140remaining local attempts,effective1000output/20000ms,10secondspacing,expiry22October22:43Singapore;no key displayed or allowance changed. No product/source tests rerun or DB/network/provider action. Main only,no subagent dispatch/reuse or independent-review claim. Approval pending;no code/configuration/allowance/index/commit/push/deploy changes. Bundled Python prompt-log validator --from-entry21 --final exited0:one root,zero spawned/reused/dispatches,token telemetry unavailable/null;no token totals invented.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 21,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "32d62e315ce7b59ef5d77c835c64c0b86b1d1d60",
+  "captured_at": null,
+  "delegation": "Explicit human main-agent-only assignment; no subagents dispatched or reused.",
+  "agents": [{
+    "id": "/root", "parent": null, "thread_id": null, "action": "root", "role": "main",
+    "task": "Inspect existing publication/provider integration and prepare a bounded real-event Q&A approval plan.",
+    "reason": null, "dispatches": 0, "outcome": "completed",
+    "result": "Prepared proposed v1.0 plan with exact files, mocked/disposable SQL checks, existing local limits and remaining hosted/full-WP006 dependencies. Awaiting approval; no implementation, subagents, live requests, allowance/configuration/DB writes or delivery actions.",
+    "settings": {"model": null, "effort": null, "basis": "unknown"},
+    "tokens": {"status": "unavailable", "responses": null, "input": null, "cached_input": null, "output": null, "reasoning_output": null, "total": null, "source": null, "note": "Exact prompt-scoped runtime usage and turn/thread mapping unavailable; root turn active."}
+  }],
+  "usage_updates": []
+}
+```
+
+# 22 - Implement Real Published Event Q&A - 22 October 2026
+
+## Request
+
+Darryl approved real-publication Q&A plan v1.0 after clarification that WP005 feeds the existing approved publication contract. Implement only that local slice in the existing checkout; main agent only. Preserve all work; no live provider requests, allowance changes, shared database writes, commit, push or deployment.
+
+## Results
+
+Approved local slice implemented atHEAD32d62e3 plus working changes:trusted-public-source provider core,canonical public-form/title projection,authenticated development answer route and real event-page floating chat/controller/transport. Final source/session/evidence recheck discards changed/unavailable answers;no automatic inference retries. Preserved inherited work,index,local configuration/allowance and registration fixes. Exact files/checks/failures/manual limits in D006verification/delivery. Initial mock101passed/one route-suite syntax error;fixed,affected route/render39passed;after main-review overlap fix and start-boundary regression affected service/route/controller54passed. SQL initially11/12due missing test import;corrected,12/12passed. Header test typing/import fixed;finaltypes/scopedlintpass;productionbuildpass;actual local production sourceGET/answerPOST404/private-no-store;restored development3001andunauthenticatedsource401checked. No live provider request,real allowance mutation,shared DBwrite,subagent,commit,push/deploy. Authenticated visual/live quality/hosted/inbox/fullWP006remainpending. All new evidence MAIN-AGENT VERIFICATION ONLY;prior independent evidence unchanged. Codex/provider token consumption was not measured or fabricated;no provider call dispatched by this agent.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1, "entry": 22, "root_thread_id": null, "root_turn_id": null,
+  "revision": "32d62e315ce7b59ef5d77c835c64c0b86b1d1d60", "captured_at": null,
+  "delegation": "Human explicitly requires main-agent-only implementation and verification; no subagents.",
+  "agents": [{
+    "id": "/root", "parent": null, "thread_id": null, "action": "root", "role": "main",
+    "task": "Implement approved local real-publication Q&A with source/lifecycle/auth checks and offline verification.",
+    "reason": null, "dispatches": 0, "outcome": "completed", "result": "Implemented approved local real-publication Q&A and affected mocked/12disposableSQL/type/lint/build/production-denial checks. Initial test defects corrected;server restored on3001. Prompt-log validator entries21/22 and whitespace checks passed;token totals unavailable. Main-only verification;live/browser/hosted/inbox remain explicitly unverified. No live provider/allowance/sharedDB/commit/push/deploy action.",
+    "settings": {"model": null, "effort": null, "basis": "unknown"},
+    "tokens": {"status": "unavailable", "responses": null, "input": null, "cached_input": null, "output": null, "reasoning_output": null, "total": null, "source": null, "note": "Exact prompt-scoped runtime token telemetry and turn/thread mapping unavailable; root active."}
+  }], "usage_updates": []
+}
+```
+
+# 23 - Natural Chat and Organiser Contact Follow-up - 22 October 2026
+
+## Request
+
+Darryl confirmed short friendly conversation with internal-only evidence, no visible citation/unresolved-information dump, and honest uncertainty directing Students to the organiser instead of guessing or automatic forwarding. Keith will supply a published organiser-contact field in a future iteration; do not invent its schema/contact values or a working link. Preserve the existing local integration, limits and no-live/no-delivery/main-only boundaries.
+
+## Results
+
+Approved conversational refinement implemented in existingD005/D006 increment,main agent alone. Chat now shows concise prose,internal quotes/sections/revisions/unresolved arrays remain hidden;partial/unanswered facts get a short code-controlled organiser-contact suggestion without a fake link/button/sent claim. Prompt v4 discourages source narration,unasked details,unsupported assumptions/hype/contacts;server formats approved times in Singapore zone. Projection-format changes invalidate stale transcript without changing publication identity. Source/schema/evidence/lifecycle validation retained. Updated canonical decisions/contracts/UI/scenarios/handoff and detailed D006delivery/verification with exact paths and Keith's future-contact dependency. Initial5filemock run77/78passed;one SSR assertion failed on escaped apostrophe,corrected;rendering16/16passed,then16/16rechecked after positive-suggestion dedup refinement. Other4files62passedchecks reused;nonincrementaltypes/scopedlintpassed. No unrelatedSQL/build/live/browser rerun or semantic-quality claim. No provider/allowance/config/sharedDB/agent/commit/push/deployment action. Contact field/type/validation/publication/safe destination handoff still required for a working route. Main verification only;prior independent evidence untouched;token telemetry unavailable/null.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1, "entry": 23, "root_thread_id": null, "root_turn_id": null,
+  "revision": "32d62e315ce7b59ef5d77c835c64c0b86b1d1d60", "captured_at": null,
+  "delegation": "Explicit main-agent-only scope retained;no subagents needed or dispatched.",
+  "agents": [{
+    "id": "/root", "parent": null, "thread_id": null, "action": "root", "role": "main",
+    "task": "Refine chat/prompt for concise natural replies and internal evidence,record contact handoff and verify affected offline checks.",
+    "reason": null, "dispatches": 0, "outcome": "completed", "result": "Implemented natural prose/internal evidence UI,promptv4,deterministic Singapore schedule and organiser uncertainty guidance. Affected mocked tests/types/lintpassed after SSR assertion fix. Actual contact action awaits Keith's public field handoff. Main-only verification;no live requests,allowance/config/DB changes or delivery.",
+    "settings": {"model": null, "effort": null, "basis": "unknown"},
+    "tokens": {"status": "unavailable", "responses": null, "input": null, "cached_input": null, "output": null, "reasoning_output": null, "total": null, "source": null, "note": "Exact prompt-scoped usage and runtime turn/thread mapping unavailable;root active."}
+  }], "usage_updates": []
+}
+```
+
+# 24 - Deliver Local Q&A Increment to Preview - 22 October 2026
+
+## Request
+
+Commit the saved WP006 changes in logical iterations, publish a preview branch and open a PR. Main agent only; preserve private settings, local customisations and unrelated changes. Delivery authorisation supersedes the previous no-commit/push/deploy boundary for this increment, without authorising live inference or hosted feature implementation.
+
+## Results
+
+Prepared commits e275c49 (publication loading/UI) and 9f73ba4 (local real-event answering) on preview/WP-006; contract/evidence commit follows. The affected Student assistant suite passed303/303tests across18files and whitespace checks passed. Reusing prior SQL/types/lint/build verification; real-publication chat remains loopback-development-only and is deliberately disabled on Vercel. Full WP006, hosted admissions, organiser contact and messaging remain pending. Existing local registration diagnostics and generated next-env changes are excluded from the focused Q&A delivery. No provider calls or allowance changes.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1, "entry": 24, "root_thread_id": null, "root_turn_id": null,
+  "revision": "32d62e315ce7b59ef5d77c835c64c0b86b1d1d60", "captured_at": null,
+  "delegation": "Main agent only by explicit human instruction; no subagents.",
+  "agents": [{
+    "id": "/root", "parent": null, "thread_id": null, "action": "root", "role": "main",
+    "task": "Prepare logical commits and publish the local Q&A increment through the preview PR workflow.",
+    "reason": null, "dispatches": 0, "outcome": "in_progress", "result": "Inspecting saved changes and preview requirements; preserving local-only settings and unrelated work.",
+    "settings": {"model": null, "effort": null, "basis": "unknown"},
+    "tokens": {"status": "unavailable", "responses": null, "input": null, "cached_input": null, "output": null, "reasoning_output": null, "total": null, "source": null, "note": "Prompt-scoped token telemetry unavailable; root turn active."}
+  }], "usage_updates": []
+}
+```

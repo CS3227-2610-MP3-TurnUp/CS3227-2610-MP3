@@ -1,5 +1,11 @@
 # Decisions and implementation gates
 
+## 22 October 2026 — latest Student chat/contact amendment
+
+Darryl explicitly required a short friendly conversation with evidence retained internally, no visible quotations/source panels/unresolved-question lists, and honest uncertainty with a check-with-organiser follow-up instead of invented arrangements or automatic forwarding. This supersedes the Student-assistant automatic-forwarding portion of D09/PAR06/PAR09/PAR12 and earlier PAR07expandable-source presentation;it does not claim cancellation/implementation of separately planned private inbox/reply features. Canonical Student/privacy/UI/scenario records reflect the amendment. Source/revision/schema/exact-quote checks,privacy boundaries and technical-failure distinction remain mandatory;provenance alone does not prove semantic entailment.
+
+Keith is expected to add a published Organiser-contact field in a future iteration. Its field shape,validation,approval/versioning and code-controlled safe contact destination must be handed off before a working action is implemented. No schema/contact/URL is invented and no Keith approval/implementation is asserted. Darryl owns this Student refinement;Keith retains the future producer. Remote WP006issue reconciliation is outside current authority and remains pending with the owners;no GitHub update is claimed. Exact local main-agent implementation/mock evidence is in D006verification and log07entry23.
+
 B1 · 16 October 2026; ownership update D12 · 17 October 2026; SoC access clarification D13 · 18 October 2026. **Accepted** is human-agreed target; **recommended** is a proposal; **open** requires a recorded resolution before dependent implementation. None implies passing tests.
 
 ## Accepted reconciliations
