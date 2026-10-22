@@ -63,6 +63,8 @@ model User {
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   sessions     Session[]
   events       Event[]
+  registrations Registration[]
+  registrationOperations RegistrationOperation[]
 
   @@map("app_user")
 }
@@ -103,12 +105,15 @@ model Event {
   state EventState @default(DRAFT)
   version Int @default(0)
   draft Json
+  draftForm Json @default("{\"questions\":[]}") @map("draft_form")
   draftVersion Int @default(0) @map("draft_version")
   firstPublishedAt DateTime? @map("first_published_at") @db.Timestamptz(6)
   currentPublicationId String? @unique @map("current_publication_id") @db.Uuid
   currentPublication EventPublication? @relation("CurrentPublication", fields: [currentPublicationId], references: [id], onDelete: Restrict)
   publications EventPublication[] @relation("PublicationHistory")
   approvals EventApproval[]
+  registrations Registration[]
+  registrationOperations RegistrationOperation[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   editedAt DateTime @default(now()) @map("edited_at") @db.Timestamptz(6)
   @@index([ownerId, editedAt])
@@ -120,6 +125,8 @@ model EventPublication {
   eventId String @map("event_id") @db.Uuid
   event Event @relation("PublicationHistory", fields: [eventId], references: [id], onDelete: Restrict)
   currentFor Event? @relation("CurrentPublication")
+  joinedRegistrations Registration[]
+  submissions RegistrationSubmission[]
   revision Int
   snapshot Json
   digest String @db.Char(64)
@@ -141,4 +148,69 @@ model EventApproval {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   @@index([eventId])
   @@map("event_approval")
+}
+
+
+enum RegistrationState {
+  ACTIVE
+  CANCELLED
+}
+enum RegistrationOperationKind {
+  JOIN
+  CANCEL
+  CORRECT
+}
+model Registration {
+  id String @id @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  studentId String @map("student_id") @db.Uuid
+  student User @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  state RegistrationState
+  generation Int
+  version Int
+  joinedPublicationId String @map("joined_publication_id") @db.Uuid
+  joinedPublication EventPublication @relation(fields: [joinedPublicationId], references: [id], onDelete: Restrict)
+  joinedAt DateTime @map("joined_at") @db.Timestamptz(6)
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  currentSubmissionId String? @unique @map("current_submission_id") @db.Uuid
+  currentSubmission RegistrationSubmission? @relation("CurrentSubmission", fields: [currentSubmissionId], references: [id], onDelete: Restrict)
+  submissions RegistrationSubmission[] @relation("SubmissionHistory")
+  @@unique([studentId, eventId])
+  @@index([eventId, state])
+  @@index([studentId, joinedAt])
+  @@map("registration")
+}
+model RegistrationSubmission {
+  id String @id @db.Uuid
+  registrationId String @map("registration_id") @db.Uuid
+  registration Registration @relation("SubmissionHistory", fields: [registrationId], references: [id], onDelete: Restrict)
+  currentFor Registration? @relation("CurrentSubmission")
+  generation Int
+  version Int
+  publicationId String @map("publication_id") @db.Uuid
+  publication EventPublication @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+  formRevisionId String @map("form_revision_id") @db.Uuid
+  capturedForm Json @map("captured_form")
+  profileName String? @map("profile_name")
+  profilePhone String? @map("profile_phone")
+  answers Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([registrationId, generation, version])
+  @@unique([id, registrationId, generation])
+  @@map("registration_submission")
+}
+model RegistrationOperation {
+  actorId String @map("actor_id") @db.Uuid
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  eventId String @map("event_id") @db.Uuid
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  operation RegistrationOperationKind
+  key String @db.Uuid
+  payloadDigest String @map("payload_digest") @db.Char(64)
+  result Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@id([actorId, eventId, operation, key])
+  @@index([createdAt])
+  @@map("registration_operation")
 }

@@ -140,9 +140,26 @@ textarea[aria-invalid="true"], input[aria-invalid="true"] { border-color: var(--
 .student-discovery-filters > .field-help { grid-column: 1 / -1; }
 .student-event-card { min-width: 0; overflow-wrap: anywhere; }
 .student-event-location { white-space: pre-wrap; }
-.student-event-link { color: var(--tu-action); text-decoration: underline; text-underline-offset: 0.2em; }
 .student-event-details { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .student-event-details > * { min-width: 0; overflow-wrap: anywhere; }
 .student-event-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-.student-registration-notice h2 { margin-top: 0; }
+.student-registration-notice { display: grid; align-content: start; gap: 1rem; }
+.student-registration-notice h2, .student-registration-notice p { margin: 0; }
+.student-registration-action { display: grid; gap: 0.625rem; width: 100%; margin-top: 0.25rem; }
+.student-registration-action .primary { width: 100%; }
+.student-registration-action .field-help { font-size: 0.875rem; }
 @media (max-width: 48rem) { .student-event-details, .student-discovery-filters { grid-template-columns: minmax(0, 1fr); } }
+
+/* Student event-specific registration, captured corrections and own history. */
+.student-registration-form { width: 100%; min-width: 0; max-width: 58rem; overflow-wrap: anywhere; }
+.student-form-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.student-form-fields > legend { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+.student-choice-group { display: grid; gap: 0.5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.student-choice { display: flex; gap: 0.75rem; align-items: flex-start; min-height: 2.75rem; padding: 0.5rem 0; overflow-wrap: anywhere; }
+.student-choice input { flex: 0 0 auto; width: 1.25rem; min-height: 1.25rem; margin: 0.1rem 0 0; accent-color: var(--tu-action); }
+.student-my-events { display: grid; gap: 1.5rem; }
+.student-my-events > article, .student-registration-form label { min-width: 0; overflow-wrap: anywhere; }
+.student-my-events .event-actions { margin-top: 1rem; align-items: center; }
+
+.student-form-fields > *, .student-registration-form .field { min-width: 0; }
+.student-submission-editor { min-width: 0; overflow-wrap: anywhere; }

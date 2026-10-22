@@ -1,7 +1,9 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { AuthError } from "../auth/policy";
 import { EMPTY_EVENT, EVENT_LIMITS, FIELD_LABELS, type EventFields, type TextField } from "../../lib/event-fields";
+
+import { parseRegistrationForm, assertPublicFormBudget, FormValidationError, formObject, formKeys, type FormQuestion } from "../../lib/registration-form";
 
 export class EventError extends AuthError {
   constructor(status: number, message: string, public field?: string) { super(status, message); }
@@ -50,8 +52,38 @@ export function validatePublication(fields: EventFields, state: string, previous
   if (state !== "PUBLISHED" && Date.parse(fields.start) <= now.getTime()) throw new EventError(400, "First publication and republication require a future start.", "start");
   if (state === "PUBLISHED" && fields.start !== previousStart && Date.parse(fields.start) <= now.getTime()) throw new EventError(400, "A changed start must be in the future.", "start");
 }
-export function publicationSnapshot(fields: EventFields, formRevisionId: string) {
-  return { fields, form: { formRevisionId, questions: [] } };
+export function publicationSnapshot(fields: EventFields, formRevisionId: string, questions: FormQuestion[] = []) {
+  try {
+    const form = parseRegistrationForm({ formRevisionId, questions });
+    assertPublicFormBudget(fields, form);
+    return { fields, form };
+  } catch (error) {
+    if (!(error instanceof FormValidationError)) throw error;
+    throw new EventError(400, "Review the registration form and combined public content limits.", "form");
+  }
+}
+/** New identities are created here; clients may retain only identities from this saved draft. */
+export function parseDraftForm(value: unknown, previous: { questions: FormQuestion[] }): { questions: FormQuestion[] } {
+  try {
+    const input = formObject(value); formKeys(input, ["questions"], ["questions"]);
+    if (!Array.isArray(input.questions)) throw new FormValidationError({ form: "Use a questions array." });
+    const questions = input.questions.map((raw) => {
+      const item = { ...formObject(raw) };
+      const prior = previous.questions.find((question) => question.id === item.id);
+      if (item.id !== undefined && (!prior || prior.type !== item.type)) throw new FormValidationError({ form: "Unknown question identity or changed type; create a new question." });
+      item.id ??= randomUUID();
+      if (Array.isArray(item.options)) item.options = item.options.map((rawOption) => {
+        const option = { ...formObject(rawOption) };
+        if (option.id !== undefined && (!prior || !("options" in prior) || !prior.options.some((known) => known.id === option.id))) throw new FormValidationError({ form: "Unknown option identity." });
+        option.id ??= randomUUID(); return option;
+      });
+      return item;
+    });
+    return { questions: parseRegistrationForm({ formRevisionId: randomUUID(), questions }).questions };
+  } catch (error) {
+    if (!(error instanceof FormValidationError)) throw error;
+    throw new EventError(400, "Review the registration form, identities and limits.", "form");
+  }
 }
 // JSONB does not preserve object-key order. Arrays remain ordered public content.
 function canonicalJson(value: unknown): string {

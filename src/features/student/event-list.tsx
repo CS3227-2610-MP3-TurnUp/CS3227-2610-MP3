@@ -9,7 +9,7 @@ export function StudentEventCard({ event }: { event: StudentEvent }) {
     <span className="event-state">{event.hasStarted ? "Started / past" : "Upcoming"}</span>
     <h2>{event.fields.title}</h2><p>{displayTime(event.fields.start)}</p>
     <p className="student-event-location">{event.fields.location}</p><p><strong>Fee:</strong> {event.fields.fee}</p>
-    <p className="muted">By {event.organiser}</p><span className="student-event-link">View event details</span>
+    <p className="muted">By {event.organiser}</p>{event.remainingPlaces !== null && <p>{event.remainingPlaces} places remaining{event.registrationStatus === "ACTIVE" ? " · Registered" : ""}</p>}
   </Link>;
 }
 export function StudentEventList() {

@@ -19,3 +19,18 @@ it("accepts full Unicode search bounds in browser/server policy without UTF-16 t
   expect(discoverySearchError("🌱".repeat(151))).toContain("150");
   expect(discoverySearchError("a\nb")).toBeDefined();
 });
+
+import { remainingCapacity, registrationActions } from "../../src/server/registration/policy";
+it("derives remaining capacity from active registrations and fails on inconsistent counts", () => {
+  expect(remainingCapacity(10, 3)).toBe(7); expect(remainingCapacity(1, 1)).toBe(0);
+  for (const [capacity, count] of [[0, 0], [10001, 0], [2, 3], [2, -1], [2, 0.5]]) expect(() => remainingCapacity(capacity, count)).toThrow();
+});
+it("follows effective-start equality, safe withdrawal cancellation and explicit future rejoining", () => {
+  const start = "2099-01-01T00:00:00.000Z", before = new Date("2098-12-31T23:59:59.999Z");
+  expect(registrationActions("PUBLISHED", start, null, 1, before).canJoin).toBe(true);
+  expect(registrationActions("PUBLISHED", start, "CANCELLED", 1, before).canRejoin).toBe(true);
+  expect(registrationActions("WITHDRAWN", start, "ACTIVE", 0, before)).toMatchObject({ canCancel: true, canCorrect: false, canJoin: false });
+  expect(Object.values(registrationActions("PUBLISHED", start, "ACTIVE", 0, new Date(start)))).not.toContain(true);
+  expect(Object.values(registrationActions("CANCELLED", start, "ACTIVE", 1, before))).not.toContain(true);
+  expect(registrationActions("PUBLISHED", start, null, 0, before).canJoin).toBe(false);
+});

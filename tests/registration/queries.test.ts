@@ -27,7 +27,7 @@ const event = { findMany: vi.fn(async ({ where, select }: { where: Record<string
 }), findFirst: vi.fn(async ({ where, select }: { where: Record<string, unknown>; select: Record<string, unknown> }) => {
   onRead?.(++reads); const row = records.find((row) => matches(row, where)); return row ? project(row, select) : null;
 }) };
-const fake = { event, $queryRaw: async () => [{ now }], $transaction: async (read: (db: unknown) => Promise<unknown>): Promise<unknown> => read(fake) };
+const fake = { event, registration: { count: async () => 0, findUnique: async () => null }, $queryRaw: async () => [{ epochMs: now.getTime() }], $transaction: async (read: (db: unknown) => Promise<unknown>): Promise<unknown> => read(fake) };
 const db = fake as unknown as PrismaClient;
 function row(id = eventId, title = "Campus workshop", start = publicFields.start): Row {
   return { id, state: "PUBLISHED", version: 2, currentPublicationId: publicationId, owner: { username: "campus_owner" },
@@ -43,7 +43,7 @@ it("lists current approved facts only, filters by title and sorts start then sta
     { ...row("withdrawn"), state: "WITHDRAWN" }, { ...row("cancelled"), state: "CANCELLED" }];
   const events = await discoverEvents(db, "token", { search: "WORKSHOP", period: "upcoming" });
   expect(events.map((item) => item.eventId)).toEqual(["a", "b"]);
-  expect(events[0]).toMatchObject({ organiser: "campus_owner", remainingPlaces: null, registrationStatus: "unavailable" });
+  expect(events[0]).toMatchObject({ organiser: "campus_owner", remainingPlaces: publicFields.capacity, registrationStatus: "none" });
   expect(JSON.stringify(events)).not.toMatch(/private draft|never share|password|profile|digest/);
   expect(event.findMany.mock.calls[0][0].select).not.toHaveProperty("draft");
   expect(event.findMany.mock.calls[0][0].where).toEqual({ state: "PUBLISHED" });

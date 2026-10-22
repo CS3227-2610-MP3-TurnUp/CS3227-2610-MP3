@@ -12,7 +12,10 @@ export function StudentEventContent({ event }: { event: StudentEvent }) {
         <div key={key}><dt>{FIELD_LABELS[key]}</dt><dd>{event.fields[key]}</dd></div>)}</dl></article>
     <aside className="card student-registration-notice" aria-label="Registration"><h2>Registration</h2>
       {event.hasStarted && <p className="notice">This event has started. Registration is closed for its current schedule.</p>}
-      <p>Event capacity: {event.fields.capacity}</p><p className="muted">Registration is not available yet. Remaining places and your registration status are unavailable.</p>
+      <p>Event capacity: {event.fields.capacity}</p>
+      {event.remainingPlaces === null ? <p className="muted">Remaining places and your registration status are unavailable.</p> : <>
+      <p>{event.remainingPlaces} places remaining</p><p>{event.registrationStatus === "ACTIVE" ? "You are registered. Your place is confirmed." : event.registrationStatus === "CANCELLED" ? "You cancelled your registration." : "You are not registered."}</p>
+        {!event.hasStarted && event.remainingPlaces > 0 && event.registrationStatus !== "ACTIVE" && <div className="student-registration-action"><Link className="primary action-link" href={`/student/events/${event.eventId}/register`}>{event.registrationStatus === "CANCELLED" ? "Continue to re-registration" : "Continue to registration"}</Link><p className="field-help">Review your details and confirm your registration on the next screen.</p></div>}</> }
     </aside></div>;
 }
 export function StudentEventDetails({ eventId }: { eventId: string }) {
