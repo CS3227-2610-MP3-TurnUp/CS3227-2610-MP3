@@ -1536,3 +1536,57 @@ Implemented the approved Preview extension in commits e03733e(durable budget) an
 Entry26deliveryupdate:push9ec0031PRchecks39755401879passed;deploy39755395260passedmigration/buildbutactivationfailedpreview_database_required beforebudgetinsert. Main-agentfixusesmatchingprotectedmigrationconnectionanddoesnotrequiredowloadingruntimeAPIkey;runtimepolicyvalidatesactualpooledURL. No rawvalueexposed,assumptionaboutsecretavailability,liveinferenceorallowancereset. FocusedchecksandnextdeployresultsrecordedinD006verification.
 
 Entry26finaldelivery:threefeature/workflowcommits e03733e,07fe60d,9ec0031 plusactivationfixf2272ebpublishedtoPR28. Correctedpush39756062772andPR39756070008passed;activationreported0/200usedandstablealiassourceguard401passedwithoutinference. Previewhttps://turnup-team-preview.vercel.app,candidatehttps://turnup-2wqk5nxvy-mp3-dd27.vercel.app. Actualpublicchat/hostedbudgetenabled;authenticatedvisual/livequality/ProductionfullWP006remainpending. Newverificationmainonly,noagentsorcredential/customisationdelivery. Initialactivationfailureandfixretained. Finalpolicy14passed,previousroutes8passed,types/lintpassed;noSQLrerunneededforconnection-selectionfix. Structuredvalidatorentry26passed;exactCodextokensunavailable. A records-onlyfollow-upwilltriggeraseparatedeploywithoutreset.
+
+# 27 - Separate Student and Organiser AI Keys - 22 October 2026
+
+## Request
+
+Darryl requests explicitSTUDENT_SOCLAAS_API_KEY selection for Student chat while Organiser/shared clients retainSOCLAAS_API_KEY,and push to existing PreviewPR28. Main agent only,no live calls or budget changes.
+
+## Results
+
+Implementedserver-onlyStudentconfigadapterandallStudententrypointsincludinglocalpreviewavailability.NoOrganiserkeyfallback;sharedclient/Organisersettingsuntouched.Affected6suites91/91passed;previewpage14/14passed;types/scopedlintpassed.NoSQL/buildrerunneededforcredentialselection;GitHubdeploymentperformsrequiredgates.StudentkeymustbesetprivatelyinVercelPreview;operatorstepsprovided.Nokeyuploaded,liveproviderrequest,budgetreset/increaseoragents.LocalStudentaliasaddedfromexistingpersonalkeyonlyifabsent;sharedlocalsettingandallowancepreserved. Commit/push/workflowresultsfollow;currentchecksmain-agentonly.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 27,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "1c4e079",
+  "captured_at": null,
+  "delegation": "Main agent only; no subagents by human instruction.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Separate Student server key selection from Organiser shared key,test and push PR28.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Student-onlykeyselectionimplemented;105affectedtestsacross7filespassedwithtypes/scopedlint.Shared/Organiserkeyandbudgetsunchanged.Noagentliveinference.SeparateVercelPreviewvariableisoperatorprerequisite;authorisedpush/workflowresultsfollow.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped telemetry unavailable;root turn active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

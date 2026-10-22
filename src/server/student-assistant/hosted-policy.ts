@@ -1,6 +1,7 @@
 import "server-only";
 import { authConfig } from "../auth/request-security";
-import { readSoCConfig, type SoCConfig } from "../ai/soclaas-config";
+import type { SoCConfig } from "../ai/soclaas-config";
+import { readStudentSoCConfig } from "./provider-config";
 import { readRuntimeDatabaseConfig } from "../config/environment";
 
 export const PREVIEW_APPROVAL = "wp006-preview-20261022-200";
@@ -13,7 +14,7 @@ export function hostedPolicy(env: Record<string, string | undefined> = process.e
     || env.TURNUP_ENVIRONMENT !== "preview" || env.DATABASE_ENVIRONMENT !== "non-production") return null;
   try {
     readRuntimeDatabaseConfig(env);
-    const auth = authConfig(env), soc = readSoCConfig(env);
+    const auth = authConfig(env), soc = readStudentSoCConfig(env);
     if (auth.sourceMode !== "vercel" || !soc.ok || soc.config.model !== "qwen3.8:27b") return null;
     return { origin: auth.origin, config: { ...soc.config,
       maxInputBytes: Math.min(soc.config.maxInputBytes, HOSTED_LIMITS.inputBytes),

@@ -10,9 +10,9 @@ export default async function StudentAssistantPreviewPage() {
   const { localDevelopment } = await import("../../../server/student-assistant/development-policy");
   let liveAvailable = false;
   if (localDevelopment()) {
-    const { readSoCConfig } = await import("../../../server/ai/soclaas-config");
+    const { readStudentSoCConfig } = await import("../../../server/student-assistant/provider-config");
     const { localAvailability } = await import("../../../server/student-assistant/local-admission");
-    const config = readSoCConfig(process.env);
+    const config = readStudentSoCConfig(process.env);
     if (config.ok) liveAvailable = await localAvailability(config.config);
   }
   return React.createElement(StudentAssistantPreview, { liveAvailable });

@@ -1,4 +1,4 @@
-import { readSoCConfig } from "../../../../server/ai/soclaas-config";
+import { readStudentSoCConfig } from "../../../../server/student-assistant/provider-config";
 import { answerSynthetic } from "../../../../server/student-assistant/answer";
 import { localDevelopment, permittedRequest, readBody, readQuestion } from "../../../../server/student-assistant/development-policy";
 import { reserveLocal } from "../../../../server/student-assistant/local-admission";
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const input = readQuestion(await readBody(request));
   if (!input) return reply({ ok: false, reason: "invalid_question" }, 400);
   if (!syntheticSource(input.eventId, input.revision)) return reply({ ok: false, reason: "invalid_source" }, 400);
-  const config = readSoCConfig(process.env);
+  const config = readStudentSoCConfig(process.env);
   if (!config.ok) return reply({ ok: false, reason: "provider_unavailable" }, 503);
   const admission = await reserveLocal(config.config);
   if (!admission.ok) return reply({ ok: false, reason: admission.reason === "limited" ? "budget_exhausted" : admission.reason === "busy" ? "rate_limited" : "live_not_authorized" }, 429);

@@ -15,7 +15,7 @@ function request(body: unknown = question, headers: Record<string, string> = {},
 }
 const post = (req = request(), id = eventId) => POST(req, { params: Promise.resolve({ eventId: id }) });
 beforeEach(() => {
- for (const [key, value] of Object.entries({ NODE_ENV: "development", VERCEL: "", __NEXT_PRIVATE_ORIGIN: "http://127.0.0.1:3001", AUTH_ORIGIN: "http://localhost:3001", AUTH_SOURCE_MODE: "local", TURNUP_ENVIRONMENT: "development", AUTH_THROTTLE_SECRET: "1".repeat(64), SOCLAAS_API_KEY: "fake-key", SOCLAAS_MODEL: "fake-model", SOCLAAS_BASE_URL: "https://soclaas-api.comp.nus.edu.sg/v1", SOCLAAS_MAX_INPUT_BYTES: "65536", SOCLAAS_MAX_OUTPUT_TOKENS: "4096", SOCLAAS_TIMEOUT_MS: "30000" })) vi.stubEnv(key, value);
+ for (const [key, value] of Object.entries({ NODE_ENV: "development", VERCEL: "", __NEXT_PRIVATE_ORIGIN: "http://127.0.0.1:3001", AUTH_ORIGIN: "http://localhost:3001", AUTH_SOURCE_MODE: "local", TURNUP_ENVIRONMENT: "development", AUTH_THROTTLE_SECRET: "1".repeat(64), STUDENT_SOCLAAS_API_KEY: "fake-key", SOCLAAS_MODEL: "fake-model", SOCLAAS_BASE_URL: "https://soclaas-api.comp.nus.edu.sg/v1", SOCLAAS_MAX_INPUT_BYTES: "65536", SOCLAAS_MAX_OUTPUT_TOKENS: "4096", SOCLAAS_TIMEOUT_MS: "30000" })) vi.stubEnv(key, value);
  mock.answer.mockReset().mockResolvedValue({ ok: true, candidate });
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -47,7 +47,7 @@ it.each(["timeout", "provider_unavailable", "invalid_response", "budget_exhauste
  expect(await response.json()).toEqual({ ok: false, reason }); expect(response.status).toBeGreaterThanOrEqual(400);
 });
 it("does not leak configuration/dependency details or generate when unconfigured", async () => {
- vi.stubEnv("SOCLAAS_API_KEY", ""); expect((await post()).status).toBe(503); expect(mock.answer).not.toHaveBeenCalled();
- vi.stubEnv("SOCLAAS_API_KEY", "fake-key"); mock.answer.mockRejectedValueOnce(new Error("private-db-secret"));
+ vi.stubEnv("STUDENT_SOCLAAS_API_KEY", ""); expect((await post()).status).toBe(503); expect(mock.answer).not.toHaveBeenCalled();
+ vi.stubEnv("STUDENT_SOCLAAS_API_KEY", "fake-key"); mock.answer.mockRejectedValueOnce(new Error("private-db-secret"));
  expect(await (await post()).text()).not.toContain("private-db-secret");
 });

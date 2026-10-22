@@ -1,7 +1,7 @@
 import { privateHeaders } from "../../../../../../../server/accounts/service";
 import { authConfig } from "../../../../../../../server/auth/request-security";
 import { presentedToken } from "../../../../../../../server/auth/session";
-import { readSoCConfig } from "../../../../../../../server/ai/soclaas-config";
+import { readStudentSoCConfig } from "../../../../../../../server/student-assistant/provider-config";
 import { localDevelopment, permittedRequest, readBody } from "../../../../../../../server/student-assistant/development-policy";
 import { PublicationSourceError } from "../../../../../../../server/student-assistant/publication-source";
 import { answerPublication, readPublicationQuestion } from "../../../../../../../server/student-assistant/publication-answer";
@@ -25,7 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ eventI
     if (!token) throw new PublicationSourceError(401, "login_required");
     const input = readPublicationQuestion(await readBody(request));
     if (!input) throw new PublicationSourceError(400, "invalid_request");
-    const config = readSoCConfig(process.env);
+    const config = readStudentSoCConfig(process.env);
     if (!config.ok) return reply({ ok: false, reason: "provider_unavailable" }, 503);
     const { prisma } = await import("../../../../../../../server/db/client");
     const result = await answerPublication(prisma, token, eventId, input, config.config, { signal: request.signal });

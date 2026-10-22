@@ -56,3 +56,10 @@ Planning performed no provider call, private allowance mutation, database write,
 - [x] Push and verify hosted migration/activation/deployment and source guard:run39756062772,0/200attemptsused,anonymoussource401;PR39756070008passed.
 - [ ] Authenticated Preview visual/manual answering acceptance;no agent live inference authorised.
 - [ ] Separate Production budget/enablement,organiser contact and remaining full-package capabilities.
+
+## Key isolation — log27
+
+- [x] Explicit Student key selection across hosted and development Student entrypoints,no shared-key fallback.
+- [x] Shared/Organiser client/settings preserved;key selection and malformed/missing-key/privacy regressions added.
+- [ ] Operator sets STUDENT_SOCLAAS_API_KEY privately in Vercel Preview;no credential upload by agent.
+- [ ] Push/check Preview workflow;existing budget/expiry/counters remain unchanged.
