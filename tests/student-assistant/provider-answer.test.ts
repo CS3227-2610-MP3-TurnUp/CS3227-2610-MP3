@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-import { answerSynthetic } from "../../src/server/student-assistant/answer";
+import { answerSynthetic, answerFromSource } from "../../src/server/student-assistant/answer";
 import { validateAnswer } from "../../src/features/student-assistant/evidence";
 import { SAMPLE_SOURCE } from "../../src/features/student-assistant/demo/scenarios";
 const config = { apiKey: "synthetic-key", model: "synthetic-model", maxInputBytes: 65536, maxOutputTokens: 500, timeoutMs: 1000 };
@@ -8,6 +8,14 @@ const input = { requestId: "one", eventId: SAMPLE_SOURCE.eventId, revision: SAMP
 const identity = { eventId: input.eventId, revision: input.revision };
 const candidate = { ...identity, kind: "answered", evidence: [{ ...identity, sectionId: "preparation", quote: "Gardening tools are provided." }] };
 const completion = (text = JSON.stringify(candidate)) => vi.fn<typeof fetch>().mockResolvedValue(Response.json({ choices: [{ message: { content: text } }] }));
+it("accepts a server-resolved real publication without consulting the synthetic catalogue", async () => {
+ const source = { ...SAMPLE_SOURCE, eventId: "11111111-1111-4111-8111-111111111111", revision: "current-publication" };
+ const value = { eventId: source.eventId, revision: source.revision, kind: "unanswered", reply: "That detail is not in the published information." };
+ const fetcher = completion(JSON.stringify(value));
+ expect(await answerFromSource(source, "Is lunch provided?", config, undefined, fetcher)).toEqual({ ok: true, candidate: value });
+ const init = fetcher.mock.calls[0][1]!; expect(init.redirect).toBe("error");
+ expect(JSON.parse(init.body as string).messages[0].content).not.toContain("synthetic campus event");
+});
 describe("server-only synthetic adapter", () => {
   it("uses server source/question only and reconstructs a client-validatable candidate", async () => {
     const fetcher = completion(), result = await answerSynthetic(input, config, undefined, fetcher);
@@ -66,9 +74,16 @@ it("round-trips conversational factual/subjective/unknown replies with source-on
     const sent = JSON.parse(fetcher.mock.calls[0][1]!.body as string);
     expect(sent.messages[0].content).toContain("Every factual claim must be directly supported");
     expect(sent.messages[0].content).toContain("Subjective fun");
+    expect(sent.messages[0].content).toContain("Never narrate the source");
+    expect(sent.messages[0].content).toContain("Never invent contact details");
+    expect(sent.messages[0].content).toContain("Do not introduce reporting-time uncertainty for a start-time-only question");
     expect(sent.messages).toHaveLength(2); expect(sent.tools).toBeUndefined();
     expect(fetcher).toHaveBeenCalledOnce();
   }
+});
+it("keeps quotes internal and preserves the organiser-uncertainty reply without inventing a reporting time", async () => {
+ const value = { ...candidate, kind: "partially_answered", reply: "Tools are provided! I'm not sure whether lunch is included.", unresolved: ["Is lunch provided?"] };
+ expect(await answerSynthetic(input, config, undefined, completion(JSON.stringify(value)))).toEqual({ ok: true, candidate: value });
 });
 it("does not render a friendly reply that accompanies fabricated citations", async () => {
   const value = { ...candidate, reply: "Lunch is free!", evidence: [{ ...candidate.evidence[0], quote: "Lunch is provided." }] };
