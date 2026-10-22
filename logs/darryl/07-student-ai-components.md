@@ -1590,3 +1590,57 @@ Implementedserver-onlyStudentconfigadapterandallStudententrypointsincludinglocal
   "usage_updates": []
 }
 ```
+
+# 28 - Quiet Background Event Checks - 22 October 2026
+
+## Request
+
+Darryl requires routine event freshness checks without distracting chat buffering and explicitly authorises pushing the fix to the existing Preview PR. Preserve conversation while checks run;notify actual changes;keep server validation and do not dispatch inference without a question. Main agent only.
+
+## Results
+
+Implementedsilentready-statechecks,preservedtranscript/draft/focus,active-answerprotectionandimmediateinvalidationuponconfirmedreplacement.Automaticreplacementreloadissource-only,neverinference.Initial31affectedtestspassed,final32passedafterreplacementedgecase;types/scopedlintchecked.Priorindependentevidenceretained;currentmain-agentonly.NoDB/provider/key/budgetchangeorliverequest.Authorisedcommit/pushandCIresultsfollow.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 28,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "ab77990",
+  "captured_at": null,
+  "delegation": "Main agent only by human instruction;no subagents.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Make routine publication checks silent,preserve conversational state,test and push PreviewPR28.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Implementedsilentbackgroundchecksandactive-answerprotection;32affectedtests/types/lintverified.Noagentliveinference,credentialorbudgetchange.ReadyforauthorisedPreviewpush;currentchecksmainonly.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped telemetry unavailable;root active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

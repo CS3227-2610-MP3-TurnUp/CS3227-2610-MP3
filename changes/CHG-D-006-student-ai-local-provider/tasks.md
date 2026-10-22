@@ -63,3 +63,6 @@ Planning performed no provider call, private allowance mutation, database write,
 - [x] Shared/Organiser client/settings preserved;key selection and malformed/missing-key/privacy regressions added.
 - [ ] Operator sets STUDENT_SOCLAAS_API_KEY privately in Vercel Preview;no credential upload by agent.
 - [ ] Push/check Preview workflow;existing budget/expiry/counters remain unchanged.
+
+- [x] Log28silentbackgroundchecks preserve transcript/draft and activeanswers;confirmedreplacementinvalidates immediately and reloads sourceonly.
+- [x] Focused controller/rendering/concurrency tests and types/lint;no liveinference.

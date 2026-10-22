@@ -23,46 +23,84 @@ it("does not infer on mount/open/refocus and retains conversation on unchanged r
  const { chat, load, answer } = fixture(); await chat.refocus(); expect(load).not.toHaveBeenCalled();
  await chat.open(); expect(answer).not.toHaveBeenCalled(); chat.edit("What should I bring?"); await chat.submit();
  expect(chat.snapshot().assistant.turns).toHaveLength(1); expect(chat.snapshot().assistant.draft).toBe("");
- const refresh = chat.refocus(); expect(chat.snapshot().status).toBe("checking"); expect(chat.snapshot().assistant.source).toBeNull();
- await refresh; expect(chat.snapshot().assistant.turns).toHaveLength(1); expect(answer).toHaveBeenCalledOnce(); expect(load.mock.calls[1][2]).toBe(source.revision);
+ const before = chat.snapshot().assistant;
+ const refresh = chat.refocus(); expect(chat.snapshot().status).toBe("ready"); expect(chat.snapshot().assistant).toBe(before);
+ chat.edit("What time?");
+ await refresh; expect(chat.snapshot().assistant.turns).toHaveLength(1); expect(chat.snapshot().assistant.draft).toBe("What time?"); expect(answer).toHaveBeenCalledOnce(); expect(load.mock.calls[1][2]).toBe(source.revision);
 });
 it("keeps failed questions and rechecks only source, never automatically retrying inference", async () => {
  const { chat, answer, load } = fixture(); answer.mockResolvedValueOnce({ ok: false, reason: "timeout" });
  await chat.open(); chat.edit("Is it fun?"); await chat.submit();
  expect(chat.snapshot().assistant.draft).toBe("Is it fun?"); expect(chat.snapshot().assistant.error).toBe("timeout"); expect(answer).toHaveBeenCalledOnce(); expect(load).toHaveBeenCalledTimes(2);
 });
-it("retains unchanged conversation through overlapping refreshes without showing stale excerpts", async () => {
+it("keeps the visible transcript through overlapping checks and ignores an older result", async () => {
  const { chat, load } = fixture(); await chat.open(); chat.edit("Bring what?"); await chat.submit();
  let resolveFirst!: (value: unknown) => void;
  load.mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }));
  const first = chat.refresh(); const second = chat.refresh();
- expect(chat.snapshot().assistant.source).toBeNull(); await second;
+ expect(chat.snapshot().status).toBe("ready"); expect(chat.snapshot().assistant.turns).toHaveLength(1); await second;
  expect(chat.snapshot().assistant.turns).toHaveLength(1);
  resolveFirst({ ok: true, source }); await first; expect(chat.snapshot().assistant.turns).toHaveLength(1);
 });
 it("clears old conversation if the public projection format changes under the same publication binding", async () => {
  const { chat, load } = fixture(); await chat.open(); chat.edit("Bring what?"); await chat.submit();
  load.mockResolvedValueOnce({ ok: true, source: { ...source, sections: source.sections.map(section => section.id === "schedule" ? { ...section, text: "Updated deterministic schedule display" } : section) } });
- await chat.refresh(); expect(chat.snapshot().assistant.turns).toEqual([]);
+ await chat.refresh(); expect(chat.snapshot().assistant.turns).toEqual([]); expect(chat.snapshot().assistant.notice).toBe("source_changed");
 });
 it.each(["source_changed", "event_unavailable", "login_required", "source_unavailable"])("clears all source evidence and retains draft on %s", async code => {
  const { chat, answer } = fixture(); await chat.open(); chat.edit("Bring what?"); await chat.submit();
  chat.edit("What time?"); answer.mockResolvedValueOnce({ ok: false, code }); await chat.submit();
  expect(chat.snapshot().status).toBe(code); expect(chat.snapshot().assistant).toMatchObject({ source: null, turns: [], draft: "What time?", pending: null });
 });
-it("ignores stale completion after source refresh/navigation and blocks duplicate clicks", async () => {
+it("focus does not interrupt an active answer and duplicate clicks do not resubmit", async () => {
  const { chat, answer, load } = fixture(); let finish!: (result: PublicationAnswerResult) => void;
  answer.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })); await chat.open(); chat.edit("Bring what?");
  const sending = chat.submit(); await chat.submit(); expect(answer).toHaveBeenCalledOnce();
- load.mockResolvedValueOnce({ ok: false, code: "event_unavailable" }); await chat.refocus(); finish({ ok: true, candidate }); await sending;
+ await chat.refocus(); expect(load).toHaveBeenCalledOnce(); expect(chat.snapshot().assistant.pending).not.toBeNull();
+ finish({ ok: true, candidate }); await sending; expect(chat.snapshot().assistant.turns).toHaveLength(1);
+ load.mockResolvedValueOnce({ ok: false, code: "event_unavailable" }); await chat.refocus();
  expect(chat.snapshot().assistant.turns).toEqual([]); expect(chat.snapshot().status).toBe("event_unavailable");
  chat.stop(); await chat.open(); expect(load).toHaveBeenCalledTimes(2);
 });
-it("requires explicit refresh after replacement and never sends a draft automatically", async () => {
+it("automatically loads a replacement publication with a notice but never sends the draft", async () => {
  const { chat, load, answer } = fixture(); await chat.open(); chat.edit("Bring what?");
- load.mockResolvedValueOnce({ ok: false, code: "source_changed" }); await chat.refresh();
- expect(chat.snapshot().assistant.draft).toBe("Bring what?"); expect(chat.snapshot().assistant.source).toBeNull();
- await chat.refresh(); expect(load.mock.calls[2][2]).toBeUndefined(); expect(answer).not.toHaveBeenCalled();
+ const replacement = { ...source, revision: source.revision.replace(":2:", ":3:") };
+ load.mockResolvedValueOnce({ ok: false, code: "source_changed" }).mockResolvedValueOnce({ ok: true, source: replacement }); await chat.refresh();
+ expect(chat.snapshot().assistant.draft).toBe("Bring what?"); expect(chat.snapshot().assistant.source).toEqual(replacement);
+ expect(chat.snapshot().assistant.notice).toBe("source_changed"); expect(load.mock.calls[2][2]).toBeUndefined(); expect(answer).not.toHaveBeenCalled();
+});
+it("a question supersedes a slow background check without losing its answer", async () => {
+ const { chat, load, answer } = fixture(); await chat.open();
+ let finish!: (value: unknown) => void;
+ load.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+ const checking = chat.refocus(); chat.edit("Bring what?"); await chat.submit();
+ expect(answer).toHaveBeenCalledOnce(); expect(chat.snapshot().assistant.turns).toHaveLength(1);
+ finish({ ok: false, code: "event_unavailable" }); await checking;
+ expect(chat.snapshot().status).toBe("ready"); expect(chat.snapshot().assistant.turns).toHaveLength(1);
+});
+it("clears old replies as soon as replacement is confirmed, before its slow reload finishes", async () => {
+ const { chat, load, answer } = fixture(); await chat.open(); chat.edit("Bring what?"); await chat.submit(); chat.edit("What time?");
+ let finish!: (value: unknown) => void;
+ load.mockResolvedValueOnce({ ok: false, code: "source_changed" }).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+ const checking = chat.refocus(); await Promise.resolve();
+ expect(chat.snapshot().status).toBe("source_changed"); expect(chat.snapshot().assistant).toMatchObject({ source: null, turns: [], draft: "What time?" });
+ finish({ ok: false, code: "event_unavailable" }); await checking;
+ expect(chat.snapshot().status).toBe("event_unavailable"); expect(answer).toHaveBeenCalledOnce();
+});
+it("navigation discards an in-flight answer without publishing or retrying", async () => {
+ const { chat, answer } = fixture(); let finish!: (value: PublicationAnswerResult) => void;
+ answer.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+ await chat.open(); chat.edit("Bring what?"); const sending = chat.submit(); chat.stop();
+ finish({ ok: true, candidate }); await sending;
+ expect(chat.snapshot().assistant.turns).toEqual([]); expect(answer).toHaveBeenCalledOnce();
+});
+it("confirmed unavailability clears stale content only after the silent check finishes", async () => {
+ const { chat, load, answer } = fixture(); await chat.open(); chat.edit("Bring what?"); await chat.submit(); chat.edit("What time?");
+ let finish!: (value: unknown) => void; load.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+ const checking = chat.refocus(); expect(chat.snapshot().assistant.turns).toHaveLength(1);
+ finish({ ok: false, code: "event_unavailable" }); await checking;
+ expect(chat.snapshot().status).toBe("event_unavailable"); expect(chat.snapshot().assistant).toMatchObject({ source: null, turns: [], draft: "What time?" });
+ expect(answer).toHaveBeenCalledOnce();
 });
 it("revalidates candidate evidence on the client instead of trusting HTTP success", async () => {
  const { chat, answer } = fixture(); answer.mockResolvedValueOnce({ ok: true, candidate: { ...candidate, evidence: [{ ...candidate.evidence[0], quote: "Fabricated lunch" }] } });
