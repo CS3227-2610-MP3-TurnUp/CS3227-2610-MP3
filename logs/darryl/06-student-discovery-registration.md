@@ -529,8 +529,13 @@ passed. The configured non-production database received only the reviewed
 event and registration additive migrations and subsequently reported all six
 migrations current. The first focused implementation commit is `49d7ec8`
 (`feat: add transactional student registration`). Documentation/evidence
-changes and the Preview deployment result are being recorded next; no Preview
-push or Vercel deployment has occurred at this point.
+changes were committed as `31c08d4` (`docs: record registration contracts and
+verification`). The same revision was pushed to `preview/WP-004` and completed
+GitHub Actions run40 successfully: required gates, Preview build and migration,
+candidate upload and stable-alias assignment all passed. The alias
+`https://turnup-team-preview.vercel.app` returns HTTP200 but Vercel access
+protection serves its Login page to an unauthenticated request, so hosted
+application interaction still needs an authorised Vercel session.
 
 <!-- turnup-prompt:v1 -->
 ```json
@@ -552,8 +557,8 @@ push or Vercel deployment has occurred at this point.
       "task": "Commit verified WP-004 work in coherent groups and deploy the resulting revision through the protected Preview branch.",
       "reason": null,
       "dispatches": 0,
-      "outcome": "in_progress",
-      "result": "Implementation commit 49d7ec8 created after release checks; documentation commit and Preview deployment remain in progress.",
+      "outcome": "completed",
+      "result": "Created commits 49d7ec8, ba11f59 and 31c08d4; published feature and protected Preview branches; Actions run40 built, migrated and deployed 31c08d4 successfully. Public reachability is Vercel-login protected.",
       "settings": {
         "model": null,
         "effort": null,

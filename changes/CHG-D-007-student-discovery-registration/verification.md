@@ -17,6 +17,18 @@ This is migration and basic availability evidence only: it does not replace a
 signed-in browser registration walkthrough, Preview deployment evidence, or
 the pending Organiser builder/roster integration.
 
+### 22 October 2026 — Preview deployment
+
+Protected branch `preview/WP-004` deployed revision `31c08d4` through GitHub
+Actions run [40](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39718497430).
+The required workflow gates, target-matched Vercel build and Preview migration
+all succeeded; Vercel assigned the stable alias
+`https://turnup-team-preview.vercel.app` to the uploaded candidate. A public
+HTTPS request reached that address with HTTP 200 but received Vercel's Login
+page, so it confirms hosted reachability and deployment routing, not an
+unauthenticated application walkthrough. Use an authorised Vercel session to
+perform the remaining signed-in Preview browser checks.
+
 Student discovery/current details at `/student` and `/student/events/[eventId]`, backed by GET `/api/student/events` and `/api/student/events/[eventId]`. Server checks Student identity/session, current publication/state and allowlisted public projection. NFC/case-insensitive title search, Upcoming default, Started/past and database-time equality, ascending approved start/UUID ties; current post-start/end details readable. Private saved edits do not alter results until publication. Detected withdrawn/replaced source fails closed before delivery. Safe loading/empty/unavailable/conflict/dependency outcomes, explicit refresh, inert public text, Singapore display and existing account menu.
 
 Capacity is advertised capacity only. Remaining places is null and own registration state explicitly unavailable; no enabled Attend/registration/correction control, invented roster or fake success. PAR01/current-read portion of PAR02 is implemented; PAR02 live state/count and PAR03–05/13–15 remain incomplete. Shared custom forms, atomic transactions, submissions/profile confirmation/corrections, My Events and Organiser integration are not implemented in this checkpoint. Do not mark complete T30/T17/T18–24 or whole WP-004 passed.
