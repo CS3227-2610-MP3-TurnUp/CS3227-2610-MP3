@@ -62,3 +62,7 @@ Darryl requests Production Student chat,push/merge and explicitly chooses a sepa
 ## Hosted Student account window - 22 October 2026, log09entry04
 
 Darryl increased the shared hosted per-account ceiling from5to20attempts in a rolling15minute window for both Preview and Production. The separate200attempttotal pools,200000output reservation cap,1000output/request,20second timeout,10second shared spacing,lease,deduplication,existing spend and expiry remain unchanged. No migration,activation,reset or live inference. Focused disposable SQL checks verify20admissions,21st denial and window recovery in each environment; actual check results are recorded in log09. New verification remains main-agent-only.
+
+## Private Student assistant history - log10
+
+The additive20261022030000_student_ai_history migration must deploy before the new history endpoints/answer persistence. Preview and Production store private history in their respective databases,with no cross-environment copy. Payloads are bounded to40000bytes per turn and20turns per account/event/current publication. Expiry,query suppression,opportunistic deletion and pending scheduled/cancellation/backup retention details are specified in the Student FAQ history amendment. This is explicit user content storage,not diagnostic logging;no private prompt/output text enters logs. No new provider service,secret,AI request or allowance is required to read saved history.

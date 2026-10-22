@@ -163,3 +163,7 @@ Darryl requests Production Student chat,push/merge and explicitly chooses a sepa
 ## Response reliability increment - log09
 
 Ready for focused PR delivery: compact provider output bound to trusted source identity, friendly conversational/clarification instructions, complete JSON-fence handling, truncation metadata, metadata-only failure classification, friendly retry copy and offline regressions. Existing strict evidence/lifecycle checks, Student key isolation and local/Preview/Production budgets are unchanged. No live-inference quality result; organiser contact-field integration and other full WP006 dependencies remain pending. See log09 and verification.md for exact checks.
+
+## Persistent event history - log10
+
+New increment on mergedPR30base02bdca7: migration20261022030000,PrismaUser/Eventhistory relations,private server append/read,local/hosted historyGET routes,validated browser restoration and account/event keyed widget. No model history context,live inference,API key change or budget reset. Current publication/session/evidence checks suppress changed/withdrawn/cancelled history. Deploy migration before serving code;Preview workflow runs migrations. Production requires this new PR's merge and protected deployment. Hosted walkthrough andG06scheduled/backup retention remain pending.

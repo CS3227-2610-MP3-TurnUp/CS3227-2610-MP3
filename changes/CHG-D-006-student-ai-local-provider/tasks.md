@@ -82,3 +82,12 @@ Planning performed no provider call, private allowance mutation, database write,
 - [x] Friendly technical-failure UX preserving the question and explicit retry.
 - [x] Affected mocked adapter, routes, provider compatibility and rendering checks.
 - [ ] Separately authorised live model quality evaluation; the previous hosted response was not retained.
+
+## Account-owned history - log10
+
+- [x] Add account/event-owned append-only turns with current-revision filtering,expiry and20turn bounds.
+- [x] Persist server-generated successful/technical-failure outcomes on local and hosted answer paths.
+- [x] Restore validated history on new event-page controllers with authenticated source/history reads and no inference replay.
+- [x] Test cross-account/event privacy,logout/new-session recovery,replacement/withdrawal/cancellation,expiry,corruption and pruning.
+- [ ] Apply migration through authorised deployments;hosted cross-device walkthrough remains pending.
+- [ ] G06scheduled/cancellation/backup erasure remains operational scope;no completion asserted.

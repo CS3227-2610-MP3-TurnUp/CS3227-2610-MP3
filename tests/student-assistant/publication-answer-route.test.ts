@@ -1,3 +1,4 @@
+vi.mock("../../src/server/student-assistant/history", () => ({ saveHistory: vi.fn(async () => {}) }));
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const mock = vi.hoisted(() => ({ answer: vi.fn() }));

@@ -45,7 +45,7 @@ export type SourceValidationResult = { readonly ok: true; readonly source: Publi
 export type AnswerValidationResult = { readonly ok: true; readonly answer: ValidatedAnswer }
   | { readonly ok: false; readonly reason: "invalid_source" | "invalid_response" | "invalid_evidence" };
 
-/** Volatile display history only; never provider context or persistent messaging. */
+/** Display-only turns; saved history is revalidated on restore, never provider context or inbox messaging. */
 export interface AssistantTurn {
   readonly requestId: string;
   readonly eventId: string;

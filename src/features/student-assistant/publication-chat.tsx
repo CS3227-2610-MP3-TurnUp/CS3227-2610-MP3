@@ -5,6 +5,9 @@ import { createAssistantState, assistantReducer } from "./state";
 import type { AssistantState } from "./types";
 import { requestPublicationSource, type PublicationCode } from "./publication-transport";
 import { requestPublicationAnswer } from "./publication-answer-transport";
+import { requestHistory, type HistoryLoad } from "./history-transport";
+import { restoreHistory } from "./history";
+import type { PublicSourceSnapshot } from "./types";
 
 export const chatPublicationMessages: Record<PublicationCode, string> = {
   invalid_request: "This event reference could not be checked. Refresh the page.",
@@ -15,13 +18,14 @@ export const chatPublicationMessages: Record<PublicationCode, string> = {
   timing_policy_pending: "Questions are currently available only before the event starts.",
   source_unavailable: "The event information could not be checked. Try refreshing.",
 };
-export interface PublicationChatView { assistant: AssistantState; status: "idle" | "checking" | "ready" | PublicationCode }
+export interface PublicationChatView { assistant: AssistantState; status: "idle" | "checking" | "ready" | PublicationCode; historyUnavailable?: boolean }
 const empty = (draft = ""): AssistantState => ({ ...createAssistantState(null), draft, error: null });
-/** A testable volatile controller: refresh never dispatches inference; old requests cannot publish. */
-export function createPublicationChat(eventId: string, dependencies = { load: requestPublicationSource, answer: requestPublicationAnswer }) {
+/** Refresh restores authenticated display history without inference; old requests cannot publish. */
+export function createPublicationChat(eventId: string, dependencies: { load: typeof requestPublicationSource; answer: typeof requestPublicationAnswer; history?: (source: PublicSourceSnapshot, signal: AbortSignal) => Promise<HistoryLoad> } = { load: requestPublicationSource, answer: requestPublicationAnswer }) {
   const initial: PublicationChatView = { assistant: empty(), status: "idle" };
   let view = initial, active = true, opened = false, generation = 0;
   let pending: AbortController | undefined;
+  let accountScope: string | undefined;
   const listeners = new Set<() => void>();
   const update = (next: PublicationChatView) => { view = next; for (const listener of listeners) listener(); };
   async function refresh() {
@@ -47,11 +51,30 @@ export function createPublicationChat(eventId: string, dependencies = { load: re
     if (!active || controller.signal.aborted || ticket !== generation) return;
     pending = undefined;
     if (!result.ok) { update({ assistant: empty(view.assistant.draft), status: result.code }); return; }
-    const assistant = !changed && previous?.source?.revision === result.source.revision && previous.source.eventId === result.source.eventId
+    let assistant = !changed && previous?.source?.revision === result.source.revision && previous.source.eventId === result.source.eventId
       && JSON.stringify(previous.source) === JSON.stringify(result.source)
       ? view.assistant
       : { ...assistantReducer(previous ? { ...previous, draft: view.assistant.draft } : view.assistant, { type: "source_changed", source: result.source }), error: null };
-    update({ assistant, status: "ready" });
+    let historyUnavailable = false;
+    if (dependencies.history) {
+      pending = controller;
+      const history = await dependencies.history(result.source, controller.signal);
+      if (!active || controller.signal.aborted || ticket !== generation) return;
+      if (!history.ok && history.code !== "source_unavailable") {
+        update({ assistant: empty(view.assistant.draft), status: history.code }); return;
+      }
+      if (history.ok) {
+        const switchedAccount = accountScope !== undefined && accountScope !== history.accountScope;
+        const restored = restoreHistory(result.source, history.turns, switchedAccount ? "" : view.assistant.draft);
+        accountScope = history.accountScope;
+        // An unchanged background read must not steal composer focus or replace branded answers.
+        if (!restored) historyUnavailable = true;
+        else if (switchedAccount || JSON.stringify(restored.turns) !== JSON.stringify(assistant.turns)) assistant = { ...restored, notice: switchedAccount ? null : assistant.notice };
+      } else historyUnavailable = true;
+    }
+    if (historyUnavailable) assistant = { ...createAssistantState(result.source), error: null };
+    pending = undefined;
+    update({ assistant, status: "ready", historyUnavailable });
   }
   return {
     subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
@@ -85,6 +108,7 @@ export function createPublicationChat(eventId: string, dependencies = { load: re
 }
 export function PublicationChat({ eventId, mode = "local" }: { eventId: string; mode?: "local" | "hosted" }) {
   const controller = useMemo(() => createPublicationChat(eventId.toLowerCase(), {
+    history: (source, signal) => requestHistory(source, signal, mode),
     load: (id, signal, revision) => requestPublicationSource(id, signal, revision, fetch, mode),
     answer: (input, signal) => requestPublicationAnswer(input, signal, fetch, mode),
   }), [eventId, mode]);
@@ -95,7 +119,7 @@ export function PublicationChat({ eventId, mode = "local" }: { eventId: string; 
     window.addEventListener("focus", focus);
     return () => { window.removeEventListener("focus", focus); controller.stop(); };
   }, [controller]);
-  const message = view.status === "checking" ? "Checking the current event information…" : view.status === "idle" ? undefined : view.status === "ready" ? undefined : chatPublicationMessages[view.status];
+  const message = view.status === "checking" ? "Checking the current event information…" : view.status === "idle" ? undefined : view.status === "ready" ? (view.historyUnavailable ? "Your saved conversation could not be loaded. You can still ask a new question." : undefined) : chatPublicationMessages[view.status];
   return <ChatWidget state={view.assistant} publicationMode statusMessage={message}
     onRefreshSource={view.status !== "checking" ? () => { void controller.refresh(); } : undefined}
     onOpen={() => { void controller.open(); }} onDraftChange={controller.edit} onSubmit={() => { void controller.submit(); }} />;

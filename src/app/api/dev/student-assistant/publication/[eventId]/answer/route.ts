@@ -1,3 +1,4 @@
+import { saveHistory } from "../../../../../../../server/student-assistant/history";
 import { privateHeaders } from "../../../../../../../server/accounts/service";
 import { authConfig } from "../../../../../../../server/auth/request-security";
 import { presentedToken } from "../../../../../../../server/auth/session";
@@ -29,6 +30,7 @@ export async function POST(request: Request, context: { params: Promise<{ eventI
     if (!config.ok) return reply({ ok: false, reason: "provider_unavailable" }, 503);
     const { prisma } = await import("../../../../../../../server/db/client");
     const result = await answerPublication(prisma, token, eventId, input, config.config, { signal: request.signal });
+    await saveHistory(prisma, token, eventId, input, result);
     if (!result.ok) return reply(result, ["budget_exhausted", "rate_limited", "live_not_authorized"].includes(result.reason) ? 429 : 503);
     return reply({ ...result, requestId: input.requestId, eventId, revision: input.revision }, 200);
   } catch (error) {
