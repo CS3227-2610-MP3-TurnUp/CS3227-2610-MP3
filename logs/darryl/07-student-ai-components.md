@@ -1478,3 +1478,57 @@ Prepared docs/plans/wp-006-hosted-qa-plan.md. Existing file admission and explic
   "usage_updates": []
 }
 ```
+
+# 26 - Implement Hosted Preview Q&A - 22 October 2026
+
+## Request
+
+Darryl approved the hosted plan with200total Preview attempts and requested implementation and push to preview PR28. Preserve1000output/20000ms caps,local allowance and main-agent-only scope. No live inference or Production activation.
+
+## Results
+
+Implemented the approved Preview extension in commits e03733e(durable budget) and07fe60d(hosted endpoints/chat);workflow/contracts/evidence follow. Initial7affectedmocked suites94passed;follow-up4suites50passed;canonicalconfigpolicy12rechecked. DisposableSQL18passed across2files,types/lint/Prismavalidation/build/productionHTTPdenialpassed. Workflow shell syntax12blocks passed;YAMLparser unavailable locally,actualGitHubexecutionpending. Dev3001restored. Main-agent-onlyverification;no live inference/local allowance reset or private credential/customisation delivery. Activation gives200total Preview attempts,200000reservedoutput,1000output/20secondcaps andseven-dayexpiry,no automatic renewal. Push/deployment/activation/source-only smoke results pending below;fullWP006andProductionremainincomplete.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 26,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "6cd7cb3",
+  "captured_at": null,
+  "delegation": "Explicit main-agent-only assignment; no subagents.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Implement approved hosted Preview Q&A with200attempt budget,verify offline,push PR28 and check deployment.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Approved hosted Preview slice implemented with200attemptdurablebudget and affectedmocked/SQL/type/lint/schema/build/production-denial checks. Ready for authorisedpush/deployment;no live inference,localallowancechange or independent-review claim.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped telemetry unavailable;root active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

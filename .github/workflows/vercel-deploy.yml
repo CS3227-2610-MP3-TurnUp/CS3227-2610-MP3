@@ -196,6 +196,9 @@ jobs:
         env:
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
         run: corepack pnpm db:migrate:deploy
+      - name: Activate approved Student Preview budget without resetting usage
+        if: env.DEPLOYMENT_TARGET == 'preview' && github.ref_name == 'preview/WP-006'
+        run: node scripts/activate-student-ai-budget.mjs --preview wp006-preview-20261022-200
       - name: Upload checked prebuilt output
         id: upload
         shell: bash
@@ -204,7 +207,11 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$DEPLOYMENT_TARGET" == "preview" ]]; then
-            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
+            student_ai_args=()
+            if [[ "$GITHUB_REF_NAME" == "preview/WP-006" ]]; then
+              student_ai_args+=(--env STUDENT_ASSISTANT_ENABLED=true)
+            fi
+            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" "${student_ai_args[@]}" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
           else
             deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --skip-domain --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
           fi
@@ -219,6 +226,17 @@ jobs:
               "$deployment_url" "$PREVIEW_ALIAS" \
               --token="$VERCEL_TOKEN"
             printf 'Stable Preview URL: https://%s\n' "$PREVIEW_ALIAS" >> "$GITHUB_STEP_SUMMARY"
+            if [[ "$GITHUB_REF_NAME" == "preview/WP-006" ]]; then
+              # An anonymous source-only check must reach the enabled product guard.
+              # No cookie, database data mutation, allowance reservation or inference.
+              status_output="$(corepack pnpm dlx vercel@58.4.4 curl /api/student/events/11111111-1111-4111-8111-111111111111/assistant/source --deployment "https://$PREVIEW_ALIAS" --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30)"
+              status="$(printf '%s\n' "$status_output" | node .github/scripts/read-vercel-output.mjs http-status)"
+              if [[ "$status" != "401" ]]; then
+                echo "Student Preview source guard smoke failed (expected anonymous 401). No AI request was made."
+                exit 1
+              fi
+              echo "Student Preview source guard passed; no inference used." >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
           if [[ "$DEPLOYMENT_TARGET" == "production" ]]; then
             echo "Candidate was uploaded with --skip-domain; promotion waits for candidate verification and the protected production-promotion environment."

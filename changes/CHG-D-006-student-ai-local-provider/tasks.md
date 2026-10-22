@@ -45,3 +45,14 @@ Entry23 approved conversational/contact refinement:
 - [ ] Separate authorised live-quality test and authenticated visual walkthrough, if requested; hosted admissions/provider/release and private messaging remain outside this increment.
 
 Planning performed no provider call, private allowance mutation, database write, source/test/config edit, subagent, commit, push or deployment. Started/past Q&A, larger source bounds, hosted admission and messaging remain deferred. The proposed extension does not retrospectively broaden earlier approvals.
+
+## Hosted Preview extension — log26
+
+- [x] Approval amended to200total attempts,separate from local allowance.
+- [x] Product source/answer HTTP boundaries and server-selected fixed transport.
+- [x] Additive durable budget/reservation schema with atomic global/account admission and idempotent release/activation.
+- [x] Offline route/policy/transport/publication regressions,disposable SQL,types,lint,schema and production build/HTTPdenial.
+- [x] Workflow integration for reviewed migration,target-matched activation,Preview-only runtime switch and source-only anonymous guard smoke.
+- [ ] Push and verify hosted migration/activation/deployment and source guard.
+- [ ] Authenticated Preview visual/manual answering acceptance;no agent live inference authorised.
+- [ ] Separate Production budget/enablement,organiser contact and remaining full-package capabilities.

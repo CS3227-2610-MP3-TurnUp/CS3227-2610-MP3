@@ -50,3 +50,7 @@ evidence in [CHG-K-008](../../changes/CHG-K-008-stable-preview-alias/verificatio
 Do not delete live publications with inactive draft cleanup or retain personal history indefinitely merely because versions are immutable. Define derived/cached/backup expiry and deletion/anonymisation relationships; do not claim erasure while recoverable backups remain under policy. See [G06/G07](../decisions.md).
 
 Verification: T14/15/26/28. Actual hosted walkthrough, deterministic suite and bounded live-model evaluation are release evidence. Local foundation/provider checks are partial evidence; documentation checks alone validate documents only.
+
+## Scoped Student assistant Preview activation — 22 October2026
+
+Darryl authorised the D006hosted Preview extension and200total-attempt budget. Product answering uses durable Neon admission,not local filesystem counters. The protected preview/WP-006 workflow applies the additive migration and activates one fixed Preview approval with seven-dayexpiry from first activation;redeploys preserve counts and expiry. It passes only a nonsecret runtime enable flag to that Preview deployment. Production answering stays disabled even if that flag is accidentally present. Missing/expired/disabled policy,model mismatch or database failure denies inference;no automatic retry/reset/renewal. Developer keys/allowance files are never copied by activation. See hosted plan/D006verification for exact request/global/account caps and actual runtime checks;no full G04/G08 or Production readiness is implied.

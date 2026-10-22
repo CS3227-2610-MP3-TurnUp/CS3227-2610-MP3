@@ -139,3 +139,7 @@ Additional exact paths beyond earlier delivery lists (producer import is separat
 - tests/student-assistant/publication-preview.test.ts
 - tests/student-assistant/publication-sql.integration.test.ts
 - tests/student-assistant/publication-sql.config.ts
+
+## Latest hosted Preview increment — log26
+
+The approved200attempt hosted slice is now implemented locally;earlier localhost-only statements describe the previous delivery. Product /api/student/events/[eventId]/assistant/source and /answer routes use the existing current-publication/evidence core and new durable admissions. Workflow activates the approved Preview budget once with seven-dayexpiry and enables only preview/WP-006. Actual hosted deployment/activation results must be checked separately. Production stays disabled;no local secrets/allowance files/customisations delivered. See hosted plan and current verification;no full WP006,live quality or contact/inbox completion.
