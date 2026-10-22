@@ -74,3 +74,11 @@ Planning performed no provider call, private allowance mutation, database write,
 - [x] Affectedpolicy/routes/keytests30passed;two-disposable-databaseSQL20passed;types/lint/schema/shellsyntaxpassed.
 - [ ] PublishnewPR,verifyPreviewchecksandmergeasexplicitlyrequested;GitHubownsmergerequirements.
 - [ ] VerifyProductionactivation,candidateguard,promotionandcanonicalURL;privateStudentkeymustbeconfigured.
+
+## Response reliability - log09
+
+- [x] Compact server-bound response and friendly generation/clarification instructions.
+- [x] Exact evidence/identity checks, complete-fence handling and safe truncation/format diagnostics.
+- [x] Friendly technical-failure UX preserving the question and explicit retry.
+- [x] Affected mocked adapter, routes, provider compatibility and rendering checks.
+- [ ] Separately authorised live model quality evaluation; the previous hosted response was not retained.

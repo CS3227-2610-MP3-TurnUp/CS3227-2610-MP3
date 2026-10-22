@@ -67,9 +67,9 @@ it("serialises simultaneous requests and releases only the named lease", async (
 it("duplicate IDs never dispatch again after release, while throttling is account scoped", async () => {
   await activate(); const id = randomUUID(), first = await reserve(id); if (!first.ok) throw Error("Expected admission"); await first.release(); await space();
   expect(await reserve(id)).toEqual({ ok: false, reason: "busy" });
-  for (let i = 0; i < 4; i++) await spend(); expect(await reserve()).toEqual({ ok: false, reason: "busy" });
+  for (let i = 0; i < 19; i++) await spend(); expect(await reserve()).toEqual({ ok: false, reason: "busy" });
   actor.id = "22222222-2222-4222-8222-222222222222"; const other = await reserve(id); expect(other.ok).toBe(true); if (other.ok) await other.release();
-  expect((await counters()).attempts).toBe(6);
+  expect((await counters()).attempts).toBe(21);
 });
 it("enforces aggregate attempt/output caps and expiration without resets", async () => {
   await activate(); await db.$executeRaw`UPDATE student_ai_budget SET attempts=199,reserved_output_tokens=199000`;
@@ -106,6 +106,25 @@ it("Production enforces the same200attempt cap without spending Preview allowanc
   expect(await reserveHosted(productionDb, "synthetic", randomUUID(), config, "production")).toMatchObject({ ok: false, reason: "limited" });
   expect(await counters()).toEqual({ attempts: 0, reserved_output_tokens: 0 });
 });
+
+it.each(["preview", "production"] as const)("%s admits20peraccount, rejects21st and recovers when attempts leave the15minute window", async environment => {
+  const target = environment === "production" ? productionDb : db;
+  await activate(environment, target);
+  const reserveTarget = () => reserveHosted(target, "synthetic-token", randomUUID(), config, environment);
+  for (let i = 0; i < 20; i++) {
+    const admitted = await reserveTarget();
+    expect(admitted.ok).toBe(true);
+    if (admitted.ok) await admitted.release();
+    await target.$executeRaw`UPDATE student_ai_budget SET last_admission_at=clock_timestamp()-interval '11 seconds'`;
+  }
+  expect(await reserveTarget()).toEqual({ ok: false, reason: "busy" });
+  expect(await target.$queryRaw`SELECT attempts,reserved_output_tokens FROM student_ai_budget`).toEqual([{ attempts: 20, reserved_output_tokens: 20000 }]);
+  await target.$executeRaw`UPDATE student_ai_reservation SET created_at=clock_timestamp()-interval '16 minutes'`;
+  const resumed = await reserveTarget();
+  expect(resumed.ok).toBe(true); if (resumed.ok) await resumed.release();
+  expect(await target.$queryRaw`SELECT attempts,reserved_output_tokens FROM student_ai_budget`).toEqual([{ attempts: 21, reserved_output_tokens: 21000 }]);
+});
+
 it("database errors propagate so inference cannot fall back to local admission", async () => {
   await db.$executeRaw`DROP TABLE student_ai_reservation`; await db.$executeRaw`DROP TABLE student_ai_budget`;
   await expect(reserve()).rejects.toThrow();

@@ -11,7 +11,7 @@ export function hostedApproval(environment: HostedEnvironment) {
   return environment === "production" ? PRODUCTION_APPROVAL : PREVIEW_APPROVAL;
 }
 export const HOSTED_LIMITS = Object.freeze({ attempts: 200, outputBudget: 200_000, outputTokens: 1000,
-  inputBytes: 65_536, timeoutMs: 20_000, spacingMs: 10_000, leaseMs: 60_000, perUser: 5 });
+  inputBytes: 65_536, timeoutMs: 20_000, spacingMs: 10_000, leaseMs: 60_000, perUser: 20 });
 
 /** Each hosted environment needs explicit enablement and its own durable approval. */
 export function hostedPolicy(env: Record<string, string | undefined> = process.env): { origin: string; config: SoCConfig; environment: HostedEnvironment } | null {

@@ -209,3 +209,14 @@ describe("server-side SoCLaaS boundary", () => {
     await expect(pending).resolves.toEqual({ ok: false, outcome: "cancelled" });
   });
 });
+
+it("preserves output-cap metadata without changing the provider request or retrying", async () => {
+  const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(Response.json({
+    choices: [{ message: { content: "partial" }, finish_reason: "length" }],
+    usage: { prompt_tokens: 3, completion_tokens: 16, total_tokens: 19 },
+  }));
+  expect(await requestSoCCompletion(input, { env: configured, fetchImpl })).toEqual({
+    ok: true, text: "partial", truncated: true, usage: { promptTokens: 3, completionTokens: 16, totalTokens: 19 },
+  });
+  expect(fetchImpl).toHaveBeenCalledOnce();
+});

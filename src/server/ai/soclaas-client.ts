@@ -29,7 +29,7 @@ export type SoCFailure =
   | { ok: false; outcome: Exclude<SoCOutcome, "unavailable"> }
   | { ok: false; outcome: "unavailable"; failureSource: "http_response" | "transport" };
 
-export type SoCResult = { ok: true; text: string; usage?: SoCUsage } | SoCFailure;
+export type SoCResult = { ok: true; text: string; truncated?: true; usage?: SoCUsage } | SoCFailure;
 
 export interface SoCUsage {
   promptTokens?: number;
@@ -188,7 +188,8 @@ function readCompletion(body: unknown): SoCResult {
   }
 
   const usage = readUsage(body.usage);
-  return usage ? { ok: true, text: first.message.content, usage } : { ok: true, text: first.message.content };
+  const truncated = first.finish_reason === "length" ? { truncated: true as const } : {};
+  return usage ? { ok: true, text: first.message.content, ...truncated, usage } : { ok: true, text: first.message.content, ...truncated };
 }
 
 function readUsage(value: unknown): SoCUsage | undefined {
