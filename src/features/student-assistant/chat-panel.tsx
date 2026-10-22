@@ -29,39 +29,39 @@ export interface ChatPanelProps {
   onSubmit: () => void;
   onClose?: () => void;
   liveMode?: boolean;
+  canAsk?: boolean;
   suggestions?: readonly string[];
   onSuggestion?: (question: string) => void;
+  publicationMode?: boolean;
+  statusMessage?: string;
+  onRefreshSource?: () => void;
 }
 
 function AnswerMessage({ answer }: { answer: ValidatedAnswer }) {
-  return <>
-    {answer.reply ? <p>{answer.reply}</p> : <h3>{answer.kind === "answered" ? "From the event information" : answer.kind === "partially_answered" ? "Part of your question is covered" : answer.kind === "unanswered" ? "Not covered by the event information" : answer.kind === "needs_clarification" ? "Could you clarify?" : "Please ask about this event"}</h3>}
-    {(answer.kind === "answered" || answer.kind === "partially_answered") && <>
-      {!answer.reply && answer.evidence.map((item) => <blockquote key={item.sectionId + item.quote} className={styles.quote}>{item.quote}</blockquote>)}
-      <details className={styles.citations}><summary>View sources ({answer.evidence.length})</summary>
-        <ul>{answer.evidence.map((item) => <li key={item.sectionId + item.quote}>{item.label} · {answer.revision}{answer.reply && <blockquote className={styles.quote}>{item.quote}</blockquote>}</li>)}</ul>
-      </details>
-    </>}
-    {answer.kind === "partially_answered" && <><p>Not answered by these details:</p><ul>{answer.unresolved.map((item) => <li key={item}>{item}</li>)}</ul></>}
-    {answer.kind === "unanswered" && !answer.reply && <p>The sample event information does not cover this question.</p>}
-    {answer.kind === "needs_clarification" && !answer.reply && <p>{answer.clarification}</p>}
-    {answer.kind === "out_of_scope" && !answer.reply && <p>I can help with questions about the selected event information.</p>}
-    {(answer.kind === "partially_answered" || answer.kind === "unanswered") && <p className={styles.explanation}>Organiser follow-up is not connected in this preview. No question has been sent.</p>}
-  </>;
+  // Evidence/revisions/unresolved fragments stay internal; never substitute a quote dump for a reply.
+  const uncertain = answer.kind === "unanswered" || answer.kind === "partially_answered";
+  const reply = answer.reply ?? (answer.kind === "needs_clarification" ? answer.clarification
+    : answer.kind === "out_of_scope" ? "I'm here to help with questions about this event. What would you like to know?"
+    : "I'm not sure enough to answer that.");
+  const needsContact = (uncertain || !answer.reply && answer.kind === "answered")
+    && !["Please check with the organiser to confirm.", "Please contact the organiser to confirm."].some(suggestion => reply.trimEnd().endsWith(suggestion));
+  return <p>{reply}{needsContact ? " Please check with the organiser to confirm." : ""}</p>;
 }
 
-export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = false, suggestions = [], onSuggestion }: ChatPanelProps) {
+export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = false, canAsk = true, suggestions = [], onSuggestion, publicationMode = false, statusMessage, onRefreshSource }: ChatPanelProps) {
   const error = useRef<HTMLParagraphElement>(null);
   const conversation = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { if (state.error) error.current?.focus(); }, [state.error]);
   useEffect(() => { const element = conversation.current; if (element) element.scrollTop = element.scrollHeight; }, [state.turns.length, state.pending?.requestId, state.notice]);
   const available = state.availability === "available" && state.source !== null;
-  const disabled = state.pending !== null || !available;
+  const disabled = state.pending !== null || !available || !canAsk;
   const turns = available ? state.turns.filter((turn) => turn.eventId === state.source!.eventId && turn.revision === state.source!.revision) : [];
   const pending = available && state.pending?.eventId === state.source!.eventId && state.pending.revision === state.source!.revision ? state.pending : null;
   useEffect(() => { if (state.answer && !state.pending) composer.current?.focus(); }, [state.answer, state.pending]);
   const inlineError = state.error && (state.error === "invalid_question" || !turns.length);
+  const message = (reason: FailureReason) => publicationMode && reason === "invalid_source" ? "The published event information is unavailable. Refresh it before trying again."
+    : publicationMode && reason === "live_not_authorized" ? "Local AI requests are not enabled. The local permission or allowance may need checking." : errors[reason];
   function choose(question: string) { (onSuggestion ?? onDraftChange)(question); composer.current?.focus(); }
   return <section className={styles.chat} aria-labelledby="assistant-title">
     <header className={styles.chatHeader}>
@@ -70,8 +70,10 @@ export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = 
     </header>
     <div className={styles.conversation} role="log" aria-label="Event conversation" aria-live="polite" aria-relevant="additions text" tabIndex={0} ref={conversation}>
       <div className={styles.assistantRow}><div className={styles.assistantBubble}><span className={styles.speaker}>TurnUp assistant</span>
-        <p>Hi! What would you like to know about this event?</p><p className={styles.explanation}>I’ll use the event information and show you the sources. You don’t need to register to ask.</p>
+        <p>{canAsk ? "Hi! What would you like to know about this event?" : "This view checks the current publication source."}</p>{!canAsk && <p className={styles.explanation}>AI answers are not connected here. Refresh to check whether the publication changed.</p>}
       </div></div>
+      {statusMessage && <p role="status" className={styles.notice}>{statusMessage}</p>}
+      {publicationMode && onRefreshSource && <button type="button" className={styles.retry} onClick={onRefreshSource}>Refresh event information</button>}
       {state.notice && <p role="status" className={styles.notice}>{notices[state.notice]}</p>}
       {!turns.length && !pending && available && suggestions.length > 0 && <div className={styles.suggestions} aria-label="Starter questions">{suggestions.map((question) => <button key={question} type="button" onClick={() => choose(question)}>{question}</button>)}</div>}
       {turns.map((turn, index) => {
@@ -81,7 +83,7 @@ export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = 
           <div className={styles.userRow}><div className={styles.userBubble}><span className={styles.speaker}>You</span><p>{turn.question}</p></div></div>
           {(answer || turn.error) && <div className={styles.assistantRow}><div className={styles.assistantBubble}><span className={styles.speaker}>TurnUp assistant</span>
             {answer && <AnswerMessage answer={answer} />}
-            {turn.error && <><p id={latestError ? "assistant-error" : undefined} role={latestError ? "alert" : undefined} tabIndex={latestError ? -1 : undefined} ref={latestError ? error : undefined} className={styles.failure}>{errors[turn.error]}</p>
+            {turn.error && <><p id={latestError ? "assistant-error" : undefined} role={latestError ? "alert" : undefined} tabIndex={latestError ? -1 : undefined} ref={latestError ? error : undefined} className={styles.failure}>{message(turn.error)}</p>
               {latestError && !disabled && state.draft === turn.question && <button type="button" className={styles.retry} onClick={onSubmit}>Try again</button>}
             </>}
           </div></div>}
@@ -98,8 +100,8 @@ export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = 
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>
         </button>
       </div>
-      {inlineError && <p id="assistant-error" role="alert" tabIndex={-1} ref={error} className={styles.failure}>{errors[state.error!]}</p>}
-      <p id="question-help" className={styles.composerHelp}>{liveMode ? "Live AI · sample event information" : "Simulated responses only"}</p>
+      {inlineError && <p id="assistant-error" role="alert" tabIndex={-1} ref={error} className={styles.failure}>{message(state.error!)}</p>}
+      <p id="question-help" className={styles.composerHelp}>{publicationMode ? "Live AI · published event information" : !canAsk ? "Source inspection only. AI answers are not connected here." : liveMode ? "Live AI · sample event information" : "Simulated responses only"}</p>
     </form>
   </section>;
 }

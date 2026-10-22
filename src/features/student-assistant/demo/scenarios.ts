@@ -42,9 +42,9 @@ export function simulateResponse(scenarioId: ScenarioId, request: SimulationRequ
       let candidate: AnswerCandidate;
       switch (scenarioId) {
         case "answered": candidate = { ...identity, kind: "answered", reply: "No need to bring gardening tools—they are provided. Bring a water bottle.", evidence: [{ ...identity, sectionId: "preparation", quote: "Bring a water bottle. Gardening tools are provided." }] }; break;
-        case "partial": candidate = { ...identity, kind: "partially_answered", evidence, unresolved: ["Is lunch provided?"] }; break;
-        case "subjective": candidate = { ...identity, kind: "unanswered", reply: "That depends on what you enjoy! What kind of activities do you usually like?" }; break;
-        case "unanswered": candidate = { ...identity, kind: "unanswered" }; break;
+        case "partial": candidate = { ...identity, kind: "partially_answered", reply: "Tools are provided! I'm not sure whether lunch is included.", evidence, unresolved: ["Is lunch provided?"] }; break;
+        case "subjective": candidate = { ...identity, kind: "needs_clarification", reply: "That depends on what you enjoy! What kind of activities do you usually like?", clarification: "What kind of activities do you usually like?" }; break;
+        case "unanswered": candidate = { ...identity, kind: "unanswered", reply: "I'm not sure whether lunch is provided." }; break;
         case "clarification": candidate = { ...identity, kind: "needs_clarification", clarification: "Would you like to know what happens at the workshop or how to attend?" }; break;
         case "out_of_scope": candidate = { ...identity, kind: "out_of_scope" }; break;
         case "bad_evidence": candidate = { ...identity, kind: "answered", evidence: [{ ...identity, sectionId: "access", quote: "Lunch is provided for free." }] }; break;

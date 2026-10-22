@@ -16,20 +16,27 @@ const evidence = [{ ...identity, sectionId: "preparation", quote: "Gardening too
 function answered(candidate: unknown) { return assistantReducer(request(), { type: "response_received", requestId: "one", ...identity, candidate }); }
 
 describe("Student assistant presentation", () => {
-  it("shows validated exact source quotation and source identity, not generated factual prose", () => {
-    const html = render(answered({ ...identity, kind: "answered", evidence }));
-    expect(html).toContain("Gardening tools are provided."); expect(html).toContain("What to bring"); expect(html).toContain(SAMPLE_SOURCE.revision);
-    expect(html).toContain("From the event information"); expect(html).not.toContain("Lunch is provided");
+  it("labels real-publication replies and failure states without sample or simulated copy", () => {
+    const state = answered({ ...identity, kind: "unanswered" });
+    const html = renderToStaticMarkup(createElement(ChatPanel, { state, publicationMode: true, onSubmit() {}, onDraftChange() {}, statusMessage: "The event information changed." }));
+    expect(html).toContain("published event information"); expect(html).toContain("Please check with the organiser");
+    expect(html).toContain("The event information changed."); expect(html).not.toMatch(/sample event|Simulated responses|in this preview|Source inspection only/);
+  });
+  it("shows only the friendly validated reply, keeping quotation/section/revision internal", () => {
+    const html = render(answered({ ...identity, kind: "answered", reply: "No need to bring tools—they are provided.", evidence }));
+    expect(html).toContain("No need to bring tools"); expect(html).not.toContain("What to bring"); expect(html).not.toContain(SAMPLE_SOURCE.revision);
+    expect(html).not.toContain("From the event information"); expect(html).not.toContain("Gardening tools are provided."); expect(html).not.toContain("View sources");
   });
   it("separates supported evidence and unresolved question without claiming delivery", () => {
-    const html = render(answered({ ...identity, kind: "partially_answered", evidence, unresolved: ["Is lunch provided?"] }));
-    expect(html).toContain("Not answered by these details"); expect(html).toContain("Is lunch provided?");
-    expect(html).toContain("No question has been sent."); expect(html).not.toContain("threadId");
+    const html = render(answered({ ...identity, kind: "partially_answered", reply: "Tools are provided! I'm not sure about lunch.", evidence, unresolved: ["Is lunch provided?"] }));
+    expect(html).not.toContain("Not answered by these details"); expect(html).not.toContain("Is lunch provided?");
+    expect(html).toContain("Tools are provided!"); expect(html).toContain("Please check with the organiser");
+    expect(html).not.toContain("No question has been sent."); expect(html).not.toContain("threadId"); expect(html).not.toContain("<a ");
   });
   it("distinguishes unanswered, clarification, out of scope and technical failures", () => {
-    expect(render(answered({ ...identity, kind: "unanswered" }))).toContain("Not covered by the event information");
-    expect(render(answered({ ...identity, kind: "needs_clarification", clarification: "Which workshop topic do you mean?" }))).toContain("Could you clarify?");
-    expect(render(answered({ ...identity, kind: "out_of_scope" }))).toContain("Please ask about this event");
+    expect(render(answered({ ...identity, kind: "unanswered" }))).toContain("not sure enough");
+    expect(render(answered({ ...identity, kind: "needs_clarification", clarification: "Which workshop topic do you mean?" }))).toContain("Which workshop topic do you mean?");
+    expect(render(answered({ ...identity, kind: "out_of_scope" }))).toContain("questions about this event");
     const failed = assistantReducer(request(), { type: "request_failed", requestId: "one", ...identity, reason: "timeout" });
     const html = render(failed); expect(html).toContain("took too long"); expect(html).toContain("Do I need tools?"); expect(html).toContain("Try again");
     expect(html).not.toContain("Not covered by the event information");
@@ -65,11 +72,11 @@ describe("Student assistant presentation", () => {
 });
 
 describe("chat presentation", () => {
-  it("places source-bound conversation before the bottom composer and keeps sources expandable", () => {
+  it("places conversation before the bottom composer without evidence panels", () => {
     const html = render(answered({ ...identity, kind: "answered", evidence }));
     expect(html).toContain('role="log"'); expect(html).toContain("You"); expect(html).toContain("TurnUp assistant");
     expect(html.indexOf("Do I need tools?")).toBeLessThan(html.indexOf('<form'));
-    expect(html).toContain('<summary>View sources (1)</summary>'); expect(html).not.toContain('<details open');
+    expect(html).not.toContain('<summary>'); expect(html).not.toContain('<blockquote');
     expect(html).toContain('aria-label="Send question"');
   });
   it("offers optional starter questions only for an empty, available conversation", () => {
@@ -96,19 +103,23 @@ describe("corner widget presentation", () => {
   });
 });
 
-it("renders conversational prose inertly with exact quotes inside collapsed sources", () => {
+it("renders conversational prose inertly while keeping exact quotes out of the markup", () => {
   const reply = "No need to bring tools—they are provided. <script>alert(1)</script>";
   const html = render(answered({ ...identity, kind: "answered", reply, evidence }));
   expect(html).toContain("No need to bring tools");
   expect(html).toContain("&lt;script&gt;"); expect(html).not.toContain("<script>");
   expect(html).not.toContain("From the event information");
-  expect(html.indexOf("<details")).toBeLessThan(html.indexOf("Gardening tools are provided."));
-  expect(html).not.toContain("<details open");
+  expect(html).not.toContain("Gardening tools are provided."); expect(html).not.toContain("<details");
 });
 it("shows a natural subjective reply without invented evidence or a technical error", () => {
   const html = render(answered({ ...identity, kind: "unanswered", reply: "That depends on what you enjoy! What activities do you like?" }));
   expect(html).toContain("That depends on what you enjoy!");
   expect(html).not.toContain("could not be read safely");
   expect(html).not.toContain("View sources"); expect(html).not.toContain("Not covered by the event information");
-  expect(html).toContain("No question has been sent.");
+  expect(html).toContain("Please check with the organiser");
+});
+it("keeps a clear organiser follow-up once and never invents a contact action", () => {
+  const reply = "I'm not sure about lunch. Please contact the organiser to confirm.";
+  const html = render(answered({ ...identity, kind: "unanswered", reply }));
+  expect(html.match(/Please contact the organiser to confirm\./g)).toHaveLength(1); expect(html).not.toContain("Please check with"); expect(html).not.toContain("<a ");
 });
