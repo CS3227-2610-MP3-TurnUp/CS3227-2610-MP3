@@ -341,3 +341,237 @@ Prepared one coherent discovery/checks/contracts/planning checkpoint on codex/wp
   "usage_updates": []
 }
 ```
+
+Continuation of entry08 after requested checkpoint commit: existing discovery/planning committed as b1f6d92 (entry09). Approved independent form contract/components now in progress in main agent; database/exclusive-window question remains pending. No additional commit authority inferred for new implementation.
+
+# 10 - Continue Approved Registration Completion - 22 October 2026
+
+## Request
+
+Continue the approved completion plan and shared schema/publisher assignment, preserving WP006 and excluding Keith’s builder/roster UI.
+
+## Results
+
+Completed every locally ready approved Student/shared implementation slice; exact checks/findings/limits and source snapshot are in [D007 verification](../../changes/CHG-D-007-student-discovery-registration/verification.md). Reused discovery evidence. Actual299unit/83final-focused/7disposable-SQL/9PostgreSQL results, lint/schema/final build passed. Main-agent verification only; no delegates or exact token measurements. Fixed database clock timezone conversion, source/pointer integrity and UI focus/layout/receipt findings. No shared Neon mutation or Keith agreement inferred; builder/roster and shared-target/full-browser integration remain pending. Prior commitb1f6d92 preserved; no new commit/push/deployment, WP006 or original-root edit. Temporary browser fixture removed; temporary local PostgreSQL fixture cleanup follows checks.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 10,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "b1f6d92",
+  "captured_at": "2026-10-22T02:07:40.256606+00:00",
+  "delegation": "Main agent only by explicit human instruction; no agents dispatched.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Continue approved D007 Student completion and assigned shared schema/publisher implementation.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Implemented ready approved Student and assigned shared schema/publisher slices in the existing WP004 tree. Main-agent review; no agents. Checks:299 full unit then83 final affected;7 fresh disposable SQL;9 real PostgreSQL race/boundary/retry; lint/schema/final build passed. Fixed proven8-hour raw-clock timezone bug and recorded UI fixes. Shared Neon migration/window, full live browser and Keith builder/roster remain pending; no new commit/push/deployment or WP006 write.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Exact prompt-scoped runtime usage is unavailable; no estimates."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```
+
+Final cleanup: verified the temporary PostgreSQL data directory against the task-created exact path, stopped only that cluster, and removed it. No shared/installed database was stopped. Prompt-log validator entries05–10 passed (one root, zero dispatches; usage unavailable); git diff --check passed. Original-root WP004 plan/log SHA256 still match the preserved pre-run hashes. No write targeted WP006; its staged/unstaged work remains in place. Final41-file product fingerprint remains097111d0c77e2b52ad3d7140836fc51c2723b893e61df051accaf127c13eed72.
+
+# 11 - Student Navigation and Registration Action Refinement - 22 October 2026
+
+## Request
+
+Refine the Student discovery card, registration call to action and placement of My Events, preserving WP004 scope and the separate WP006 worktree.
+
+## Results
+
+Removed the redundant visible details link from the already-linked event card, leaving the card as the sole details navigation. Moved My Events into the Student account menu on discovery, details, registration, correction and My Events pages. Replaced the ambiguous registration link with a full-width “Continue to registration” action and clear next-screen confirmation copy. The final form remains the only action that creates a registration, preserving the approved optional-profile confirmation and no-seat-hold rules.
+
+Main-agent verification: direct component rendering checks passed (8/8) and TypeScript passed. The local Student development server is running at its existing port, but the in-app browser was denied localhost authority by its browser policy before it could inspect the page; no live browser walkthrough is claimed. No subagents, commits, pushes, deployments, database calls, WP006 edits or Organiser work.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 11,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "b1f6d92",
+  "captured_at": null,
+  "delegation": "Main-agent-only instruction remained in force; the focused Student UI refinement was completed directly.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Refine Student discovery navigation, registration action wording and My Events placement.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Updated the scoped Student navigation and action UI; component and TypeScript checks passed. Browser validation was blocked by localhost authority policy.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "No exact prompt-scoped runtime thread/turn usage is available."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```
+
+# 12 - Required Event Contact and Registration Copy - 22 October 2026
+
+## Request
+
+Make registration confirmation refer to the organizer, require Name and Phone number or Telegram handle, and reduce redundant registration-screen text.
+
+## Results
+
+Darryl explicitly replaced optional event-contact values with required per-event Name plus phone number or `@Telegram` handle. Global profile data remains optional and can only prefill this event-specific snapshot. Both the client and server reject missing contact fields; server validation normalizes phone numbers and accepts a bounded Telegram handle. The form now uses compact “Contact details” copy, says “the organizer,” and removes the redundant registration introduction. Corrections follow the same required event-contact rule.
+
+Main-agent checks: focused validation/component/policy/route tests passed (40/40); TypeScript passed; disposable local registration SQL integration passed (7/7). The first SQL run correctly found a stale test assertion expecting a null captured name; that expectation was updated and the suite rerun successfully. Browser authority remains unavailable for localhost, so no live browser acceptance is claimed. No subagents, migrations, external database calls, commits, pushes, deployments, WP006 edits, or Organiser builder/roster work.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 12,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "b1f6d92",
+  "captured_at": null,
+  "delegation": "Main-agent-only instruction remained in force; this focused Student contract and presentation update was completed directly.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Make event contact details required and simplify Student registration wording.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Updated the Student form, server validation, contract, scenarios and focused tests; all selected checks passed after correcting one obsolete null-contact assertion.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "No exact prompt-scoped runtime thread/turn usage is available."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```
+
+# 13 - Commit Verified Registration and Deploy Preview - 22 October 2026
+
+## Request
+
+Darryl authorised sensible WP-004 commits and deployment of the resulting
+reviewed feature revision to the protected Preview branch for Vercel testing.
+
+## Results
+
+The completed registration implementation was rechecked before delivery:
+301/301 tests passed using the documented temporary LF workflow normalization
+on this Windows checkout (the original bytes were restored), lint and Prisma
+validation passed, TypeScript typecheck passed, and the production build
+passed. The configured non-production database received only the reviewed
+event and registration additive migrations and subsequently reported all six
+migrations current. The first focused implementation commit is `49d7ec8`
+(`feat: add transactional student registration`). Documentation/evidence
+changes and the Preview deployment result are being recorded next; no Preview
+push or Vercel deployment has occurred at this point.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 13,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "49d7ec8",
+  "captured_at": null,
+  "delegation": "Main-agent-only instruction remains in force; direct verification, commit preparation and authorised Preview delivery need no delegated task.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Commit verified WP-004 work in coherent groups and deploy the resulting revision through the protected Preview branch.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "in_progress",
+      "result": "Implementation commit 49d7ec8 created after release checks; documentation commit and Preview deployment remain in progress.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "No exact prompt-scoped runtime thread/turn usage is available."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

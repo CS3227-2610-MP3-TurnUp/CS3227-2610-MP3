@@ -34,3 +34,29 @@ This replaces the earlier all-slices blanket hold; retain checked discovery work
 No new product code before the requested plan decision. No agent dispatch; main agent verifies. Recommend prioritising schema+capacity server handoff rather than waiting for the complete Organiser builder/roster. Exact source paths stay in v1.0/v1.1; prisma schema/new migration are conditional writes, never assumed assigned. No new change ID or owner log.
 
 22October2026 explicit assignment update: Darryl approved planv1.1 and assigned main-agent authorship of prisma/schema.prisma, one new additive registration migration (exact collision-free path to be chosen after the shared-file window is established), and necessary src/server/events/policy.ts/service.ts publisher form/capacity integration. src/server/publication/reader.ts changes only if required by this shared contract. Keith's Organiser builder/roster UI/API remain outside scope. This is Darryl's assignment, not invented Keith agreement. Exclusive shared-file window and actual synthetic project/branch/database are not yet identified; no shared source or database write made at this checkpoint. Existing independent components remain ready. Previous D007 discovery/planning changes are authorised for commit; no push/deployment.
+
+## Current execution matrix — approved completion v1.1, 22 October 2026
+
+This section supersedes historical blanket holds above. Main agent is the only local writer in the existing isolated WP004 worktree, under Darryl's explicit assignment and subsequent continue instructions. No exclusive shared merge/Neon window or Keith agreement is invented.
+
+| Slice | Current outcome | Remaining boundary |
+| --- | --- | --- |
+| A: versioned forms, typed answers, profile confirmation, captured correction and My Events components | Implemented; focused unit and synthetic component/browser evidence | Human/hosted UI acceptance remains separate |
+| B: schema/additive migration | Implemented `prisma/migrations/20261022000000_registration/migration.sql`; fresh replay/upgrade locally verified | Shared Neon target/migration slot and applied migration evidence pending |
+| C: atomic registration/cancel/rejoin/correction and protected endpoints | Implemented; actual PostgreSQL last-seat/duplicate/capacity/lifecycle/conflict/rollback/time/expiry/retry tests | Shared hosted execution remains unrun |
+| D: live own state/counts, My Events/change flags and pages | Implemented against real store; SQL service integration verified | Full signed-in browser walkthrough on assigned configured shared target pending |
+| E: saved form/preview/approval/publish and capacity safety | Necessary shared server/readonly preview implemented by assignment | Keith owns builder and owner-roster UI/API; actual builder→Student→roster integration pending |
+
+Exact additional main-agent paths: `prisma/schema.prisma`; `prisma/migrations/20261022000000_registration/migration.sql`; `src/server/events/{policy,service,http}.ts`; relevant `tests/events/{policy,service}.test.ts`; `src/components/events/{editor,event-content}.tsx` only for exact readonly form preview; `src/features/student/registration-screen.tsx` composes the already allocated Student components/pages. The earlier plan's Student API/pages/lib/server/test paths remain the rest of the source manifest. `src/server/publication/reader.ts`, account sources, dependencies/lockfile, workflow, original checkout and WP006 are unchanged.
+
+- [x] Author bounded form/submission contracts and safe private Student controls.
+- [x] Author additive schema/migration, composite pointer/source guards and immutable submissions.
+- [x] Integrate publisher saved forms, exact readonly preview/approval/digest, form-only saved-change state and locked capacity floor.
+- [x] Implement atomic mutations, durable generation-safe replay and bounded serialization retry; final session/UTC database-clock checks.
+- [x] Wire real Student discovery counts/state, registration, own captured correction and My Events/change indicators.
+- [x] Run focused/unit/disposable SQL/real PostgreSQL checks and main-agent source review; preserve earlier independent producer review evidence.
+- [ ] Apply migration/checks to explicitly confirmed shared Neon target and exclusive migration window.
+- [ ] Signed-in full browser walkthrough on that actual configured target, and Keith's actual builder/roster cross-role handoff.
+- [ ] G06 cleanup/key expiry operational implementation is separate; not claimed complete.
+
+No new commit, push, deployment, SoCLaaS call or remote message. Previous requested checkpoint commit remains b1f6d92. Main-agent verification only.

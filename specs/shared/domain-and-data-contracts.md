@@ -37,7 +37,7 @@ Published events can have separate working drafts. Cancel Editing discards unsav
 | Preparation/draft | Event/source/fact/draft versions; minimal private facts/evidence/issues; candidate fields/document/form, separate private notes |
 | Publication/form revision | Immutable approved fields/document/form, digest, owner/time; historical wording/options |
 | Registration | Unique Student/event relationship, active/cancelled, joined publication/current submission, version |
-| Submission | Registration/captured form, confirmed optional profile snapshot, typed answers, immutable version/time |
+| Submission | Registration/captured form, confirmed required event-contact snapshot, typed answers, immutable version/time |
 | QuestionThread/Message | Student/event/server-derived owner, source revision, necessary context, private messages/state/times |
 | Idempotency/audit | Actor/operation/key/payload digest/result; minimal metadata/expiry, no raw proposals/answers |
 
@@ -45,24 +45,24 @@ One authoritative transactional registration store prevents partial seats/submis
 
 ## Variable form and submission
 
-A versioned form contains an ordered array of zero or more questions with stable server-generated question/option IDs. Allowed types are `short_text`, `long_text`, `single_choice`, `multiple_choice`. Example data (bounds remain G03):
+A versioned form contains an ordered array of zero or more questions with stable server-generated question/option IDs. Allowed types are `short_text`, `long_text`, `single_choice`, `multiple_choice`. Example data (D007 accepted bounds below):
 
 ```json
 {
-  "formRevisionId": "form-v2",
+  "formRevisionId": "10000000-0000-4000-8000-000000000001",
   "questions": [
-    {"id": "q-server-1", "type": "short_text", "label": "Dietary needs", "required": false},
-    {"id": "q-server-2", "type": "single_choice", "label": "Workshop", "required": true,
-     "options": [{"id": "o-server-1", "label": "Morning"}, {"id": "o-server-2", "label": "Afternoon"}]},
-    {"id": "q-server-3", "type": "multiple_choice", "label": "Interests", "required": false,
-     "options": [{"id": "o-server-3", "label": "Design"}, {"id": "o-server-4", "label": "Coding"}]}
+    {"id": "10000000-0000-4000-8000-000000000002", "type": "short_text", "label": "Dietary needs", "required": false},
+    {"id": "10000000-0000-4000-8000-000000000003", "type": "single_choice", "label": "Workshop", "required": true,
+     "options": [{"id": "10000000-0000-4000-8000-000000000004", "label": "Morning"}, {"id": "10000000-0000-4000-8000-000000000005", "label": "Afternoon"}]},
+    {"id": "10000000-0000-4000-8000-000000000006", "type": "multiple_choice", "label": "Interests", "required": false,
+     "options": [{"id": "10000000-0000-4000-8000-000000000007", "label": "Design"}, {"id": "10000000-0000-4000-8000-000000000008", "label": "Coding"}]}
   ]
 }
 ```
 
 Answer values keyed by question ID are text, one option ID, or an array of option IDs. Optional unanswered fields may be omitted. Server validates required/type/length/option/unknown-ID rules. Labels are inert data, never executable application fields; credential collection/file uploads/scripts/conditional executable schema are outside the proposed controls.
 
-Join supplies expected publication/form versions, confirmed optional profile values, answers and idempotency key; actor/owner are server-derived. Final submission atomically checks state/start/capacity/versions and commits one place plus submission. Opening/typing holds nothing; invalid/stale/full submissions expose no partial roster record. Same-key same-payload retry returns committed result; changed payload conflicts. Two Students racing for one place produce one winner.
+Join supplies expected publication/form versions, required event name and phone number or Telegram handle, answers and idempotency key; actor/owner are server-derived. The global profile remains optional and is only a prefill source. Final submission atomically checks state/start/capacity/versions and commits one place plus submission. Opening/typing holds nothing; invalid/stale/full submissions expose no partial roster record. Same-key same-payload retry returns committed result; changed payload conflicts. Two Students racing for one place produce one winner.
 
 New joins/rejoins use current form. Existing active corrections before start use captured form and create a new submission version; later form edits do not reinterpret answers or remove places. Profile edits never rewrite submissions. Reject capacity below active count. Date/location/fee/Open to changes preserve registrations and flag My Events; cutoff edge cases remain G05. Route names/HTTP conventions belong in mutually agreed design, not an invented scaffold API.
 
@@ -89,3 +89,17 @@ Explicit Preview saved draft replaces the editor with Public Preview only. Appro
 ## WP-004 consumer proposal status — 22 October 2026
 
 Darryl approved [plan v1.0](../../docs/plans/wp-004-student-registration-plan.md), including his form/answer bounds, explicit optional sharing, captured-form corrections and effective-start/rescheduling direction. These proposed cross-role refinements await Keith's agreement and producer/migration handoff; they do not silently replace G03/G05/G07 or assign his implementation. Existing versioned form/submission/privacy/atomicity requirements above remain authoritative. D007's discovery-only DTO initially reports unavailable remaining places/own registration status rather than inferring a count/state from advertised capacity. Registration-dependent floor/count/history checks remain pending.
+
+## D007 assigned completion contract — 22 October 2026
+
+Darryl approved completion plan v1.1 and its recommended rules and assigned the main agent registration schema/migration and necessary shared publisher form/capacity work. This supersedes earlier unassigned-writer statements for this change only; it records no Keith agreement. Keith retains Organiser form-builder and roster UI/API. Main-agent verification replaces independent-agent verification by explicit human instruction.
+
+Form/answer bounds: zero–10 questions; labels200/help500 Unicode code points; short answers250/long2,000; choices2–10 options/labels100. NFC/trim/CRLF-to-LF normalisation; reject controls/line separators except LF/tab in multiline text. Optional blanks are omitted; required/type/unknown/repeated-option checks are authoritative. Public fields plus labels/help/options share20,000-code-point/48,000-UTF-8-byte budget. Four types remain unchanged. New question/option UUIDs are server generated; save may retain only IDs from that event's saved draft, with unchanged question type. Semantic replacements require new IDs; builder must offer that distinction. Form-only edits change the saved-change badge and require fresh preview/approval. The preview displays exact labels/help/options/required flags without adding builder controls.
+
+Join/rejoin/cancel/correction require database wall time strictly before the current effective published start. Withdrawn cancellation uses last publication start; withdrawn correction is denied. Published details remain readable after start. Approved future rescheduling preserves places and can close/reopen controls; no forced new answers. Numeric UTC epoch avoids driver/session-timezone conversion in time guards. My Events compares approved Schedule/Location/Fee/Open to/form content with the joined baseline; changed-back content clears the relevant flag, fresh revision identity alone does not. Viewing/correction/private saves leave the baseline intact; rejoining establishes a new baseline. Unpublished cards contain safe status/reference only.
+
+Registration owns one Student/event relationship, incrementing join generation and optimistic version; immutable submissions capture exact source publication/form, required event name and a phone number or `@Telegram` handle, and typed answers. Corrections append versions against captured form, never current profile or replacement form. SQL source and current-pointer ownership guards supplement server checks. Active counts are derived from registrations, never advertised capacity or owner editedAt. Publisher and lifecycle mutations use the same event row lock; undersized capacity is rejected under that lock.
+
+Operation key is UUID scoped to actor/event/JOIN|CANCEL|CORRECT, with canonical JSON digest and minimal durable result. Exact replay returns the original receipt without mutating a newer generation; changed payload conflicts. A receipt reports the historical committed operation, so Student success text directs users to My Events for current status. At most one retry of explicit serialization/deadlock aborts retains the original key. Registration JSON is streamed with256KiB/5s bounds; auth parsing is unchanged. Cleanup/key expiry and the90-day retention implementation remain G06, with no silent key recycling or completed-cleanup claim.
+
+Executable paths and actual local checks are in D007 verification. Neon migration and deployed acceptance are not established by these rules.

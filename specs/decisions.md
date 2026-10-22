@@ -13,7 +13,7 @@ B1 · 16 October 2026; ownership update D12 · 17 October 2026; SoC access clari
 | D05 | Required fee/Open to/preparation text; optional FAQ/Other | Optional or silently inferred participation facts; SHR06, ORG06 |
 | D06 | Show partial extraction immediately; clarify defined blockers; optional gaps do not endlessly block | Waiting for all clarification before any useful field display; ORG04–07 |
 | D07 | Temporary server PDF/fulltext; Student AI uses current approved public content only | Persistent proposals or chatbot PDF/private-source access; ORG03/04, SEC01/04 |
-| D08 | Atomic one-place registration, cancellation/rejoin, versioned forms/submissions | Seat holds, Organiser participation and mandatory global contact; PAR03–05/13–15 |
+| D08 | Atomic one-place registration, cancellation/rejoin, versioned forms/submissions; required per-event name and phone/Telegram contact | Seat holds, Organiser participation and mandatory global contact; PAR03–05/13–15 |
 | D09 | Application inbox/private replies; explicit new public approval to share answers | Autonomous model messaging, automatic public learning, real-time dependency; PAR09–12, ORG15–17 |
 | D10 | 30-day inactive private draft and 90-day event-personal/audit defaults | Indefinite version history or unspecified default retention; DEP02, SEC06 |
 | D11 | Next.js/TypeScript on Vercel Hobby; team Markdown/Git SDD without OpenSpec installation | Django/VM/Vite as settled stack; DEP01–04, DEV01 |
@@ -56,3 +56,13 @@ Darryl approved explicit optional-profile sharing, captured-form corrections and
 ## 22 October 2026 — WP-004 completion approval and shared implementation assignment
 
 Darryl approved [completion planv1.1](../docs/plans/wp-004-student-registration-plan.md#completion-plan-v11--22-october-2026), including its recommended form/profile/timing rules and content-based form-change indicators. He explicitly assigned main-agent authorship of D007 registration schema/new migration and necessary shared publisher form/capacity changes, retaining Keith's Organiser builder/roster UI outside this assignment. This records Darryl's explicit decision/assignment, not Keith agreement. An exclusive shared-file writing window still needs coordination; the provided literal database placeholder does not identify a synthetic target, so database execution remains unassigned. Existing scope approval is retained and independent authorised work can proceed. Implementation and actual checks remain separate.
+
+### D007 implementation continuation — 22 October 2026
+
+After the database questions Darryl instructed continuing. The approved shared source assignment was executed by the main agent as sole writer in the isolated WP-004 checkout; no Keith agreement, shared merge window or remote coordination is asserted. Additive migration `20261022000000_registration` has no name collision with the five baseline migrations observed in WP-004/WP-006. The rule detail above now lives in the [D007 contract](shared/domain-and-data-contracts.md#d007-assigned-completion-contract--22-october-2026). This is Darryl's accepted implementation position for G03/G05, not a claim that all cross-role/release gates are closed.
+
+The old `[identified synthetic database]` placeholder was never treated as a connection. Historical Neon target is `turnup-nonprod / dev/darryl / turnup`; no D007 Neon mutation occurred. Local checks used disposable PGlite plus a task-owned PostgreSQL18.6 loopback cluster/database, with verified metadata and no real records. Assignment/metadata/exclusive migration-window confirmation is still required before applying D007 to a shared Neon branch; Preview/Production remain unauthorised. One previously authorised discovery/planning checkpoint was committed as `b1f6d92`; subsequent completion code is uncommitted.
+
+### D08 amendment — required event contact — 22 October 2026
+
+Darryl explicitly replaced the optional event-profile rule for WP-004 registration and correction with a required event name plus either a valid phone number or `@Telegram` handle. The global account profile remains optional: it may prefill the event form but is neither required nor updated by event submission. Students explicitly confirm sharing these event-only values and answers with the organizer. This narrow Student decision supersedes the optional-contact portions of the 22 October WP-004 plan/contract records; it does not assign Organiser roster/builder work, require a database migration, or settle wider contact/recovery policy.
