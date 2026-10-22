@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AccountMenu } from "../../components/account/account-menu";
+import { WorkspaceHeader } from "../../components/workspace-header";
 import { StudentEventList } from "../../features/student/event-list";
 import { requireRole } from "../../server/auth/guards";
 
@@ -11,6 +11,6 @@ export default async function StudentPage() {
     <h1>{access.status === "denied" ? "Access unavailable" : "Account access is unavailable"}</h1>
     <p>{access.status === "denied" ? "This page is for Student accounts." : "Please try again later."}</p><Link href="/login">Go to login</Link>
   </section></main>;
-  return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/student">TurnUp</Link><AccountMenu username={access.user.username} studentNavigation /></header>
+  return <main className="workspace"><WorkspaceHeader username={access.user.username} role={"STUDENT"} />
     <StudentEventList /></main>;
 }

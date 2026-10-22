@@ -16,7 +16,7 @@ export function StudentEventList() {
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState<DiscoveryPeriod>("upcoming");
   const [reload, setReload] = useState(0);
-  const [result, setResult] = useState<{ key: string; events?: StudentEvent[]; error?: string } | null>(null);
+  const [result, setResult] = useState<{ key: string; events?: StudentEvent[]; error?: string; loginRequired?: boolean } | null>(null);
   const key = new URLSearchParams({ search, period }).toString();
   const searchError = discoverySearchError(search);
   useEffect(() => {
@@ -24,7 +24,7 @@ export function StudentEventList() {
     const controller = new AbortController();
     fetch(`/api/student/events?${key}`, { cache: "no-store", signal: controller.signal }).then(async (response) => {
       if (!response.ok) {
-        if (!controller.signal.aborted) setResult({ key, error: response.status === 401 ? "Log in again to browse events." :
+        if (!controller.signal.aborted) setResult({ key, loginRequired: response.status === 401, error: response.status === 401 ? "Log in again to browse events." :
           response.status === 409 ? "Published events changed. Refresh the list." : "Published events are unavailable. Try again later." });
         return;
       }
@@ -48,9 +48,9 @@ export function StudentEventList() {
       <p className="field-help">Ordered by start time, earliest first. Times are shown in Singapore time.</p>
     </section>
     <section aria-label="Published event results" aria-busy={!searchError && !current}>
-      {searchError ? <p role="status">Update your search to see events.</p> : !current ? <p role="status">Loading published events…</p> : current.error ? <div role="alert" className="error-panel">{current.error} <Link href="/login">Go to login</Link></div> :
-        !current.events?.length ? <div className="card"><h2>{search.trim() ? "No matching events" : period === "upcoming" ? "No upcoming events" : "No started or past events"}</h2>
-          <p>{search.trim() ? "Try another title or change the event filter." : "Try the other event filter or check back later."}</p></div> :
+      {searchError ? <p role="status">Update your search to see events.</p> : !current ? <p role="status">Loading published events…</p> : current.error ? <div role="alert" className="error-panel">{current.error} {current.loginRequired && <Link href="/login">Go to login</Link>}</div> :
+        !current.events?.length ? <div className="card empty-state"><h2>{search.trim() ? "No matching events" : period === "upcoming" ? "No upcoming events" : "No started or past events"}</h2>
+          <p>{search.trim() ? "Try another title or change the event filter." : "Try the other event filter or check back later."}</p>{search && <button className="secondary" onClick={() => setSearch("")}>Clear search</button>}</div> :
           <><p className="muted" role="status">{current.events.length} {current.events.length === 1 ? "event" : "events"}</p>
             <div className="event-grid">{current.events.map((event) => <StudentEventCard key={event.eventId} event={event} />)}</div></>}
     </section></>;

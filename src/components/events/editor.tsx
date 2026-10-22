@@ -49,8 +49,18 @@ export function EventEditor({ id }: { id: string }) {
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    // Cover shared client-side navigation as well as tab closure without changing routes.
+    const leave = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(anchor instanceof HTMLAnchorElement) || anchor.target && anchor.target !== "_self" || anchor.hasAttribute("download")) return;
+      const destination = new URL(anchor.href);
+      if (destination.href === window.location.href || destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (!window.confirm("Leave and discard unsaved edits?")) { event.preventDefault(); event.stopPropagation(); }
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", leave, true);
+    return () => { window.removeEventListener("beforeunload", warn); document.removeEventListener("click", leave, true); };
   }, [dirty]);
 
   function showEditor() {
@@ -119,8 +129,15 @@ export function EventEditor({ id }: { id: string }) {
   const displayedFields = mode === "publication" && published ? published.fields : mode === "preview" && preview ? preview.snapshot.fields : fields;
   const describedBy = (key: string) => `${key in EVENT_LIMITS ? `help-${key}` : ""} ${fieldError === key ? "event-error" : ""}`.trim() || undefined;
 
+  const renderTextField = (key: TextField) => <div className="field" key={key}>
+          <label htmlFor={`event-${key}`}>{FIELD_LABELS[key]}{key !== "other" && " (required to publish)"}</label>
+          {key === "title" ? <input id={`event-${key}`} value={fields[key]} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} /> :
+            <textarea id={`event-${key}`} value={fields[key]} rows={key === "description" || key === "other" ? 5 : 3} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} />}
+          <p id={`help-${key}`} className="field-help">{[...fields[key].normalize("NFC").trim()].length.toLocaleString()} / {EVENT_LIMITS[key].toLocaleString()} characters</p>
+        </div>;
+
   return <>
-    <Link href="/organiser" onClick={(event) => { if (dirty && !window.confirm("Leave and discard unsaved edits?")) event.preventDefault(); }}>Back to your events</Link>
+    <Link href="/organiser">Back to your events</Link>
     <div className="event-heading"><div><p className="eyebrow">{view.state.toLowerCase()}</p>
       <h1 ref={heading} tabIndex={-1}>{displayedFields.title || "Untitled draft"}</h1>
       <p className="muted">Times are entered and displayed in Singapore time (SGT).</p></div></div>
@@ -146,30 +163,35 @@ export function EventEditor({ id }: { id: string }) {
     {mode === "editor" && !cancelled && <form className="card event-editor" onSubmit={(event) => { event.preventDefault(); void action("save"); }}>
       <h2>Private Working Draft</h2><p className="muted">Incomplete drafts can be saved. Published content changes only after fresh preview and approval.</p>
       <fieldset disabled={pending} className="event-fields">
-        {(Object.keys(EVENT_LIMITS) as TextField[]).map((key) => <div className="field" key={key}>
-          <label htmlFor={`event-${key}`}>{FIELD_LABELS[key]}{key !== "other" && " (required to publish)"}</label>
-          {key === "title" ? <input id={`event-${key}`} value={fields[key]} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} /> :
-            <textarea id={`event-${key}`} value={fields[key]} rows={key === "description" || key === "other" ? 5 : 3} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} />}
-          <p id={`help-${key}`} className="field-help">{[...fields[key].normalize("NFC").trim()].length.toLocaleString()} / {EVENT_LIMITS[key].toLocaleString()} characters</p>
-        </div>)}
+        <section className="editor-section" aria-labelledby="event-basics"><h3 id="event-basics">Event details</h3>
+          {(["title", "description", "location"] as TextField[]).map(renderTextField)}
         <div className="event-date-grid">{(["start", "end"] as const).map((key) => <div className="field" key={key}>
           <label htmlFor={`event-${key}`}>{key === "start" ? "Start" : "End"} (SGT; required to publish)</label>
           <input id={`event-${key}`} type="datetime-local" value={singaporeInput(fields[key])} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => {
             try { change(key, singaporeInstant(e.target.value)); } catch { setFieldError(key); setError("Enter a complete valid Singapore date and time."); }
           }} />
         </div>)}</div>
+        </section>
+        <section className="editor-section" aria-labelledby="event-participation"><h3 id="event-participation">Participation</h3>
+          {(["fee", "openTo", "preparation"] as TextField[]).map(renderTextField)}
         <div className="field"><label htmlFor="event-capacity">Capacity (required to publish)</label>
           <input id="event-capacity" type="number" min="1" max="10000" step="1" value={fields.capacity ?? ""} aria-invalid={fieldError === "capacity"} aria-describedby={describedBy("capacity")} onChange={(e) => change("capacity", e.target.value === "" ? null : Number(e.target.value))} />
         </div>
+        </section>
+        <section className="editor-section" aria-labelledby="event-extra"><h3 id="event-extra">Additional information</h3>
+          {renderTextField("other")}
+        </section>
       </fieldset>
       {dirty && <p className="notice">You have unsaved edits. Save before previewing.</p>}
       <div className="event-actions">
         <button className="primary" disabled={pending} type="submit">{pending ? "Working…" : "Save Draft"}</button>
         <button className="secondary" type="button" disabled={pending || (!dirty && !published)} onClick={cancelEditing}>Cancel Editing</button>
         <button className="secondary" type="button" disabled={pending || dirty} onClick={() => void action("preview")}>Preview saved draft</button>
+      </div>
+      {(!published || hasSavedChanges) && <div className="event-actions event-danger-actions"><p>Draft management</p>
         {!published && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("delete")}>Delete draft</button>}
         {hasSavedChanges && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("discard")}>Discard saved changes</button>}
-      </div>
+      </div>}
     </form>}
 
     {mode === "preview" && preview && !cancelled && <section className="card event-preview" aria-label="Exact public preview">

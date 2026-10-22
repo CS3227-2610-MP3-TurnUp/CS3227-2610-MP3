@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { FormValidationError, sameFormContent, validateAnswers, type AnswerMap, type RegistrationFormRevision } from "../../lib/registration-form";
 import type { RegistrationActionResult } from "../../lib/registration-types";
@@ -6,6 +7,15 @@ import type { RegistrationActionResult } from "../../lib/registration-types";
 export type SubmissionDraft = { name: string; phone: string; answers: AnswerMap; sharingConfirmed: true };
 type Props = { form: RegistrationFormRevision; mode?: "join" | "correction";
   initial?: { name: string | null; phone: string | null; answers?: AnswerMap }; onSubmit: (draft: SubmissionDraft) => Promise<RegistrationActionResult> };
+export function RegistrationSuccess({ mode = "join" }: { mode?: "join" | "correction" }) {
+  const summary = useRef<HTMLElement>(null);
+  useEffect(() => { summary.current?.focus(); }, []);
+  return <section className="success-panel registration-success" ref={summary} tabIndex={-1} aria-labelledby="registration-result-title">
+    <h2 id="registration-result-title">{mode === "join" ? "Registration saved" : "Submission saved"}</h2>
+    <p role="status">{mode === "join" ? "Check My Events for your current registration status." : "Your corrected event submission has been saved."}</p>
+    <Link className="primary action-link" href="/student/my-events">View My Events</Link>
+  </section>;
+}
 /** Event-specific state only. The caller binds versions/identity and commits; this component never writes the profile. */
 export function StudentRegistrationForm({ form: incomingForm, mode = "join", initial, onSubmit }: Props) {
   const [form] = useState(() => structuredClone(incomingForm));
@@ -48,13 +58,14 @@ export function StudentRegistrationForm({ form: incomingForm, mode = "join", ini
     finally { lock.current = false; setPending(false); }
   }
   function description(id: string, help?: string) { return [help ? `${id}-help` : "", issues[id] ? `${id}-error` : ""].filter(Boolean).join(" ") || undefined; }
+  if (completed) return <RegistrationSuccess mode={mode} />;
   return <form ref={formRef} className="student-registration-form" noValidate onSubmit={submit}>
     {stale && <p role="alert" className="error-panel">The published form changed. Your entries remain on the captured form; explicitly reload and review the current form before submitting.</p>}
     <fieldset disabled={pending || completed || stale} className="student-form-fields"><legend>Contact details</legend>
       <p className="field-help">Shared with the organizer for this event only.</p>
       <div className="field"><label htmlFor="registration-name">Name</label><input id="registration-name" data-field="name" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!issues.name} aria-describedby={issues.name ? "name-error" : undefined} />
         {issues.name && <p className="field-error" id="name-error">{issues.name}</p>}</div>
-      <div className="field"><label htmlFor="registration-phone">Phone number or Telegram handle</label><input id="registration-phone" data-field="phone" type="text" inputMode="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} aria-invalid={!!issues.phone} aria-describedby={issues.phone ? "phone-error" : undefined} />
+      <div className="field"><label htmlFor="registration-phone">Phone number or Telegram handle</label><input id="registration-phone" data-field="phone" type="text" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} aria-invalid={!!issues.phone} aria-describedby={issues.phone ? "phone-error" : undefined} />
         {issues.phone && <p className="field-error" id="phone-error">{issues.phone}</p>}</div>
       {form.questions.map((question, index) => <div className="field" key={question.id}>
         {"options" in question ? <p className="student-question-label">{index + 1}. {question.label} ({question.required ? "required" : "optional"})</p> :
@@ -76,6 +87,6 @@ export function StudentRegistrationForm({ form: incomingForm, mode = "join", ini
       {issues.sharingConfirmed && <p className="field-error" id="sharingConfirmed-error">{issues.sharingConfirmed}</p>}
       <button className="primary" type="submit">{pending ? "Submitting…" : mode === "join" ? "Confirm and register" : "Save corrected submission"}</button>
     </fieldset>
-    {notice && <p className={completed ? "notice" : "error-panel"} role={completed ? "status" : "alert"}>{notice}</p>}
+    {notice && <p className="error-panel" role="alert">{notice}</p>}
   </form>;
 }

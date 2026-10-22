@@ -77,3 +77,8 @@
 .close:hover { background: var(--tu-action-soft); }
 .shell { padding-bottom: 7rem; }
 @media (max-width: 30rem) { .launcher, .widget { right: max(1rem, env(safe-area-inset-right)); } .eventDetails { padding: 1.25rem; } }
+
+.headerActions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
+.headerActions .retry { margin-top: 0; font-size: .75rem; text-align: left; }
+.chat button:hover:not(:disabled) { filter: brightness(.96); }
+@media (max-width: 30rem) { .headerActions { max-width: 10rem; } .chatHeader { align-items: flex-start; } }

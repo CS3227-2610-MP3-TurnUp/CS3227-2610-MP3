@@ -65,20 +65,22 @@ export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = 
   function choose(question: string) { (onSuggestion ?? onDraftChange)(question); composer.current?.focus(); }
   return <section className={styles.chat} aria-labelledby="assistant-title">
     <header className={styles.chatHeader}>
-      <div><span className={styles.eyebrow}>Event assistant</span><h2 id="assistant-title">{state.source?.title ?? "Event unavailable"}</h2></div>
+      <div><span className={styles.eyebrow}>Event assistant</span><h2 id="assistant-title">{state.source?.title ?? "Ask about this event"}</h2></div>
+      <div className={styles.headerActions}>
+      {publicationMode && onRefreshSource && (!available || !!statusMessage || state.error === "invalid_source") && <button type="button" className={styles.retry} onClick={onRefreshSource}>Refresh event information</button>}
       {onClose && <button type="button" className={styles.close} aria-label="Close chat" onClick={onClose}><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
+      </div>
     </header>
     <div className={styles.conversation} role="log" aria-label="Event conversation" aria-live="polite" aria-relevant="additions text" tabIndex={0} ref={conversation}>
       <div className={styles.assistantRow}><div className={styles.assistantBubble}><span className={styles.speaker}>TurnUp assistant</span>
         <p>{canAsk ? "Hi! What would you like to know about this event?" : "This view checks the current publication source."}</p>{!canAsk && <p className={styles.explanation}>AI answers are not connected here. Refresh to check whether the publication changed.</p>}
       </div></div>
       {statusMessage && <p role="status" className={styles.notice}>{statusMessage}</p>}
-      {publicationMode && onRefreshSource && <button type="button" className={styles.retry} onClick={onRefreshSource}>Refresh event information</button>}
       {state.notice && <p role="status" className={styles.notice}>{notices[state.notice]}</p>}
       {!turns.length && !pending && available && suggestions.length > 0 && <div className={styles.suggestions} aria-label="Starter questions">{suggestions.map((question) => <button key={question} type="button" onClick={() => choose(question)}>{question}</button>)}</div>}
       {turns.map((turn, index) => {
         const answer = isValidatedAnswer(turn.answer) && turn.answer.eventId === state.source?.eventId && turn.answer.revision === state.source?.revision ? turn.answer : null;
-        const latestError = index === turns.length - 1 && state.error === turn.error && turn.error !== null;
+        const latestError = !inlineError && index === turns.length - 1 && state.error === turn.error && turn.error !== null;
         return <React.Fragment key={turn.requestId}>
           <div className={styles.userRow}><div className={styles.userBubble}><span className={styles.speaker}>You</span><p>{turn.question}</p></div></div>
           {(answer || turn.error) && <div className={styles.assistantRow}><div className={styles.assistantBubble}><span className={styles.speaker}>TurnUp assistant</span>

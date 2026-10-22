@@ -7,6 +7,15 @@ import type { AssistantState } from "../../src/features/student-assistant/types"
 import { SAMPLE_SOURCE } from "../../src/features/student-assistant/demo/scenarios";
 
 function render(state: AssistantState) { return renderToStaticMarkup(createElement(ChatPanel, { state, onDraftChange() {}, onSubmit() {} })); }
+it("keeps source recovery in the chat header and omits routine refresh from healthy chat", () => {
+  const props = { publicationMode: true, onDraftChange() {}, onSubmit() {}, onRefreshSource() {} };
+  const healthy = renderToStaticMarkup(createElement(ChatPanel, { ...props, state: createAssistantState(SAMPLE_SOURCE) }));
+  expect(healthy).not.toContain("Refresh event information");
+  const failed = renderToStaticMarkup(createElement(ChatPanel, { ...props, state: createAssistantState(null), statusMessage: "Publication information could not be checked." }));
+  expect(failed).toContain("Refresh event information");
+  expect(failed.indexOf("Refresh event information")).toBeLessThan(failed.indexOf('role="log"'));
+  expect(failed).toContain('disabled=""');
+});
 function request() {
   const draft = assistantReducer(createAssistantState(SAMPLE_SOURCE), { type: "draft_changed", value: "Do I need tools?" });
   return assistantReducer(draft, { type: "request_started", requestId: "one" });
