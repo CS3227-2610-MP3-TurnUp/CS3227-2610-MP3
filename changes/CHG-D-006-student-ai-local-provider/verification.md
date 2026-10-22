@@ -274,3 +274,6 @@ Unrun/remaining: authenticated visual/mobile/keyboard browser walkthrough (brows
 
 User authorised logical commits, push, PR and the existing Preview workflow for the local integration increment. `vitest run tests/student-assistant --maxWorkers 1`: **303/303 tests passed across 18 files**, 17.73 seconds. `git diff --check` passed. Prior SQL/type/lint/build evidence is reused; delivery does not change application behavior. No agent live inference, allowance mutation or shared database writes. Hosted chat remains disabled by design; full WP006 is incomplete. All current delivery checks are main-agent checks, not independent review.
 
+## Published Preview evidence
+
+At724189d, push workflow39750665652 completed successfully, including deployment job and reviewed migration step; PR workflow39750765808 passed. Draft PR28 targets master from preview/WP-006. Deployment: https://turnup-hmliug2fp-mp3-dd27.vercel.app ; stable alias: https://turnup-team-preview.vercel.app . This confirms workflow deployment, not authenticated browser or live Q&A acceptance; the current chat remains intentionally local-only. The hosted enablement plan is proposed and awaiting approval. Final records-only follow-up has a distinct SHA/run.

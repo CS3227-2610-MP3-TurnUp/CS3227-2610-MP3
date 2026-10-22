@@ -1407,7 +1407,7 @@ Commit the saved WP006 changes in logical iterations, publish a preview branch a
 
 ## Results
 
-Prepared commits e275c49 (publication loading/UI) and 9f73ba4 (local real-event answering) on preview/WP-006; contract/evidence commit follows. The affected Student assistant suite passed303/303tests across18files and whitespace checks passed. Reusing prior SQL/types/lint/build verification; real-publication chat remains loopback-development-only and is deliberately disabled on Vercel. Full WP006, hosted admissions, organiser contact and messaging remain pending. Existing local registration diagnostics and generated next-env changes are excluded from the focused Q&A delivery. No provider calls or allowance changes.
+Created commits e275c49 (publication loading/UI),9f73ba4(local answering),724189d(contracts/evidence) on preview/WP-006 and pushed. Opened draft PR28: https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/28. Push run39750665652 deployed724189d successfully,including reviewed migration step;PRrun39750765808passed all checks. Deployment https://turnup-hmliug2fp-mp3-dd27.vercel.app and stable alias https://turnup-team-preview.vercel.app. Chat remains deliberately unavailable on Vercel. A final evidence/plan-only commit follows;its workflow outcome is distinct. The initial records commit whitespace check found an extra EOF blank line,corrected in final evidence commit. The affected Student assistant suite passed303/303tests across18files and whitespace checks passed. Reusing prior SQL/types/lint/build verification; real-publication chat remains loopback-development-only and is deliberately disabled on Vercel. Full WP006, hosted admissions, organiser contact and messaging remain pending. Existing local registration diagnostics and generated next-env changes are excluded from the focused Q&A delivery. No provider calls or allowance changes.
 
 <!-- turnup-prompt:v1 -->
 ```json
@@ -1418,9 +1418,63 @@ Prepared commits e275c49 (publication loading/UI) and 9f73ba4 (local real-event 
   "agents": [{
     "id": "/root", "parent": null, "thread_id": null, "action": "root", "role": "main",
     "task": "Prepare logical commits and publish the local Q&A increment through the preview PR workflow.",
-    "reason": null, "dispatches": 0, "outcome": "in_progress", "result": "Inspecting saved changes and preview requirements; preserving local-only settings and unrelated work.",
+    "reason": null, "dispatches": 0, "outcome": "completed", "result": "Published logical commits and draft PR28;303affectedtests passed;Preview push39750665652 and PR39750765808 succeeded at724189d. Local-only chat restriction remains explicit. Secrets/customisations/generated files/registration diagnostics excluded;no live provider request or allowance change. Final records-only follow-up pending its own workflow.",
     "settings": {"model": null, "effort": null, "basis": "unknown"},
     "tokens": {"status": "unavailable", "responses": null, "input": null, "cached_input": null, "output": null, "reasoning_output": null, "total": null, "source": null, "note": "Prompt-scoped token telemetry unavailable; root turn active."}
   }], "usage_updates": []
+}
+```
+
+# 25 - Plan Hosted Preview Q&A - 22 October 2026
+
+## Request
+
+Darryl clarified that real event chat must work on Vercel Preview before eventual Production deployment. Explain why the current slice is local and plan the necessary hosted implementation; preserve main-agent-only and private configuration boundaries.
+
+## Results
+
+Prepared docs/plans/wp-006-hosted-qa-plan.md. Existing file admission and explicit Vercel guard are the blockers;synthetic probe singleton is not product admission. Proposed separate authenticated endpoints,durable global/account admissions and fixed transports;existing public source and natural chat/lifecycle/evidence logic reused. Proposed Preview150attempt budget is explicitly new and needs approval;earlier local150authorisation is not transferred/reset. Production activation and bounded live smoke remain separate. No product code/schema/config/allowance/provider changes. Plan awaits approval.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 25,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "724189d1b70198568b60a8c82c881b2ae4eb8bc5",
+  "captured_at": null,
+  "delegation": "Human requires main agent only; no subagents.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Explain local restriction and prepare the smallest hosted Preview Q&A enablement plan.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Prepared proposed hosted plan with product endpoints,durable admission,explicit separate Preview budget,exact files,offline tests and deployment prerequisites. Awaiting approval;no hosted implementation,live inference or allowance change.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped token telemetry unavailable; root turn active."
+      }
+    }
+  ],
+  "usage_updates": []
 }
 ```
