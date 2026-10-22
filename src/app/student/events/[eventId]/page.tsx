@@ -4,6 +4,7 @@ import { StudentEventDetails } from "../../../../features/student/event-details"
 import { requireRole } from "../../../../server/auth/guards";
 import { localDevelopment } from "../../../../server/student-assistant/development-policy";
 import { PublicationChat } from "../../../../features/student-assistant/publication-chat";
+import { hostedPolicy } from "../../../../server/student-assistant/hosted-policy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,5 +15,5 @@ export default async function StudentEventPage({ params }: { params: Promise<{ e
   const { eventId } = await params;
   return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/student">TurnUp</Link><AccountMenu username={access.user.username} studentNavigation /></header>
     <StudentEventDetails key={eventId} eventId={eventId} />
-    {localDevelopment() && <PublicationChat key={`chat-${eventId}`} eventId={eventId} />}</main>;
+    {(localDevelopment() || hostedPolicy()) && <PublicationChat key={`chat-${eventId}`} eventId={eventId} mode={localDevelopment() ? "local" : "hosted"} />}</main>;
 }

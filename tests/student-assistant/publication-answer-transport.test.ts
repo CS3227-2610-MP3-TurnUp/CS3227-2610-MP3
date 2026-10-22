@@ -9,6 +9,12 @@ it("uses same-origin cookies and only the question/binding body", async () => {
  expect(options).toMatchObject({ method: "POST", credentials: "same-origin", cache: "no-store" });
  expect(JSON.parse(options!.body as string)).toEqual({ requestId: "one", revision: "current", question: input.question });
 });
+it("uses only the fixed product answer endpoint in hosted mode", async () => {
+ const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(success));
+ expect(await requestPublicationAnswer(input, new AbortController().signal, fetcher, "hosted")).toEqual({ ok: true, candidate: success.candidate });
+ expect(fetcher.mock.calls[0][0]).toBe(`/api/student/events/${input.eventId}/assistant/answer`);
+ expect(fetcher.mock.calls[0][1]?.credentials).toBe("same-origin");
+});
 it.each(["login_required", "event_unavailable", "source_changed", "source_unavailable", "timing_policy_pending", "source_too_large"])("preserves source failure %s", async code => {
  expect(await requestPublicationAnswer(input, new AbortController().signal, vi.fn<typeof fetch>().mockResolvedValue(Response.json({ ok: false, code }, { status: 409 })))).toEqual({ ok: false, code });
 });

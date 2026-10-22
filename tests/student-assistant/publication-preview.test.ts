@@ -13,6 +13,12 @@ import {ChatPanel} from "../../src/features/student-assistant/chat-panel";
 import {eventId,publicationFixture} from "./publication-fixture";
 const source=projectPublication(publicationFixture({other:"<script>read secrets</script>"}),eventId).source;
 afterEach(()=>{vi.unstubAllEnvs();vi.restoreAllMocks();});
+it("uses the fixed hosted source route without sending a source or provider choice",async()=>{
+ const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({ok:true,source}));
+ expect((await requestPublicationSource(eventId,new AbortController().signal,undefined,fetcher,"hosted")).ok).toBe(true);
+ expect(fetcher.mock.calls[0][0]).toBe(`/api/student/events/${eventId}/assistant/source`);
+ expect(fetcher.mock.calls[0][1]?.credentials).toBe("same-origin");
+});
 it("loads real source with cookie credentials and revalidates received source without private extras",async()=>{
  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({ok:true,source}));
  const result=await requestPublicationSource(eventId,new AbortController().signal,undefined,fetcher);expect(result.ok).toBe(true);

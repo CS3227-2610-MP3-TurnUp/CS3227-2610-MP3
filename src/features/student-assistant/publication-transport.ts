@@ -3,11 +3,12 @@ import type { PublicSourceSnapshot } from "./types";
 export const publicationCodes = ["invalid_request", "login_required", "student_required", "event_unavailable", "source_changed", "source_too_large", "timing_policy_pending", "source_unavailable"] as const;
 export type PublicationCode = typeof publicationCodes[number];
 export type PublicationLoad = { ok: true; source: PublicSourceSnapshot } | { ok: false; code: PublicationCode };
-export async function requestPublicationSource(eventId: string, signal: AbortSignal, expectedRevision?: string, fetchImpl: typeof fetch = fetch): Promise<PublicationLoad> {
+export async function requestPublicationSource(eventId: string, signal: AbortSignal, expectedRevision?: string, fetchImpl: typeof fetch = fetch, mode: "local" | "hosted" = "local"): Promise<PublicationLoad> {
   try {
     eventId = eventId.toLowerCase();
     const query = expectedRevision ? "?expectedRevision=" + encodeURIComponent(expectedRevision) : "";
-    const response = await fetchImpl("/api/dev/student-assistant/publication/" + encodeURIComponent(eventId) + query, { method: "GET", credentials: "same-origin", cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
+    const path = mode === "hosted" ? `/api/student/events/${encodeURIComponent(eventId)}/assistant/source` : `/api/dev/student-assistant/publication/${encodeURIComponent(eventId)}`;
+    const response = await fetchImpl(path + query, { method: "GET", credentials: "same-origin", cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
     const reader = response.body?.getReader(); if (!reader) return { ok: false, code: "source_unavailable" };
     const chunks: Uint8Array[] = []; let bytes = 0;
     try { while (true) { const next = await reader.read(); if (next.done) break; bytes += next.value.byteLength; if (bytes > 40 * 1024) { await reader.cancel(); return { ok: false, code: "source_unavailable" }; } chunks.push(next.value); } } finally { reader.releaseLock(); }

@@ -72,8 +72,11 @@ export function createPublicationChat(eventId: string, dependencies = { load: re
     },
   };
 }
-export function PublicationChat({ eventId }: { eventId: string }) {
-  const controller = useMemo(() => createPublicationChat(eventId.toLowerCase()), [eventId]);
+export function PublicationChat({ eventId, mode = "local" }: { eventId: string; mode?: "local" | "hosted" }) {
+  const controller = useMemo(() => createPublicationChat(eventId.toLowerCase(), {
+    load: (id, signal, revision) => requestPublicationSource(id, signal, revision, fetch, mode),
+    answer: (input, signal) => requestPublicationAnswer(input, signal, fetch, mode),
+  }), [eventId, mode]);
   const view = useSyncExternalStore(controller.subscribe, controller.snapshot, controller.serverSnapshot);
   useEffect(() => {
     controller.start();

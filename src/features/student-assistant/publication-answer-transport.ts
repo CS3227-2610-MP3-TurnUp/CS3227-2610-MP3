@@ -4,11 +4,12 @@ import { publicationCodes, type PublicationCode } from "./publication-transport"
 export interface PublicationAnswerRequest { requestId: string; eventId: string; revision: string; question: string }
 export type PublicationAnswerResult = { ok: true; candidate: unknown } | { ok: false; code: PublicationCode } | { ok: false; reason: FailureReason };
 const reasons: readonly FailureReason[] = ["invalid_source", "invalid_response", "invalid_evidence", "invalid_question", "live_not_authorized", "budget_exhausted", "timeout", "provider_unavailable", "rate_limited", "cancelled"];
-export async function requestPublicationAnswer(input: PublicationAnswerRequest, signal: AbortSignal, fetchImpl: typeof fetch = fetch): Promise<PublicationAnswerResult> {
+export async function requestPublicationAnswer(input: PublicationAnswerRequest, signal: AbortSignal, fetchImpl: typeof fetch = fetch, mode: "local" | "hosted" = "local"): Promise<PublicationAnswerResult> {
   let deadline: AbortSignal | undefined;
   try {
     deadline = AbortSignal.timeout(35_000);
-    const response = await fetchImpl(`/api/dev/student-assistant/publication/${encodeURIComponent(input.eventId)}/answer`, {
+    const path = mode === "hosted" ? `/api/student/events/${encodeURIComponent(input.eventId)}/assistant/answer` : `/api/dev/student-assistant/publication/${encodeURIComponent(input.eventId)}/answer`;
+    const response = await fetchImpl(path, {
       method: "POST", credentials: "same-origin", cache: "no-store", headers: { "content-type": "application/json" },
       body: JSON.stringify({ requestId: input.requestId, revision: input.revision, question: input.question }), signal: AbortSignal.any([signal, deadline]),
     });

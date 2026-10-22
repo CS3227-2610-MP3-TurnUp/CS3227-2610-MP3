@@ -61,7 +61,7 @@ export function ChatPanel({ state, onDraftChange, onSubmit, onClose, liveMode = 
   useEffect(() => { if (state.answer && !state.pending) composer.current?.focus(); }, [state.answer, state.pending]);
   const inlineError = state.error && (state.error === "invalid_question" || !turns.length);
   const message = (reason: FailureReason) => publicationMode && reason === "invalid_source" ? "The published event information is unavailable. Refresh it before trying again."
-    : publicationMode && reason === "live_not_authorized" ? "Local AI requests are not enabled. The local permission or allowance may need checking." : errors[reason];
+    : publicationMode && reason === "live_not_authorized" ? "AI questions are currently unavailable. Please try again later." : errors[reason];
   function choose(question: string) { (onSuggestion ?? onDraftChange)(question); composer.current?.focus(); }
   return <section className={styles.chat} aria-labelledby="assistant-title">
     <header className={styles.chatHeader}>
