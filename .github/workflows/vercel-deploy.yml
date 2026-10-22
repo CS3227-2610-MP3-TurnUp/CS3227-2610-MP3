@@ -198,6 +198,8 @@ jobs:
         run: corepack pnpm db:migrate:deploy
       - name: Activate approved Student Preview budget without resetting usage
         if: env.DEPLOYMENT_TARGET == 'preview' && github.ref_name == 'preview/WP-006'
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
         run: node scripts/activate-student-ai-budget.mjs --preview wp006-preview-20261022-200
       - name: Upload checked prebuilt output
         id: upload

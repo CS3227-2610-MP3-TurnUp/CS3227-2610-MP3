@@ -20,6 +20,7 @@ function request(op: "source" | "answer", headers: Record<string, string> = {}, 
 const context = { params: Promise.resolve({ eventId }) };
 beforeEach(() => {
   vi.stubEnv("STUDENT_ASSISTANT_ENABLED", "true"); vi.stubEnv("VERCEL", "1"); vi.stubEnv("VERCEL_ENV", "preview"); vi.stubEnv("TURNUP_ENVIRONMENT", "preview"); vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("DATABASE_URL", "postgresql://fixture:fixture@ep-fixture-pooler.region.neon.tech/fixture?sslmode=require");
   vi.stubEnv("AUTH_ORIGIN", origin); vi.stubEnv("AUTH_SOURCE_MODE", "vercel"); vi.stubEnv("AUTH_THROTTLE_SECRET", "1".repeat(64));
   vi.stubEnv("SOCLAAS_API_KEY", "synthetic-key"); vi.stubEnv("SOCLAAS_BASE_URL", "https://soclaas-api.comp.nus.edu.sg/v1"); vi.stubEnv("SOCLAAS_MODEL", "qwen3.8:27b");
   vi.stubEnv("SOCLAAS_MAX_INPUT_BYTES", "65536"); vi.stubEnv("SOCLAAS_MAX_OUTPUT_TOKENS", "4096"); vi.stubEnv("SOCLAAS_TIMEOUT_MS", "30000");

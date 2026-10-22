@@ -1532,3 +1532,5 @@ Implemented the approved Preview extension in commits e03733e(durable budget) an
   "usage_updates": []
 }
 ```
+
+Entry26deliveryupdate:push9ec0031PRchecks39755401879passed;deploy39755395260passedmigration/buildbutactivationfailedpreview_database_required beforebudgetinsert. Main-agentfixusesmatchingprotectedmigrationconnectionanddoesnotrequiredowloadingruntimeAPIkey;runtimepolicyvalidatesactualpooledURL. No rawvalueexposed,assumptionaboutsecretavailability,liveinferenceorallowancereset. FocusedchecksandnextdeployresultsrecordedinD006verification.
