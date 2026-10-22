@@ -14,7 +14,9 @@ export function StudentEventContent({ event }: { event: StudentEvent }) {
       {event.hasStarted && <p className="notice">This event has started. Registration is closed for its current schedule.</p>}
       <p>Event capacity: {event.fields.capacity}</p>
       {event.remainingPlaces === null ? <p className="muted">Remaining places and your registration status are unavailable.</p> : <>
-      <p>{event.remainingPlaces} places remaining</p><p>{event.registrationStatus === "ACTIVE" ? "You are registered. Your place is confirmed." : event.registrationStatus === "CANCELLED" ? "You cancelled your registration." : "You are not registered."}</p>
+      <p className="registration-capacity"><strong>{event.remainingPlaces}</strong> places remaining</p>
+      {!event.hasStarted && event.remainingPlaces === 0 && event.registrationStatus !== "ACTIVE" && <p className="notice">This event is full. Check again later for availability.</p>}<p>{event.registrationStatus === "ACTIVE" ? "You are registered. Your place is confirmed." : event.registrationStatus === "CANCELLED" ? "You cancelled your registration." : "You are not registered."}</p>
+        {event.registrationStatus === "ACTIVE" && <Link className="secondary action-link" href="/student/my-events">Manage your registration</Link>}
         {!event.hasStarted && event.remainingPlaces > 0 && event.registrationStatus !== "ACTIVE" && <div className="student-registration-action"><Link className="primary action-link" href={`/student/events/${event.eventId}/register`}>{event.registrationStatus === "CANCELLED" ? "Continue to re-registration" : "Continue to registration"}</Link><p className="field-help">Review your details and confirm your registration on the next screen.</p></div>}</> }
     </aside></div>;
 }

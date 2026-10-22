@@ -9,16 +9,16 @@ export function MyEventsList({ items, loading = false, error, onCancel, onCommit
   onCancel?: (registrationId: string) => Promise<RegistrationActionResult>; onCommitted?: () => void }) {
   if (loading) return <p role="status">Loading your registrations…</p>;
   if (error) return <p role="alert" className="error-panel">Your registrations are unavailable. Try again later.</p>;
-  if (!items.length) return <section className="card"><h2>No registrations yet</h2><Link href="/student">Discover events</Link></section>;
+  if (!items.length) return <section className="card empty-state"><h2>No registrations yet</h2><p className="muted">Find an event and complete its registration to see it here.</p><Link className="primary action-link" href="/student">Discover events</Link></section>;
   return <div className="student-my-events">{items.map((item) => {
     const visible = item.eventState === "PUBLISHED" ? item.current : null;
-    return <article className="card" key={item.registrationId}><span className="event-state">{item.state === "ACTIVE" ? "Registered" : "Registration cancelled"}</span>
+    return <article className="card" key={item.registrationId}><span className="event-state" data-state={item.state}> {item.state === "ACTIVE" ? "Registered" : "Registration cancelled"}</span>
       {visible ? <><h2>{visible.title}</h2><p>{displayTime(visible.start)}</p>{item.changes.length > 0 && <p className="notice">Changed since you joined: {item.changes.join(", ")}.{item.state === "ACTIVE" && " Your place is preserved."}</p>}<Link href={`/student/events/${item.eventId}`}>View current event</Link></> :
         <><h2>Event unavailable</h2><p>{item.eventState === "WITHDRAWN" ? "The Organiser has withdrawn this event." : "The Organiser has cancelled this event."}</p><p className="muted">Registration reference: {item.registrationId}</p></>}
       <div className="event-actions">
         {item.canCancel && onCancel && <RegistrationAction label="Cancel registration" onAction={() => onCancel(item.registrationId)} onCommitted={onCommitted} />}
-        {visible && item.canCorrect && <Link href={`/student/registrations/${item.registrationId}`}>Correct submission</Link>}
-        {visible && item.canRejoin && <Link href={`/student/events/${item.eventId}/register`}>Register again</Link>}
+        {visible && item.canCorrect && <Link className="secondary action-link" href={`/student/registrations/${item.registrationId}`}>Correct submission</Link>}
+        {visible && item.canRejoin && <Link className="primary action-link" href={`/student/events/${item.eventId}/register`}>Register again</Link>}
       </div></article>;
   })}</div>;
 }

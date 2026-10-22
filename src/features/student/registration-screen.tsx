@@ -42,12 +42,12 @@ export function StudentRegistrationScreen({ reference, correction = false }: { r
       expectedVersion: screen.version, expectedSubmissionVersion: screen.submissionVersion } :
       { ...draft, expectedPublicationId: screen.publicationId, expectedFormRevisionId: screen.form.formRevisionId }));
   }
-  return <><nav className="student-event-toolbar"><Link href="/student">Discover events</Link></nav>
+  return <><nav className="student-event-toolbar" aria-label="Back navigation"><Link href={correction ? "/student/my-events" : `/student/events/${reference}`}>{correction ? "Back to My Events" : "Back to event"}</Link></nav>
     <section className="card student-submission-editor"><h1>{correction ? "Correct your submission" : "Register for this event"}</h1>
-      {!result ? <p role="status">Loading registration…</p> : result.error ? <p role="alert">{result.error}</p> : result.screen && <>
+      {!result ? <p role="status">Loading registration…</p> : result.error ? <p role="alert" className="error-panel">{result.error}</p> : result.screen && <>
         <h2>{result.screen.eventTitle}</h2>{correction && <p className="field-help">Update this event submission only.</p>}
         {result.screen.canSubmit ? <StudentRegistrationForm key={result.screen.form.formRevisionId} form={result.screen.form}
-          mode={correction ? "correction" : "join"} initial={result.screen.initial} onSubmit={submit} /> : <p role="status">Registration is closed, full, or you already hold a place. Check My Events for your status.</p>}
+          mode={correction ? "correction" : "join"} initial={result.screen.initial} onSubmit={submit} /> : <div className="notice"><p role="status">Registration is closed, full, or you already hold a place. Check My Events for your status.</p><Link href="/student/my-events">View My Events</Link></div>}
       </>}
     </section></>;
 }
@@ -71,6 +71,6 @@ export function StudentMyEvents() {
     return send(`/api/student/registrations/${id}/cancel`, { registrationId: id, expectedGeneration: item.generation, expectedVersion: item.version, idempotencyKey: operations.current.get(identity) });
   }
   function refresh() { setItems(null); setError(false); setReload((value) => value + 1); }
-  return <><div className="student-event-toolbar"><Link href="/student">Discover events</Link><button className="secondary" onClick={refresh}>Refresh My Events</button></div>
-    <h1>My Events</h1><MyEventsList items={items ?? []} loading={!items && !error} error={error ? "unavailable" : undefined} onCancel={cancel} onCommitted={refresh} /></>;
+  return <><div className="event-heading"><div><p className="eyebrow">Your registrations</p><h1>My Events</h1><p className="muted">Review your places, update submissions and check event changes.</p></div><button className="secondary" onClick={refresh}>Refresh My Events</button></div>
+    <MyEventsList items={items ?? []} loading={!items && !error} error={error ? "unavailable" : undefined} onCancel={cancel} onCommitted={refresh} /></>;
 }

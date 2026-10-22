@@ -13,5 +13,5 @@ export function RegistrationAction({ label, onAction, onCommitted }: { label: st
     } catch { setNotice("Registration could not be updated. Refresh its status before retrying."); }
     finally { lock.current = false; setPending(false); }
   }
-  return <div><button className="secondary" disabled={pending} onClick={act}>{pending ? "Updating…" : label}</button>{notice && <p role="status">{notice}</p>}</div>;
+  return <div><button className="secondary event-danger" disabled={pending} onClick={act}>{pending ? "Updating…" : label}</button>{notice && <p role="status">{notice}</p>}</div>;
 }

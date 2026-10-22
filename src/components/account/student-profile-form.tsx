@@ -60,7 +60,7 @@ export function StudentProfileForm({ profile }: { profile: ProfileValues }) {
       </div>}
       {feedbackField === field && <div>
         {error && <p id="profile-error" className="error-panel" ref={errorRef} tabIndex={-1} role="alert">{error.message}</p>}
-        {message && <p role="status" className="account-status">{message}</p>}
+        {message && <p role="status" className="success-panel account-status">{message}</p>}
         {error?.stale && <button className="account-text-button" type="button" onClick={reload} disabled={pending}>Reload saved values for review</button>}
       </div>}
       {editing === field && <form className="account-credential-form" aria-labelledby={`profile-${field}-title`} onSubmit={(event) => submit(event, field)} aria-busy={pending}>
