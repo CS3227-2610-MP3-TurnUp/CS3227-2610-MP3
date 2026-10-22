@@ -10,6 +10,7 @@ const actor = "owner", id = "event-1";
 const fields = { ...EMPTY_EVENT, title: "Workshop", description: "Description", location: "Hall", fee: "Free", openTo: "Anyone", preparation: "None", start: "2099-11-01T02:00:00.000Z", end: "2099-11-01T04:00:00.000Z", capacity: 10 };
 // Transactional test double exercises service decisions/rollback, not PostgreSQL locking.
 let dbNow: Date;
+let activeCount: number;
 let state: { events: Record<string, unknown>[], publications: Record<string, unknown>[], approvals: Record<string, unknown>[] };
 function match(record: Record<string, unknown>, where: Record<string, unknown>) { return Object.entries(where).every(([key, value]) => record[key] === value); }
 function table(name: keyof typeof state) { return {
@@ -27,8 +28,9 @@ function table(name: keyof typeof state) { return {
   deleteMany: async ({ where }: { where: Record<string, unknown> }) => { state[name] = state[name].filter((row) => !match(row, where)); },
 }; }
 const fake = {
+  registration: { count: async () => activeCount },
   event: table("events"), eventPublication: table("publications"), eventApproval: table("approvals"),
-  $queryRaw: async (parts: TemplateStringsArray, ...values: unknown[]) => parts.join("").includes("clock_timestamp") ? [{ now: new Date(dbNow) }] : state.events.filter((event) => event.id === values[0] && event.ownerId === values[1]).map(({ id }) => ({ id })),
+  $queryRaw: async (parts: TemplateStringsArray, ...values: unknown[]) => parts.join("").includes("clock_timestamp") ? [{ epochMs: dbNow.getTime() }] : state.events.filter((event) => event.id === values[0] && event.ownerId === values[1]).map(({ id }) => ({ id })),
   $transaction: async (fn: (db: unknown) => Promise<unknown>): Promise<unknown> => {
     const original = structuredClone(state);
     try { return await fn(fake); } catch (error) { state = original; throw error; }
@@ -36,6 +38,7 @@ const fake = {
 };
 const db = fake as unknown as PrismaClient;
 beforeEach(() => {
+  activeCount = 0;
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
   state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
@@ -150,8 +153,32 @@ it("publishing rechecks changed-start time after an earlier future reschedule wa
   const earlier = { ...fields, start: "2099-10-31T02:00:00.000Z" };
   await mutateEvent(db, "token", id, 1, "save", earlier);
   const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  activeCount = 0;
   dbNow = new Date(earlier.start);
   await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 400 });
   expect(state.publications).toHaveLength(1);
   expect((await readEvent(db, "token", id)).published?.fields.start).toBe(fields.start);
+});
+
+it("binds saved nonempty forms to preview/publication and preserves IDs on label edits", async () => {
+  await mutateEvent(db, "token", id, 0, "save", fields, undefined, { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  const saved = (await readEvent(db, "token", id)).form;
+  expect(saved.questions[0].id).toMatch(/^[0-9a-f-]{36}$/);
+  await previewAndPublish();
+  const original = structuredClone(state.publications[0]);
+  expect(state.publications[0]).toMatchObject({ snapshot: { form: saved } });
+  await mutateEvent(db, "token", id, 2, "save", fields, undefined, { questions: [{ ...saved.questions[0], label: "Dietary preferences" }] });
+  expect((await listEvents(db, "token"))[0].hasSavedChanges).toBe(true);
+  await previewAndPublish();
+  expect(state.publications[0]).toEqual(original);
+  expect((await readEvent(db, "token", id)).published?.form.questions[0].id).toBe(saved.questions[0].id);
+});
+it("rejects capacity below active places while preserving the current publication", async () => {
+  await previewAndPublish();
+  await mutateEvent(db, "token", id, 1, "save", { ...fields, capacity: 1 });
+  const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  activeCount = 2;
+  await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 409, field: "capacity" });
+  expect(state.publications).toHaveLength(1);
+  expect((await readEvent(db, "token", id)).published?.fields.capacity).toBe(10);
 });

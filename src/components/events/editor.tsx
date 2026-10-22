@@ -3,9 +3,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { EVENT_LIMITS, FIELD_LABELS, sameEventFields, singaporeInput, singaporeInstant, type EventFields, type TextField } from "../../lib/event-fields";
-import { EventContent } from "./event-content";
+import { EventContent, PublicFormContent } from "./event-content";
 
-type Snapshot = { fields: EventFields; form: { formRevisionId: string; questions: unknown[] } };
+type Snapshot = import("../../lib/registration-form").PublicationContent;
 type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null };
 type Preview = { approvalId: string; version: number; snapshot: Snapshot; digest: string };
 type Mode = "publication" | "editor" | "preview";
@@ -173,7 +173,7 @@ export function EventEditor({ id }: { id: string }) {
     </form>}
 
     {mode === "preview" && preview && !cancelled && <section className="card event-preview" aria-label="Exact public preview">
-      <h2>Public Preview</h2><EventContent fields={preview.snapshot.fields} /><p>Registration form: no questions.</p>
+      <h2>Public Preview</h2><EventContent fields={preview.snapshot.fields} /><PublicFormContent form={preview.snapshot.form} />
       <div className="event-footer">
         <label className="event-approval"><input type="checkbox" checked={approved} disabled={pending} onChange={(e) => setApproved(e.target.checked)} />I reviewed and approve this exact public content.</label>
         <div className="event-actions">

@@ -63,11 +63,11 @@ export async function eventResource(request: Request, id: string) {
     const actions: EventAction[] = ["save", "preview", "publish", "withdraw", "cancel", "delete", "discard"];
     if (!actions.includes(body.action as EventAction)) throw new EventError(400, "Choose a valid event action.");
     const action = body.action as EventAction;
-    exactKeys(body, ["action", "expectedVersion", ...(action === "save" ? ["fields"] : action === "publish" ? ["approvalId"] : [])]);
+    exactKeys(body, ["action", "expectedVersion", ...(action === "save" ? ["fields", "form"] : action === "publish" ? ["approvalId"] : [])]);
     const expected = version(body.expectedVersion);
     const fields = action === "save" ? parseFields(body.fields) : undefined;
     const approvalId = action === "publish" ? uuid(body.approvalId) : undefined;
     const { prisma } = await import("../db/client");
-    return NextResponse.json(await mutateEvent(prisma, token, id, expected, action, fields, approvalId), { headers: privateHeaders });
+    return NextResponse.json(await mutateEvent(prisma, token, id, expected, action, fields, approvalId, ...(Object.hasOwn(body, "form") ? [body.form] : [])), { headers: privateHeaders });
   } catch (error) { return eventFailure(error); }
 }

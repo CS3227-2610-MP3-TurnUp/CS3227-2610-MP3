@@ -4,8 +4,11 @@ import type { Event, Prisma, PrismaClient } from "../db/generated/client";
 import { EMPTY_EVENT, sameEventFields, type EventFields, type EventSummary } from "../../lib/event-fields";
 import { authenticatedAccount, requireSelf } from "../accounts/service";
 import type { Transaction } from "../auth/session";
-import { digest, EventError, parseFields, publicationSnapshot, validatePublication } from "./policy";
+import { digest, EventError, parseFields, parseDraftForm, publicationSnapshot, validatePublication } from "./policy";
 
+import { sameFormContent, type FormQuestion } from "../../lib/registration-form";
+
+const draftForm = (event: Event) => (event.draftForm ?? { questions: [] }) as unknown as { questions: FormQuestion[] };
 type Snapshot = ReturnType<typeof publicationSnapshot>;
 type Db = PrismaClient;
 const unavailable = () => new EventError(404, "Event unavailable.");
@@ -37,8 +40,8 @@ function editable(event: Event) {
   if (event.state === "CANCELLED") throw new EventError(409, "Cancelled events cannot be edited or republished.");
 }
 async function stamp(tx: Transaction): Promise<Date> {
-  const [row] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-  return row.now;
+  const [row] = await tx.$queryRaw<{ epochMs: number }[]>`SELECT (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::double precision AS "epochMs"`;
+  return new Date(row.epochMs);
 }
 async function previousSnapshot(tx: Transaction, event: Event): Promise<Snapshot | null> {
   if (!event.currentPublicationId) return null;
@@ -54,7 +57,7 @@ export async function listEvents(db: Db, token: string | undefined, search = "",
       const draft = event.draft as unknown as EventFields;
       const publication = event.currentPublication?.snapshot as unknown as Snapshot | undefined;
       return { id: event.id, state: event.state, version: event.version, fields: publication?.fields ?? draft,
-        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && !sameEventFields(draft, publication.fields) };
+        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && (!sameEventFields(draft, publication.fields) || !sameFormContent({ ...publication.form, ...draftForm(event) }, publication.form)) };
     });
     const filtered = items.filter((event) => event.fields.title.toLocaleLowerCase("en").includes(search.toLocaleLowerCase("en")));
     return filtered.sort((a, b) => {
@@ -76,12 +79,12 @@ export async function readEvent(db: Db, token: string | undefined, id: string) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     return { id: event.id, state: event.state, version: event.version, draftVersion: event.draftVersion,
-      fields: event.draft as unknown as EventFields, published: await previousSnapshot(tx, event) };
+      fields: event.draft as unknown as EventFields, form: draftForm(event), published: await previousSnapshot(tx, event) };
   });
 }
 export type EventAction = "save" | "preview" | "publish" | "withdraw" | "cancel" | "delete" | "discard";
 export async function mutateEvent(db: Db, token: string | undefined, id: string, expected: number,
-  action: EventAction, fields?: EventFields, approvalId?: string) {
+  action: EventAction, fields?: EventFields, approvalId?: string, form?: unknown) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     currentVersion(event, expected);
@@ -95,7 +98,9 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       const snapshot = action === "discard" ? await previousSnapshot(tx, event) : null;
       if (action === "discard" && !snapshot) throw new EventError(409, "Use Delete Draft for a never-published event.");
       const next = action === "save" ? parseFields(fields) : snapshot!.fields;
-      await tx.event.update({ where: { id }, data: { draft: next, version: { increment: 1 }, draftVersion: { increment: 1 }, editedAt: await stamp(tx) } });
+      const nextForm = action === "discard" ? { questions: snapshot!.form.questions } : form === undefined ? draftForm(event) : parseDraftForm(form, draftForm(event));
+      publicationSnapshot(next, randomUUID(), nextForm.questions);
+      await tx.event.update({ where: { id }, data: { draft: next, draftForm: nextForm, version: { increment: 1 }, draftVersion: { increment: 1 }, editedAt: await stamp(tx) } });
       await tx.eventApproval.deleteMany({ where: { eventId: id } });
       return { saved: true };
     }
@@ -103,7 +108,7 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       const fields = parseFields(event.draft);
       const previous = await previousSnapshot(tx, event);
       validatePublication(fields, event.state, previous?.fields.start, await stamp(tx));
-      const snapshot = publicationSnapshot(fields, randomUUID());
+      const snapshot = publicationSnapshot(fields, randomUUID(), draftForm(event).questions);
       // Retain one reviewable snapshot per event/version; an older tab must review anew.
       await tx.eventApproval.deleteMany({ where: { eventId: id } });
       const approval = await tx.eventApproval.create({ data: { id: randomUUID(), eventId: id, actorId: actor,
@@ -117,10 +122,13 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       if (!approval) throw new EventError(409, "Preview this exact saved draft again before publishing.");
       const snapshot = approval.snapshot as unknown as Snapshot;
       const fields = parseFields(event.draft);
-      if (digest(snapshot) !== approval.digest || digest(publicationSnapshot(fields, snapshot.form.formRevisionId)) !== approval.digest || snapshot.form.questions.length) throw new EventError(409, "The approved content changed. Preview again.");
+      if (digest(snapshot) !== approval.digest || digest(publicationSnapshot(fields, snapshot.form.formRevisionId, draftForm(event).questions)) !== approval.digest) throw new EventError(409, "The approved content changed. Preview again.");
       const previous = await previousSnapshot(tx, event);
       const now = await stamp(tx);
       validatePublication(fields, event.state, previous?.fields.start, now);
+      // Same event row lock as Student mutations: a publisher cannot undercut active places.
+      const active = await tx.registration.count({ where: { eventId: id, state: "ACTIVE" } });
+      if (fields.capacity! < active) throw new EventError(409, "Capacity cannot be lower than the active registration count.", "capacity");
       const publication = await tx.eventPublication.create({ data: { id: randomUUID(), eventId: id, revision: event.version + 1,
         snapshot: snapshot as unknown as Prisma.InputJsonValue, digest: approval.digest, approvedBy: actor } });
       await tx.event.update({ where: { id }, data: { currentPublicationId: publication.id, state: "PUBLISHED",
