@@ -201,6 +201,11 @@ jobs:
         env:
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
         run: node scripts/activate-student-ai-budget.mjs --preview wp006-preview-20261022-200
+      - name: Activate separately approved Student Production budget without resetting usage
+        if: env.DEPLOYMENT_TARGET == 'production' && github.ref_name == 'master'
+        env:
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: node scripts/activate-student-ai-budget.mjs --production wp006-production-20261022-200
       - name: Upload checked prebuilt output
         id: upload
         shell: bash
@@ -215,7 +220,7 @@ jobs:
             fi
             deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" "${student_ai_args[@]}" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
           else
-            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --skip-domain --token="$VERCEL_TOKEN" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
+            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --skip-domain --token="$VERCEL_TOKEN" --env STUDENT_ASSISTANT_ENABLED=true --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
           fi
           deployment_url="$(printf '%s\n' "$deployment_output" | node .github/scripts/read-vercel-output.mjs deployment-url)"
           printf 'candidate_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
@@ -313,6 +318,24 @@ jobs:
             echo "Production candidate HTTPS root smoke failed."
             exit 1
           fi
+          # Candidate URL differs from AUTH_ORIGIN, so the enabled application
+          # normally rejects its origin (403); a matching origin requires login (401).
+          # Check the exact safe app response, not a generic platform/firewall status.
+          student_body="$RUNNER_TEMP/student-ai-candidate-response.json"
+          status_output="$(corepack pnpm dlx vercel@58.4.4 curl /api/student/events/11111111-1111-4111-8111-111111111111/assistant/source --deployment "$CANDIDATE_URL" --silent --show-error --output "$student_body" --write-out '%{http_code}' --max-time 30)"
+          student_status="$(printf '%s\n' "$status_output" | node .github/scripts/read-vercel-output.mjs http-status)"
+          STUDENT_STATUS="$student_status" STUDENT_BODY="$student_body" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          let body;
+          try { body = JSON.parse(readFileSync(process.env.STUDENT_BODY, 'utf8')); } catch { process.exit(1); }
+          if (Object.keys(body).length !== 2 || body.ok !== false ||
+            !((process.env.STUDENT_STATUS === '403' && body.code === 'invalid_request') ||
+              (process.env.STUDENT_STATUS === '401' && body.code === 'login_required'))) {
+            console.error('Student Production guard failed. Check STUDENT_SOCLAAS_API_KEY and target settings. No inference was made.');
+            process.exit(1);
+          }
+          NODE
+          echo "Student Production configuration/source guard passed without inference."
           printf 'candidate_url=%s\n' "$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
           echo "Candidate project, production target, source revision and HTTPS root smoke passed."
 
