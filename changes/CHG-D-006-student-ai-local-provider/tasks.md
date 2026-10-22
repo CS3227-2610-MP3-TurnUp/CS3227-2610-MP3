@@ -66,3 +66,11 @@ Planning performed no provider call, private allowance mutation, database write,
 
 - [x] Log28silentbackgroundchecks preserve transcript/draft and activeanswers;confirmedreplacementinvalidates immediately and reloads sourceonly.
 - [x] Focused controller/rendering/concurrency tests and types/lint;no liveinference.
+
+## Production activation — log08
+
+- [x] Human clarified separateProduction200attemptpoolwithsamePreviewlimits.
+- [x] Matchingtargetpolicy,server-selectedadmissionenvironment,additiveconstraintmigrationandguardedProductionactivation.
+- [x] Affectedpolicy/routes/keytests30passed;two-disposable-databaseSQL20passed;types/lint/schema/shellsyntaxpassed.
+- [ ] PublishnewPR,verifyPreviewchecksandmergeasexplicitlyrequested;GitHubownsmergerequirements.
+- [ ] VerifyProductionactivation,candidateguard,promotionandcanonicalURL;privateStudentkeymustbeconfigured.

@@ -25,7 +25,7 @@ async function body(request: Request): Promise<unknown> {
   } finally { clearTimeout(timer); void reader.cancel().catch(() => {}); }
 }
 
-/** Fixed product endpoint. Disabled outside the explicitly enabled Preview environment. */
+/** Fixed product endpoint. Requires the explicitly enabled, matching hosted environment. */
 export async function hostedResource(request: Request, eventId: string, operation: "source" | "answer") {
   const policy = hostedPolicy();
   if (!policy) return new Response(null, { status: 404, headers: privateHeaders });
@@ -46,7 +46,7 @@ export async function hostedResource(request: Request, eventId: string, operatio
     const { prisma } = await import("../db/client");
     if (input) {
       const result = await answerPublication(prisma, token, eventId, input, policy.config, {
-        signal: request.signal, reserve: config => reserveHosted(prisma, token, input.requestId, config),
+        signal: request.signal, reserve: config => reserveHosted(prisma, token, input.requestId, config, policy.environment),
       });
       if (!result.ok) return reply(result, ["budget_exhausted", "rate_limited", "live_not_authorized"].includes(result.reason) ? 429 : 503);
       return reply({ ...result, requestId: input.requestId, eventId, revision: input.revision }, 200);

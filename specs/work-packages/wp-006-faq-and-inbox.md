@@ -46,3 +46,7 @@ Only future-start publications within the existing32KiB source ceiling are suppo
 ## Approved hosted Preview extension — 22 October2026
 
 The log26approval extends D006to authenticated real-event answering on Vercel Preview with200total shared attempts and durable account/global admission. Local-only limitations above remain historical for the development harness;separate product endpoints now implement the hosted path. Current publication/evidence boundaries and natural corner chat are unchanged. Production enablement,actual live semantic quality,organiser contact and remaining history/inbox requirements stay pending. See hosted plan and verification for scope,limits and actual deployment results.
+
+## Production activation authorised — 22 October2026
+
+Darryl requests Production Student chat,push/merge and explicitly chooses a separate200attemptProductionpoolwithsamePreviewlimits. NewProductionapproval and matchingVercel/app/DBlabels preserve Preview counters and strict environment isolation. Additive20261022020000migration expands the budgetenvironmentCHECKonly;target-specificactivationneverresets/replacesexistingrows. ProductionusesitsownSTUDENT_SOCLAAS_API_KEY;Organiserkeyunchanged. Existingcandidate/root/sourceguard and protectedpromotionworkflowretained. See docs/plans/wp-006-production-activation.md and ownerlog08forcurrentchecks/outcomes;earlierProduction-disabledstatementsarehistoricalforthisapprovedextension. Noagentliveinferenceorfullpackagecompletion.

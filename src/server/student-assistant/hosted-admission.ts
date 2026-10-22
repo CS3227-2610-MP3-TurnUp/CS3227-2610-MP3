@@ -5,10 +5,10 @@ import type { SoCConfig } from "../ai/soclaas-config";
 import type { Admission } from "./local-admission";
 import { resolveSession } from "../auth/session";
 import { AuthError } from "../auth/policy";
-import { HOSTED_LIMITS as limits, PREVIEW_APPROVAL } from "./hosted-policy";
+import { HOSTED_LIMITS as limits, hostedApproval, type HostedEnvironment } from "./hosted-policy";
 
 /** Serialise all instances on one durable row. Failures never refund the reserved attempt. */
-export async function reserveHosted(db: PrismaClient, token: string | undefined, requestId: string, config: SoCConfig): Promise<Admission> {
+export async function reserveHosted(db: PrismaClient, token: string | undefined, requestId: string, config: SoCConfig, environment: HostedEnvironment = "preview"): Promise<Admission> {
   const actor = await resolveSession(db, token);
   if (!actor) throw new AuthError(401, "Log in again to continue.");
   if (actor.role !== "STUDENT") throw new AuthError(403, "Student access required.");
@@ -22,8 +22,8 @@ export async function reserveHosted(db: PrismaClient, token: string | undefined,
       SELECT approval_id, model, enabled, attempts, reserved_output_tokens,
         expires_at > clock_timestamp() AS active,
         (last_admission_at IS NULL OR last_admission_at <= clock_timestamp() - interval '10 seconds') AS spaced
-      FROM student_ai_budget WHERE id = 1 AND environment = 'preview' FOR UPDATE`;
-    if (!budget || !budget.enabled || !budget.active || budget.approval_id !== PREVIEW_APPROVAL || budget.model !== capped.model) return "blocked" as const;
+      FROM student_ai_budget WHERE id = 1 AND environment = ${environment} FOR UPDATE`;
+    if (!budget || !budget.enabled || !budget.active || budget.approval_id !== hostedApproval(environment) || budget.model !== capped.model) return "blocked" as const;
     const [counts] = await tx.$queryRaw<{ duplicate: boolean; inflight: boolean; user_count: number }[]>`
       SELECT EXISTS(SELECT 1 FROM student_ai_reservation WHERE request_key = ${requestKey}) AS duplicate,
         EXISTS(SELECT 1 FROM student_ai_reservation WHERE NOT released AND lease_until > clock_timestamp()) AS inflight,
