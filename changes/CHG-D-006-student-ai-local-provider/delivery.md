@@ -143,3 +143,7 @@ Additional exact paths beyond earlier delivery lists (producer import is separat
 ## Latest hosted Preview increment — log26
 
 The approved200attempt hosted slice is now implemented locally;earlier localhost-only statements describe the previous delivery. Product /api/student/events/[eventId]/assistant/source and /answer routes use the existing current-publication/evidence core and new durable admissions. Workflow activates the approved Preview budget once with seven-dayexpiry and enables only preview/WP-006. Actual hosted deployment/activation results must be checked separately. Production stays disabled;no local secrets/allowance files/customisations delivered. See hosted plan and current verification;no full WP006,live quality or contact/inbox completion.
+
+## Hosted Preview deployed — 22 October2026
+
+Code f2272eb deployed successfully by push run39756062772;PRchecks39756070008also passed. Deploymentjob119748299791passed migrations,one-time activation and stablealias source-only anonymous401smoke. Activation reported0/200attempts used;no inference. Candidate https://turnup-2wqk5nxvy-mp3-dd27.vercel.app ;use https://turnup-team-preview.vercel.app as the configured browser/auth origin. Real-source corner chat is now enabled on that Preview deployment. No authenticated browser/live-answer quality or Production result is claimed. No agent live request,localallowancemutation or reset occurred. Later records-only redeploy is a separate run and must preserve counters/expiry.

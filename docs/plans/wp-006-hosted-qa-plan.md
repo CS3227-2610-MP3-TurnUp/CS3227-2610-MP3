@@ -1,6 +1,6 @@
 # WP006 hosted event Q&A — approved plan, 22 October 2026
 
-Status: approved by Darryl on22October2026 with200total Preview attempts;implemented locally,pending deployment checks. Extends D006, without allocating a new change ID. Darryl owns Student behavior; Keith owns deployment/database operation and shared provider contracts. Main agent only. Preserve current work and private settings. Existing delivery is PR28, branch preview/WP-006, source724189d; its Preview deploy and PR checks passed. The deployed chat is intentionally disabled.
+Status: approved by Darryl on22October2026 with200total Preview attempts;implemented and deployed to Preview;push39756062772/PR39756070008passed. Extends D006, without allocating a new change ID. Darryl owns Student behavior; Keith owns deployment/database operation and shared provider contracts. Main agent only. Preserve current work and private settings. Existing delivery is PR28, branch preview/WP-006, source724189d; its Preview deploy and PR checks passed. The deployed chat is intentionally disabled.
 
 ## Why the current slice is local
 

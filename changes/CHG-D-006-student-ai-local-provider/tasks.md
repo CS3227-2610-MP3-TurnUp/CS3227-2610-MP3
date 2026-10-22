@@ -53,6 +53,6 @@ Planning performed no provider call, private allowance mutation, database write,
 - [x] Additive durable budget/reservation schema with atomic global/account admission and idempotent release/activation.
 - [x] Offline route/policy/transport/publication regressions,disposable SQL,types,lint,schema and production build/HTTPdenial.
 - [x] Workflow integration for reviewed migration,target-matched activation,Preview-only runtime switch and source-only anonymous guard smoke.
-- [ ] Push and verify hosted migration/activation/deployment and source guard.
+- [x] Push and verify hosted migration/activation/deployment and source guard:run39756062772,0/200attemptsused,anonymoussource401;PR39756070008passed.
 - [ ] Authenticated Preview visual/manual answering acceptance;no agent live inference authorised.
 - [ ] Separate Production budget/enablement,organiser contact and remaining full-package capabilities.
