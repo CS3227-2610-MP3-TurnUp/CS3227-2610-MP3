@@ -89,6 +89,7 @@ model User {
   profileVersion Int       @default(0) @map("profile_version")
   role         AccountRole
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  aiHistory StudentAiHistory[]
   sessions     Session[]
   events       Event[]
   registrations Registration[]
@@ -127,6 +128,7 @@ enum EventState {
 }
 
 model Event {
+  aiHistory StudentAiHistory[]
   id String @id @db.Uuid
   ownerId String @map("owner_id") @db.Uuid
   owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
@@ -241,4 +243,20 @@ model RegistrationOperation {
   @@id([actorId, eventId, operation, key])
   @@index([createdAt])
   @@map("registration_operation")
+}
+
+model StudentAiHistory {
+  userId String @map("user_id") @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+  requestId String @map("request_id") @db.VarChar(128)
+  revision String @db.VarChar(128)
+  payload Json
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@id([userId,eventId,requestId])
+  @@index([userId,eventId,revision,createdAt], map: "student_ai_history_lookup")
+  @@index([expiresAt], map: "student_ai_history_expiry")
+  @@map("student_ai_history")
 }

@@ -131,3 +131,59 @@ it.each(["unchanged", "draft", "replace", "withdraw", "cancel", "revoke", "expir
  expect(fetcher).toHaveBeenCalledOnce(); expect(release).toHaveBeenCalledOnce();
  expect(await client().registration.count({ where: { eventId: event.id } })).toBe(0);
 });
+
+import { saveHistory, readHistory } from "../../src/server/student-assistant/history";
+it.each(["withdraw", "cancel"] as const)("account/event history survives logout without leaking after %s", async lifecycle => {
+ const db = client(), user = await db.user.findUniqueOrThrow({ where: { username: "qa_sql_student" } });
+ let session = await db.$transaction(tx => replaceSession(tx, user.id));
+ const id = await prepared(); await publish(id, 1);
+ const current = await loadPublicationSource(db, session, id), revision = current.binding.revision;
+ const input = { requestId: "history-1", revision, question: "How should I prepare?" };
+ const result = { ok: true as const, candidate: { kind: "answered" as const, ...current.binding, reply: "No preparation is needed.", evidence: [{ ...current.binding, sectionId: "preparation", quote: fields.preparation }] } };
+ await saveHistory(db, session, id, input, result);
+ await saveHistory(db, session, id, input, result);
+ expect(await readHistory(db, session, id, revision)).toEqual([{ requestId: input.requestId, question: input.question, result }]);
+ const otherId = randomUUID();
+ await db.user.create({ data: { id: otherId, username: "history_" + otherId.slice(0,8), role: "STUDENT", passwordHash: "synthetic" } });
+ const otherSession = await db.$transaction(tx => replaceSession(tx, otherId));
+ expect(await readHistory(db, otherSession, id, revision)).toEqual([]);
+ await expect(readHistory(db, foreignToken, id, revision)).rejects.toMatchObject({ status: 403 });
+ await revokeSession(db, session);
+ await expect(readHistory(db, session, id, revision)).rejects.toMatchObject({ status: 401 });
+ session = await db.$transaction(tx => replaceSession(tx, user.id));
+ expect(await readHistory(db, session, id, revision)).toHaveLength(1);
+ const otherEvent = await prepared(); await publish(otherEvent, 1);
+ const otherSource = await loadPublicationSource(db, session, otherEvent);
+ expect(await readHistory(db, session, otherEvent, otherSource.binding.revision)).toEqual([]);
+ // A concurrent append never overwrites a completed turn.
+ await Promise.all(["history-2", "history-3"].map(requestId => saveHistory(db, session, id, { ...input, requestId }, result)));
+ expect(await readHistory(db, session, id, revision)).toHaveLength(3);
+ await db.$executeRaw`UPDATE student_ai_history SET expires_at=clock_timestamp()-interval '1 second' WHERE event_id=${id}::uuid`;
+ expect(await readHistory(db, session, id, revision)).toEqual([]);
+ await saveHistory(db, session, id, { ...input, requestId: "history-4" }, result);
+ expect(await db.$queryRaw`SELECT count(*)::int AS count FROM student_ai_history WHERE event_id=${id}::uuid`).toEqual([{ count: 1 }]);
+ await mutateEvent(db, token, id, 2, "save", { ...fields, title: "Updated public history test" }); await publish(id, 3);
+ await expect(readHistory(db, session, id, revision)).rejects.toMatchObject({ code: "source_changed" });
+ const replacement = await loadPublicationSource(db, session, id);
+ expect(await readHistory(db, session, id, replacement.binding.revision)).toEqual([]);
+ await mutateEvent(db, token, id, 4, lifecycle);
+ await expect(readHistory(db, session, id, replacement.binding.revision)).rejects.toMatchObject({ code: "event_unavailable" });
+});
+
+it("bounds stored history to20turns and refuses corrupted stored evidence", async () => {
+ const db = client(), user = await db.user.findUniqueOrThrow({ where: { username: "qa_sql_student" } });
+ const session = await db.$transaction(tx => replaceSession(tx, user.id));
+ const id = await prepared(); await publish(id, 1);
+ const current = await loadPublicationSource(db, session, id), revision = current.binding.revision;
+ const result = { ok: true as const, candidate: { kind: "answered" as const, ...current.binding, reply: "No preparation is needed.", evidence: [{ ...current.binding, sectionId: "preparation", quote: fields.preparation }] } };
+ for (let i=0;i<21;i++) {
+   const turn = { requestId: "seed-"+i, question: "Preparation?", result };
+   await db.$executeRaw`INSERT INTO student_ai_history(user_id,event_id,request_id,revision,payload,expires_at)
+    VALUES(${user.id}::uuid,${id}::uuid,${turn.requestId},${revision},${JSON.stringify(turn)}::jsonb,${current.historyExpiresAt})`;
+ }
+ await saveHistory(db, session, id, { requestId: "latest", revision, question: "Preparation?" }, result);
+ expect(await readHistory(db, session, id, revision)).toHaveLength(20);
+ expect(await db.$queryRaw`SELECT count(*)::int AS count FROM student_ai_history WHERE event_id=${id}::uuid`).toEqual([{ count: 20 }]);
+ await db.$executeRaw`UPDATE student_ai_history SET payload=jsonb_set(payload,'{result,candidate,evidence,0,quote}','"Fabricated quote"'::jsonb) WHERE event_id=${id}::uuid AND request_id='latest'`;
+ await expect(readHistory(db, session, id, revision)).rejects.toMatchObject({ code: "invalid_answer" });
+});

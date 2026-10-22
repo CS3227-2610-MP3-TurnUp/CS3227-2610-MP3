@@ -1,3 +1,4 @@
+import { saveHistory } from "./history";
 import "server-only";
 import { privateHeaders } from "../accounts/service";
 import { authConfig } from "../auth/request-security";
@@ -48,6 +49,7 @@ export async function hostedResource(request: Request, eventId: string, operatio
       const result = await answerPublication(prisma, token, eventId, input, policy.config, {
         signal: request.signal, reserve: config => reserveHosted(prisma, token, input.requestId, config, policy.environment),
       });
+      await saveHistory(prisma, token, eventId, input, result);
       if (!result.ok) return reply(result, ["budget_exhausted", "rate_limited", "live_not_authorized"].includes(result.reason) ? 429 : 503);
       return reply({ ...result, requestId: input.requestId, eventId, revision: input.revision }, 200);
     }

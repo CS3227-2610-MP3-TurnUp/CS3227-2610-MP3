@@ -11,7 +11,7 @@ export class PublicationSourceError extends Error {
 function object(value: unknown): value is Record<string, unknown> { return !!value && typeof value === "object" && !Array.isArray(value); }
 function exact(value: Record<string, unknown>, keys: string[]) { return Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key)); }
 export interface PublicationBinding { readonly eventId: string; readonly revision: string }
-export interface PublicationSource { readonly binding: PublicationBinding; readonly source: PublicSourceSnapshot }
+export interface PublicationSource { readonly binding: PublicationBinding; readonly source: PublicSourceSnapshot; readonly historyExpiresAt: Date }
 export function projectPublication(value: unknown, eventId: string, now = Date.now()): PublicationSource {
   try {
     if (!object(value) || value.eventId !== eventId || !object(value.publication)) throw new Error();
@@ -45,6 +45,6 @@ export function projectPublication(value: unknown, eventId: string, now = Date.n
     const projection = { eventId, revision, title: fields.title, sections };
     if (Buffer.byteLength(JSON.stringify(projection), "utf8") > ASSISTANT_LIMITS.sourceBytes) throw new PublicationSourceError(413, "source_too_large");
     const checked = validateSource(projection); if (!checked.ok) throw new Error();
-    return Object.freeze({ source: checked.source, binding: Object.freeze({ eventId, revision }) });
+    return Object.freeze({ historyExpiresAt: new Date(Date.parse(fields.end) + 90 * 24 * 60 * 60 * 1000), source: checked.source, binding: Object.freeze({ eventId, revision }) });
   } catch (error) { if (error instanceof PublicationSourceError) throw error; throw new PublicationSourceError(503, "source_unavailable"); }
 }
