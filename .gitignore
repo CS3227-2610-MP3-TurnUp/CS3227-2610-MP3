@@ -24,3 +24,6 @@ coverage/
 
 # Local SoCLaaS reference exports
 /docs/reference/cf_guides_soclaas_*.pdf
+
+# Local-only Student assistant allowance/admission state
+/.student-assistant-local/

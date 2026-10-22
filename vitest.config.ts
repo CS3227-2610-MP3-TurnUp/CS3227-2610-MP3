@@ -10,7 +10,8 @@ export default defineConfig({
       "tests/auth/**/*.test.ts",
       "tests/events/**/*.test.ts",
       "tests/registration/**/*.test.ts",
+      "tests/student-assistant/**/*.test.ts",
     ],
-    exclude: ["tests/foundation/**/*.integration.test.ts", "tests/auth/**/*.integration.test.ts", "tests/events/**/*.integration.test.ts", "tests/registration/**/*.integration.test.ts"],
+    exclude: ["tests/foundation/**/*.integration.test.ts", "tests/auth/**/*.integration.test.ts", "tests/events/**/*.integration.test.ts", "tests/registration/**/*.integration.test.ts", "tests/student-assistant/**/*.integration.test.ts"],
   },
 });
