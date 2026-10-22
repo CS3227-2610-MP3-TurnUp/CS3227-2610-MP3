@@ -90,3 +90,8 @@ Use [decisions.md](decisions.md) for authority and unresolved questions. An unre
 ## WP-003 local handoff — 21 October 2026
 
 Keith selected the original Organiser-only package and accepted its event-bound/timing portions of G03/G05 in CHG-K-009. [Canonical rules](shared/domain-and-data-contracts.md#accepted-wp-003-bounds-and-timing--21-october-2026), [exact implementation plan](../docs/plans/wp-003-publication-plan.md) and [evidence](../changes/CHG-K-009-wp-003-publication/verification.md) distinguish local code from unrun hosted migration/concurrency/consumer checks. Student discovery/details remain WP-004; no ownership transfer. All registration, configurable forms, roster and AI remain outside this delivery. The empty versioned form/public reader are prerequisites for those future consumers, not completed Student flows.
+
+
+## WP-005 delivered local slices — 23 October 2026
+
+The extraction integration is committed at `9d651e8`; CHG-K-011 adds locally implemented, independently reviewed synthetic clarification persistence and server-enforced required-issue resolution. The [current handoff](../changes/CHG-K-011-wp-005-clarification/handoff.md) is authoritative for its API/schema compatibility, assigned non-production migration and tested snapshot. Private issues/evidence are excluded from public/Student contracts. Existing publication and account operations remain prerequisites, with no new registration/thread dependency. ORG07, production retention/cleanup, hosted activation and comprehensive model evaluation remain outstanding; this status update defines no additional increment.

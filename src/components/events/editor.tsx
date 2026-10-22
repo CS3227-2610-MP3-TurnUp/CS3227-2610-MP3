@@ -4,14 +4,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { EVENT_LIMITS, FIELD_LABELS, sameEventFields, singaporeInput, singaporeInstant, type EventFields, type TextField } from "../../lib/event-fields";
 import { formatEventAlternative, prepareEventAlternative, type ProposalFeedbackMap, type ProposalFieldFeedback } from "../../features/proposal-assistance/event-prefill";
-import type { PageEvidence } from "../../features/proposal-assistance/types";
+import { CLARIFICATION_COPY, PROPOSAL_TO_EVENT_FIELD, type ClarificationIssue, type ClarificationResolutionIntent, type EventPreparationResponse } from "../../features/proposal-assistance/clarification";
+import type { PageEvidence, ProposalField } from "../../features/proposal-assistance/types";
 import { EventContent } from "./event-content";
 import { ProposalAssistance } from "./proposal-assistance";
 
 type Snapshot = { fields: EventFields; form: { formRevisionId: string; questions: unknown[] } };
-type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null };
+type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; preparation: EventPreparationResponse };
 type Preview = { approvalId: string; version: number; snapshot: Snapshot; digest: string };
 type Mode = "publication" | "editor" | "preview";
+type LocalResolutionIntent = { method: "suggestion"; alternative: { value: string; evidence: PageEvidence[] } } | { method: "organiser" };
+type LocalResolutionMap = Partial<Record<ProposalField, LocalResolutionIntent>>;
 function defaultMode(view: View): Mode { return view.published ? "publication" : "editor"; }
 
 export function EventEditor({ id }: { id: string }) {
@@ -27,13 +30,19 @@ export function EventEditor({ id }: { id: string }) {
   const [notice, setNotice] = useState("");
   const [fieldError, setFieldError] = useState("");
   const [proposalFeedback, setProposalFeedback] = useState<ProposalFeedbackMap>({});
+  const [resolutionIntents, setResolutionIntents] = useState<LocalResolutionMap>({});
+  const [assistancePendingCount, setAssistancePendingCount] = useState(0);
   const [editorEpoch, setEditorEpoch] = useState(0);
   const feedback = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
   const editorRevision = useRef(0);
   const proposalFeedbackRevision = useRef(0);
-  const dirty = !!view && !!fields && !sameEventFields(fields, view.fields);
+  const assistancePendingRef = useRef(0);
+  const viewRef = useRef<View | null>(null);
+  viewRef.current = view;
+  const renderedEditorRevision = editorRevision.current;
+  const dirty = !!view && !!fields && (!sameEventFields(fields, view.fields) || Object.keys(resolutionIntents).length > 0);
 
   async function load(signal?: AbortSignal, preferredMode?: Mode) {
     const response = await fetch(`/api/organiser/events/${id}`, { cache: "no-store", signal });
@@ -41,7 +50,9 @@ export function EventEditor({ id }: { id: string }) {
     if (!response.ok) throw new Error(result.error || "Event unavailable.");
     if (!signal?.aborted) {
       proposalFeedbackRevision.current += 1;
+      viewRef.current = result;
       setView(result); setFields(result.fields); setPreview(null); setApproved(false);
+      setResolutionIntents({});
       setMode(result.state === "CANCELLED" ? "publication" : preferredMode ?? defaultMode(result));
       setEditorEpoch((epoch) => epoch + 1);
     }
@@ -71,7 +82,7 @@ export function EventEditor({ id }: { id: string }) {
     editorRevision.current += 1;
     proposalFeedbackRevision.current += 1;
     setEditorEpoch((epoch) => epoch + 1);
-    setFields(view.fields); setPreview(null); setApproved(false); setMode(defaultMode(view)); setError(""); setFieldError(""); setProposalFeedback({});
+    setFields(view.fields); setPreview(null); setApproved(false); setMode(defaultMode(view)); setError(""); setFieldError(""); setProposalFeedback({}); setResolutionIntents({});
     setNotice("Unsaved edits discarded. Saved draft and publication are unchanged.");
     setTimeout(() => heading.current?.focus(), 0);
   }
@@ -83,6 +94,13 @@ export function EventEditor({ id }: { id: string }) {
       if (!old[key]) return old;
       const next = { ...old };
       delete next[key];
+      return next;
+    });
+    const proposalField = proposalFieldForEventField(key);
+    if (proposalField) setResolutionIntents((old) => {
+      if (!old[proposalField]) return old;
+      const next = { ...old };
+      delete next[proposalField];
       return next;
     });
     setPreview(null); setApproved(false); setNotice("");
@@ -104,23 +122,54 @@ export function EventEditor({ id }: { id: string }) {
     proposalFeedbackRevision.current += 1;
     setProposalFeedback({});
   }
-  function chooseProposalAlternative(field: keyof EventFields, alternative: { value: string; evidence: PageEvidence[] }, expectedRevision: number) {
-    if (expectedRevision !== proposalFeedbackRevision.current || inFlight.current || pending || !fields) return;
-    const currentFeedback = proposalFeedback[field];
-    if (currentFeedback?.status !== "conflicting" || !currentFeedback.alternatives.some((candidate) =>
-      candidate.value === alternative.value && candidate.evidence.length === alternative.evidence.length &&
-      candidate.evidence.every((item, index) => item.quote === alternative.evidence[index]?.quote && item.page === alternative.evidence[index]?.page))) return;
-    const converted = prepareEventAlternative(field, alternative.value);
+  function adjustAssistancePending(delta: 1 | -1) {
+    const count = Math.max(0, assistancePendingRef.current + delta);
+    assistancePendingRef.current = count;
+    setAssistancePendingCount(count);
+  }
+  function acceptServerPreparation(eventVersion: number, preparation: EventPreparationResponse) {
+    const current = viewRef.current;
+    if (!current || eventVersion < current.version || (preparation?.revision ?? 0) < (current.preparation?.revision ?? 0)) return;
+    proposalFeedbackRevision.current += 1;
+    const next = { ...current, version: eventVersion, preparation };
+    viewRef.current = next;
+    setView(next);
+    // A local confirmation was made against the previous source revision. It
+    // must be repeated against this authoritative preparation, even when the
+    // newly extracted answer happens to match the old local choice.
+    setResolutionIntents({});
+  }
+  function chooseClarificationAlternative(field: ProposalField, alternative: { value: string; evidence: PageEvidence[] }, expectedRevision: number, expectedEditorRevision: number) {
+    if (!view || expectedRevision !== (view.preparation?.revision ?? 0) || expectedEditorRevision !== editorRevision.current || assistancePendingRef.current > 0 || inFlight.current || pending || !fields) return;
+    const issue = view.preparation?.issues.find((candidate) => candidate.field === field);
+    if (!issue || isIssueResolved(issue, fields, resolutionIntents) || !issue.alternatives.some((candidate) => sameEvidence(candidate, alternative))) return;
+    const eventField = PROPOSAL_TO_EVENT_FIELD[field];
+    const converted = prepareEventAlternative(eventField, alternative.value);
     if (!converted.ok) return;
-    change(field, converted.value);
-    setProposalFeedback((old) => ({
-      ...old,
-      [field]: { status: "prefilled", generatedValue: converted.value, evidence: alternative.evidence },
-    }));
-    setNotice("The selected proposal value was added. Review it and its source evidence before saving.");
+    change(eventField, converted.value);
+    setResolutionIntents((old) => ({ ...old, [field]: { method: "suggestion", alternative } }));
+    setNotice("The selected proposal value is ready to save with its evidence.");
+  }
+  function confirmClarification(field: ProposalField, expectedRevision: number, expectedEditorRevision: number) {
+    if (!view || expectedRevision !== (view.preparation?.revision ?? 0) || expectedEditorRevision !== editorRevision.current || assistancePendingRef.current > 0 || inFlight.current || pending || !fields) return;
+    const issue = view.preparation?.issues.find((candidate) => candidate.field === field);
+    if (!issue || isIssueResolved(issue, fields, resolutionIntents) || !isConfirmationReady(field, fields)) return;
+    editorRevision.current += 1;
+    proposalFeedbackRevision.current += 1;
+    setResolutionIntents((old) => ({ ...old, [field]: { method: "organiser" } }));
+    setPreview(null); setApproved(false);
+    setNotice("Your confirmation is ready to save with the draft.");
   }
   async function action(action: string) {
     if (inFlight.current || !view) return;
+    if (assistancePendingRef.current > 0 && ["save", "preview", "publish"].includes(action)) {
+      setError("Wait for proposal findings to finish before saving or previewing the draft.");
+      return;
+    }
+    if ((action === "preview" || action === "publish") && fields && unresolvedClarifications(view.preparation, fields, resolutionIntents).length > 0) {
+      setError("Resolve the outstanding proposal clarifications and save the draft before previewing or publishing.");
+      return;
+    }
     const confirmations: Record<string, string> = {
       delete: "Delete this never-published draft permanently?",
       cancel: "Cancel this event permanently? It cannot be republished.",
@@ -133,7 +182,7 @@ export function EventEditor({ id }: { id: string }) {
     setPending(true); setError(""); setFieldError(""); setNotice("");
     try {
       const response = await fetch(`/api/organiser/events/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, expectedVersion: view.version,
-        ...(action === "save" ? { fields } : action === "publish" ? { approvalId: preview?.approvalId } : {}) }) });
+        ...(action === "save" ? { fields, expectedPreparationRevision: view.preparation?.revision ?? 0, resolutions: buildResolutionIntents(resolutionIntents, fields!, view.preparation) } : action === "publish" ? { approvalId: preview?.approvalId } : {}) }) });
       const result = await response.json();
       if (!response.ok) {
         setFieldError(result.field || "");
@@ -158,7 +207,7 @@ export function EventEditor({ id }: { id: string }) {
   async function reload() {
     if (inFlight.current || (dirty && !window.confirm("Reload saved values and discard unsaved edits?"))) return;
     inFlight.current = true; setPending(true); setError(""); setFieldError("");
-    try { await load(); setProposalFeedback({}); setNotice("Saved values reloaded. Review before making further changes."); }
+    try { await load(); setProposalFeedback({}); setResolutionIntents({}); setNotice("Saved values reloaded. Review before making further changes."); }
     catch { setError("Event unavailable. Your current input has been preserved."); }
     finally { inFlight.current = false; setPending(false); setTimeout(() => feedback.current?.focus(), 0); }
   }
@@ -169,11 +218,12 @@ export function EventEditor({ id }: { id: string }) {
   const published = view.published;
   const hasSavedChanges = !!published && !cancelled && !sameEventFields(view.fields, published.fields);
   const displayedFields = mode === "publication" && published ? published.fields : mode === "preview" && preview ? preview.snapshot.fields : fields;
-  const renderedProposalFeedbackRevision = proposalFeedbackRevision.current;
+  const preparationRevision = view.preparation?.revision ?? 0;
+  const unresolved = unresolvedClarifications(view.preparation, fields, resolutionIntents);
   const describedBy = (key: string) => [
     key in EVENT_LIMITS ? `help-${key}` : "",
     fieldError === key ? "event-error" : "",
-    proposalFeedback[key as keyof EventFields] ? `proposal-feedback-${key}` : "",
+    proposalFeedback[key as keyof EventFields] || view.preparation?.issues.some((issue) => PROPOSAL_TO_EVENT_FIELD[issue.field] === key) ? `proposal-feedback-${key}` : "",
   ].filter(Boolean).join(" ") || undefined;
 
   return <>
@@ -202,37 +252,47 @@ export function EventEditor({ id }: { id: string }) {
 
     {mode === "editor" && !cancelled && <form className="card event-editor" onSubmit={(event) => { event.preventDefault(); void action("save"); }}>
       <h2>Private Working Draft</h2><p className="muted">Incomplete drafts can be saved. Published content changes only after fresh preview and approval.</p>
-      <ProposalAssistance key={`${id}-${view.version}-${editorEpoch}`} eventId={id} eventVersion={view.version} eventBusy={pending}
-        currentEditorRevision={() => editorRevision.current} onPrefill={applyProposalPrefill} onClearFeedback={clearProposalFeedback} />
+      <ProposalAssistance key={`${id}-${editorEpoch}`} eventId={id} eventVersion={view.version} preparationRevision={preparationRevision} eventBusy={pending} generationBusy={assistancePendingCount > 0}
+        preserveFields={new Set(Object.keys(resolutionIntents) as ProposalField[])}
+        currentEditorRevision={() => editorRevision.current} onPrefill={applyProposalPrefill} onServerPreparation={acceptServerPreparation}
+        onGenerationPending={adjustAssistancePending} onClearFeedback={clearProposalFeedback} />
+      <ClarificationSummary preparation={view.preparation} fields={fields} intents={resolutionIntents} />
       <fieldset disabled={pending} className="event-fields">
         {(Object.keys(EVENT_LIMITS) as TextField[]).map((key) => <div className="field" key={key}>
           <label htmlFor={`event-${key}`}>{FIELD_LABELS[key]}{key !== "other" && " (required to publish)"}</label>
           {key === "title" ? <input id={`event-${key}`} value={fields[key]} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} /> :
             <textarea id={`event-${key}`} value={fields[key]} rows={key === "description" || key === "other" ? 5 : 3} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} />}
           <p id={`help-${key}`} className="field-help">{[...fields[key].normalize("NFC").trim()].length.toLocaleString()} / {EVENT_LIMITS[key].toLocaleString()} characters</p>
-          <ProposalFieldFeedback feedback={proposalFeedback[key]} currentValue={fields[key]} field={key}
-            onChooseAlternative={(alternative) => chooseProposalAlternative(key, alternative, renderedProposalFeedbackRevision)} />
+          <ProposalFieldFeedback feedback={proposalFeedback[key]} issue={issueForEventField(view.preparation, key)} intent={issueIntent(view.preparation, key, resolutionIntents)}
+            currentValue={fields[key]} field={key} disabled={pending || assistancePendingCount > 0}
+            onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
+            onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
         </div>)}
         <div className="event-date-grid">{(["start", "end"] as const).map((key) => <div className="field" key={key}>
           <label htmlFor={`event-${key}`}>{key === "start" ? "Start" : "End"} (SGT; required to publish)</label>
           <input id={`event-${key}`} type="datetime-local" value={singaporeInput(fields[key])} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => {
             try { change(key, singaporeInstant(e.target.value)); } catch { setFieldError(key); setError("Enter a complete valid Singapore date and time."); }
           }} />
-          <ProposalFieldFeedback feedback={proposalFeedback[key]} currentValue={fields[key]} field={key}
-            onChooseAlternative={(alternative) => chooseProposalAlternative(key, alternative, renderedProposalFeedbackRevision)} />
+          <ProposalFieldFeedback feedback={proposalFeedback[key]} issue={issueForEventField(view.preparation, key)} intent={issueIntent(view.preparation, key, resolutionIntents)}
+            currentValue={fields[key]} field={key} disabled={pending || assistancePendingCount > 0}
+            onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
+            onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
         </div>)}</div>
         <p className="field-help" role="note">When the source gives a complete date and time without a timezone, it is interpreted as Singapore Time (SGT). Review the converted value against the source evidence.</p>
         <div className="field"><label htmlFor="event-capacity">Capacity (required to publish)</label>
           <input id="event-capacity" type="number" min="1" max="10000" step="1" value={fields.capacity ?? ""} aria-invalid={fieldError === "capacity"} aria-describedby={describedBy("capacity")} onChange={(e) => change("capacity", e.target.value === "" ? null : Number(e.target.value))} />
-          <ProposalFieldFeedback feedback={proposalFeedback.capacity} currentValue={fields.capacity} field="capacity"
-            onChooseAlternative={(alternative) => chooseProposalAlternative("capacity", alternative, renderedProposalFeedbackRevision)} />
+          <ProposalFieldFeedback feedback={proposalFeedback.capacity} issue={issueForEventField(view.preparation, "capacity")} intent={issueIntent(view.preparation, "capacity", resolutionIntents)}
+            currentValue={fields.capacity} field="capacity" disabled={pending || assistancePendingCount > 0}
+            onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
+            onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
         </div>
       </fieldset>
       {dirty && <p className="notice">You have unsaved edits. Save before previewing.</p>}
+      {unresolved.length > 0 && <p className="notice">Resolve the proposal clarifications below before previewing or publishing. You can save this draft while questions remain.</p>}
       <div className="event-actions">
-        <button className="primary" disabled={pending} type="submit">{pending ? "Working…" : "Save Draft"}</button>
+        <button className="primary" disabled={pending || assistancePendingCount > 0} type="submit">{pending ? "Working…" : "Save Draft"}</button>
         <button className="secondary" type="button" disabled={pending || (!dirty && !published)} onClick={cancelEditing}>Cancel Editing</button>
-        <button className="secondary" type="button" disabled={pending || dirty} onClick={() => void action("preview")}>Preview saved draft</button>
+        <button className="secondary" type="button" disabled={pending || assistancePendingCount > 0 || dirty || unresolved.length > 0} onClick={() => void action("preview")}>Preview saved draft</button>
         {!published && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("delete")}>Delete draft</button>}
         {hasSavedChanges && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("discard")}>Discard saved changes</button>}
       </div>
@@ -252,12 +312,67 @@ export function EventEditor({ id }: { id: string }) {
   </>;
 }
 
-function ProposalFieldFeedback({ feedback: fieldFeedback, currentValue, field, onChooseAlternative }: {
+function ClarificationSummary({ preparation, fields, intents }: {
+  preparation: EventPreparationResponse;
+  fields: EventFields;
+  intents: LocalResolutionMap;
+}) {
+  const unresolved = unresolvedClarifications(preparation, fields, intents);
+  if (unresolved.length === 0) return null;
+  return <section className="proposal-clarification-summary" aria-labelledby="proposal-clarification-title" aria-live="polite">
+    <h4 id="proposal-clarification-title">Clarification needed ({unresolved.length})</h4>
+    <p className="field-help">Resolve each issue before previewing or publishing. Save Draft keeps your progress.</p>
+    <ul>{unresolved.map((issue) => {
+      const eventField = PROPOSAL_TO_EVENT_FIELD[issue.field];
+      return <li key={issue.field}><a href={`#event-${eventField}`}>{CLARIFICATION_COPY[issue.field].question}</a></li>;
+    })}</ul>
+  </section>;
+}
+
+function ProposalFieldFeedback({ feedback: fieldFeedback, issue, intent, currentValue, field, disabled, onChooseAlternative, onConfirm }: {
   feedback?: ProposalFieldFeedback;
+  issue?: ClarificationIssue;
+  intent?: LocalResolutionIntent;
   currentValue: string | number | null;
   field: keyof EventFields;
-  onChooseAlternative: (alternative: { value: string; evidence: PageEvidence[] }) => void;
+  disabled: boolean;
+  onChooseAlternative: (field: ProposalField, alternative: { value: string; evidence: PageEvidence[] }) => void;
+  onConfirm: (field: ProposalField) => void;
 }) {
+  if (issue) {
+    const resolved = !!intent || (issue.resolution !== null && sameClarificationValue(issue.field, currentValue, issue.resolution.value));
+    const method = intent?.method ?? (resolved ? issue.resolution?.method : undefined);
+    const selectedEvidence = intent?.method === "suggestion" ? intent.alternative.evidence :
+      resolved && method === "suggestion" ? issue.resolution?.evidence ?? [] : [];
+    const isChanged = issue.resolution !== null && !sameClarificationValue(issue.field, currentValue, issue.resolution.value) && !intent;
+    const reason = isChanged ? "answer_changed" : issue.reason;
+    const eventField = PROPOSAL_TO_EVENT_FIELD[issue.field];
+    return <div id={`proposal-feedback-${field}`} className="proposal-field-feedback" aria-live="polite">
+      <p className="proposal-clarification-question">{CLARIFICATION_COPY[issue.field].question}</p>
+      <p className="field-help">{CLARIFICATION_COPY[issue.field].reasons[reason]}</p>
+      {!resolved && issue.confirmedValue !== undefined && <p className="field-help">Previously confirmed value: <strong>{String(issue.confirmedValue)}</strong></p>}
+      {resolved ? <>
+        <p className="field-help">{intent?.method === "organiser" ? "Your confirmation is ready to save with the draft." : intent ? "This suggestion is ready to save with the draft." : method === "suggestion" ? "Resolved from the proposal." : "Confirmed by you."}</p>
+        {selectedEvidence.length > 0 && <ProposalEvidence evidence={selectedEvidence} />}
+      </> : <>
+        {issue.alternatives.length > 0 && <>
+          <p className="field-help">Choose one supported suggestion, or enter your answer and confirm it.</p>
+          <ul className="proposal-alternatives">{issue.alternatives.map((alternative, index) => <li key={`${alternative.value}-${index}`}>
+            <button type="button" className="secondary proposal-alternative-choice" disabled={disabled}
+              aria-describedby={`proposal-alternative-evidence-${field}-${index}`}
+              onClick={() => onChooseAlternative(issue.field, alternative)}>Use {formatEventAlternative(eventField, alternative.value)}</button>
+            <ProposalEvidence evidence={alternative.evidence} id={`proposal-alternative-evidence-${field}-${index}`} />
+          </li>)}</ul>
+        </>}
+        {isChanged && issue.resolution?.evidence.length ? <div className="proposal-prior-evidence">
+          <p className="field-help">Evidence for the previously confirmed value:</p>
+          <ProposalEvidence evidence={issue.resolution.evidence} />
+        </div> : null}
+        <button type="button" className="secondary proposal-confirm-value" disabled={disabled || !isConfirmationReady(issue.field, currentValue)}
+          onClick={() => onConfirm(issue.field)}>Confirm this value</button>
+      </>}
+    </div>;
+  }
   if (!fieldFeedback) return null;
   if (fieldFeedback.status === "prefilled") {
     if (fieldFeedback.generatedValue !== currentValue) {
@@ -278,10 +393,66 @@ function ProposalFieldFeedback({ feedback: fieldFeedback, currentValue, field, o
     <p className="field-help">The proposal gives conflicting values. Choose a source-supported value or edit the field manually.</p>
     <ul className="proposal-alternatives">{fieldFeedback.alternatives.map((alternative, index) => <li key={`${alternative.value}-${index}`}>
       <button type="button" className="secondary proposal-alternative-choice" aria-describedby={`proposal-alternative-evidence-${field}-${index}`}
-        onClick={() => onChooseAlternative(alternative)}>Use {formatEventAlternative(field, alternative.value)}</button>
+        onClick={() => { const proposalField = proposalFieldForEventField(field); if (proposalField) onChooseAlternative(proposalField, alternative); }}>Use {formatEventAlternative(field, alternative.value)}</button>
       <ProposalEvidence evidence={alternative.evidence} id={`proposal-alternative-evidence-${field}-${index}`} />
     </li>)}</ul>
   </div>;
+}
+
+function issueForEventField(preparation: EventPreparationResponse, field: keyof EventFields): ClarificationIssue | undefined {
+  return preparation?.issues.find((issue) => PROPOSAL_TO_EVENT_FIELD[issue.field] === field);
+}
+
+function issueIntent(preparation: EventPreparationResponse, field: keyof EventFields, intents: LocalResolutionMap): LocalResolutionIntent | undefined {
+  const issue = issueForEventField(preparation, field);
+  return issue ? intents[issue.field] : undefined;
+}
+
+function unresolvedClarifications(preparation: EventPreparationResponse, fields: EventFields, intents: LocalResolutionMap): ClarificationIssue[] {
+  return preparation?.issues.filter((issue) => !isIssueResolved(issue, fields, intents)) ?? [];
+}
+
+function isIssueResolved(issue: ClarificationIssue, fields: EventFields, intents: LocalResolutionMap): boolean {
+  if (intents[issue.field]) return true;
+  return issue.resolution !== null && sameClarificationValue(issue.field, fields[PROPOSAL_TO_EVENT_FIELD[issue.field]], issue.resolution.value);
+}
+
+function sameClarificationValue(field: ProposalField, current: string | number | null, confirmed: string | number): boolean {
+  if (field === "capacity") return typeof current === "number" && typeof confirmed === "number" && current === confirmed;
+  if (typeof current !== "string" || typeof confirmed !== "string") return false;
+  const prepared = prepareEventAlternative(PROPOSAL_TO_EVENT_FIELD[field], current);
+  return prepared.ok && typeof prepared.value === "string" && prepared.value === confirmed;
+}
+
+function isConfirmationReady(field: ProposalField, fieldsOrValue: EventFields | string | number | null): boolean {
+  const value = typeof fieldsOrValue === "object" && fieldsOrValue !== null
+    ? fieldsOrValue[PROPOSAL_TO_EVENT_FIELD[field]]
+    : fieldsOrValue;
+  if (field === "capacity" ? typeof value !== "number" : typeof value !== "string") return false;
+  return prepareEventAlternative(PROPOSAL_TO_EVENT_FIELD[field], String(value)).ok;
+}
+
+function buildResolutionIntents(intents: LocalResolutionMap, fields: EventFields, preparation: EventPreparationResponse): ClarificationResolutionIntent[] {
+  const currentIssues = new Set(preparation?.issues.map((issue) => issue.field) ?? []);
+  return Object.entries(intents).flatMap(([rawField, intent]) => {
+    if (!intent) return [];
+    const field = rawField as ProposalField;
+    if (!currentIssues.has(field)) return [];
+    const value = fields[PROPOSAL_TO_EVENT_FIELD[field]];
+    if (field === "capacity" ? typeof value !== "number" : typeof value !== "string") return [];
+    const canonical = prepareEventAlternative(PROPOSAL_TO_EVENT_FIELD[field], String(value));
+    if (!canonical.ok || (field === "capacity" ? typeof canonical.value !== "number" : typeof canonical.value !== "string")) return [];
+    return [{ field, method: intent.method, value: canonical.value } as ClarificationResolutionIntent];
+  });
+}
+
+function sameEvidence(left: { value: string; evidence: PageEvidence[] }, right: { value: string; evidence: PageEvidence[] }): boolean {
+  return left.value === right.value && left.evidence.length === right.evidence.length &&
+    left.evidence.every((item, index) => item.quote === right.evidence[index]?.quote && item.page === right.evidence[index]?.page);
+}
+
+function proposalFieldForEventField(field: keyof EventFields): ProposalField | undefined {
+  return (Object.entries(PROPOSAL_TO_EVENT_FIELD) as Array<[ProposalField, keyof EventFields]>).find(([, eventField]) => eventField === field)?.[0];
 }
 
 function ProposalEvidence({ evidence, id }: { evidence: PageEvidence[]; id?: string }) {

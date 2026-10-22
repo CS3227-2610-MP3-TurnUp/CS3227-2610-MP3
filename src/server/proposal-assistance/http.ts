@@ -7,6 +7,7 @@ import { presentedToken } from "../auth/session";
 import { privateHeaders } from "../accounts/service";
 import { EventError, exactKeys, object, uuid, version } from "../events/policy";
 import { assertProposalEventAccess } from "./access";
+import { recordProposalExtraction } from "../events/service";
 import { admitProposalExtraction } from "./admission";
 import { extractPdfPageText, MAX_PROPOSAL_PDF_BYTES } from "./pdf-text";
 import { processProposalExtraction } from "./processor";
@@ -112,6 +113,12 @@ function readRevisions(value: FormDataEntryValue | null): ProposalRevisions {
   return revisions;
 }
 
+function parsePreparationRevision(value: FormDataEntryValue | null): number {
+  if (typeof value !== "string" || !/^(0|[1-9]\d*)$/.test(value)) throw new EventError(400, "Reload the proposal clarification state.");
+  const parsed = Number(value);
+  return version(parsed);
+}
+
 export async function proposalExtraction(request: Request, rawId: string): Promise<NextResponse> {
   try {
     const id = uuid(rawId);
@@ -121,28 +128,35 @@ export async function proposalExtraction(request: Request, rawId: string): Promi
     const { prisma } = await import("../db/client");
 
     // Check authority before accepting even a byte of the proposal body.
-    const ownerId = await assertProposalEventAccess(prisma, token, id);
+    const initial = await assertProposalEventAccess(prisma, token, id);
     const availability = proposalCompletionAvailability();
     if (!availability.available) return outcomeResponse(availability.outcome);
-    await admitProposalExtraction(prisma, ownerId, config.secret);
+    await admitProposalExtraction(prisma, initial.ownerId, config.secret);
 
     const form = await readBoundedMultipart(request);
-    if ([...form.keys()].some((key) => !["file", "expectedVersion", "revisions"].includes(key)) ||
-      form.getAll("file").length !== 1 || form.getAll("expectedVersion").length !== 1 || form.getAll("revisions").length !== 1) {
-      throw new EventError(400, "Send one PDF and the current editor version.");
+    if ([...form.keys()].some((key) => !["file", "expectedVersion", "expectedPreparationRevision", "revisions"].includes(key)) ||
+      form.getAll("file").length !== 1 || form.getAll("expectedVersion").length !== 1 ||
+      form.getAll("expectedPreparationRevision").length !== 1 || form.getAll("revisions").length !== 1) {
+      throw new EventError(400, "Send one PDF and the current event and clarification revisions.");
     }
     const expected = parseMultipartVersion(form.get("expectedVersion"));
+    const expectedPreparationRevision = parsePreparationRevision(form.get("expectedPreparationRevision"));
     const revisions = readRevisions(form.get("revisions"));
+    if (expected !== initial.eventVersion || expectedPreparationRevision !== initial.preparationRevision) {
+      throw new EventError(409, "The event or proposal clarifications changed. Reload and try again.");
+    }
     const file = form.get("file");
     if (!(file instanceof File)) throw new EventError(400, "Choose a PDF proposal.");
 
-    await assertProposalEventAccess(prisma, token, id, expected);
+    await assertProposalEventAccess(prisma, token, id, expected, expectedPreparationRevision);
     const textResult = await extractPdfPageText(file, request.signal);
     if (!textResult.ok) return outcomeResponse(textResult.outcome);
 
     // Revalidate immediately before model inference; no transaction spans parsing or provider work.
-    const currentOwner = await assertProposalEventAccess(prisma, token, id, expected);
-    if (currentOwner !== ownerId) throw new EventError(409, "The event owner changed. Reload and try again.");
+    const currentOwner = await assertProposalEventAccess(prisma, token, id, expected, expectedPreparationRevision);
+    if (currentOwner.ownerId !== initial.ownerId) {
+      throw new EventError(409, "The event or proposal clarifications changed. Reload and try again.");
+    }
     const result = await processProposalExtraction(
       textResult.pageTexts,
       (input) => requestProposalCompletion(input),
@@ -150,9 +164,11 @@ export async function proposalExtraction(request: Request, rawId: string): Promi
     );
     if (!result.ok) return outcomeResponse(result.outcome);
 
-    // A revoked session or changed/cancelled event discards this temporary result.
-    await assertProposalEventAccess(prisma, token, id, expected);
-    return NextResponse.json({ ok: true, revisions, extraction: result.value }, { headers: privateHeaders });
+    // Recheck owner/session and both revisions inside the event write transaction
+    // before recording any structured result; no PDF or page text is persisted.
+    const saved = await recordProposalExtraction(prisma, token, id, expected, expectedPreparationRevision, result.value);
+    return NextResponse.json({ ok: true, revisions, extraction: result.value,
+      eventVersion: saved.eventVersion, preparation: saved.preparation }, { headers: privateHeaders });
   } catch (error) {
     if (error instanceof AuthError || error instanceof EventError) {
       const status = error.status;

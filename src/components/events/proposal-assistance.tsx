@@ -4,20 +4,26 @@ import { useEffect, useRef, useState } from "react";
 import type { EventFields } from "../../lib/event-fields";
 import { MAX_PROPOSAL_PDF_BYTES } from "../../features/proposal-assistance/limits";
 import { prepareEventPrefill, type ProposalFeedbackMap } from "../../features/proposal-assistance/event-prefill";
-import type { PrivateExtraction, ProposalRevisions } from "../../features/proposal-assistance/types";
+import type { EventPreparationResponse } from "../../features/proposal-assistance/clarification";
+import type { PrivateExtraction, ProposalField, ProposalRevisions } from "../../features/proposal-assistance/types";
 
 type Props = {
   eventId: string;
   eventVersion: number;
+  preparationRevision: number;
   eventBusy: boolean;
+  generationBusy: boolean;
+  preserveFields: ReadonlySet<ProposalField>;
   currentEditorRevision: () => number;
   onPrefill: (values: Partial<EventFields>, feedback: ProposalFeedbackMap) => void;
+  onServerPreparation: (eventVersion: number, preparation: EventPreparationResponse) => void;
+  onGenerationPending: (delta: 1 | -1) => void;
   onClearFeedback: () => void;
 };
 
-type ApiResult = { ok: true; revisions: ProposalRevisions; extraction: PrivateExtraction } | { ok: false; outcome: string };
+type ApiResult = { ok: true; revisions: ProposalRevisions; eventVersion: number; preparation: EventPreparationResponse; extraction: PrivateExtraction } | { ok: false; outcome: string };
 
-export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEditorRevision, onPrefill, onClearFeedback }: Props) {
+export function ProposalAssistance({ eventId, eventVersion, preparationRevision, eventBusy, generationBusy, preserveFields, currentEditorRevision, onPrefill, onServerPreparation, onGenerationPending, onClearFeedback }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [extraction, setExtraction] = useState<PrivateExtraction | null>(null);
   const [pending, setPending] = useState(false);
@@ -27,11 +33,11 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
   const sourceRevision = useRef(0);
   const factsRevision = useRef(0);
   const requestRevision = useRef(0);
+  const generationActive = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => {
     requestRevision.current += 1;
-    controllerRef.current?.abort();
   }, []);
   useEffect(() => {
     if (!eventBusy) return;
@@ -53,7 +59,7 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
   }
 
   async function generate() {
-    if (!file || pending || eventBusy) return;
+    if (!file || pending || eventBusy || generationBusy || generationActive.current) return;
     const requestId = requestRevision.current + 1;
     requestRevision.current = requestId;
     const controller = new AbortController();
@@ -64,7 +70,10 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
       facts: factsRevision.current,
       editor: currentEditorRevision(),
     };
+    const fieldsToPreserve = new Set(preserveFields);
+    generationActive.current = true;
     setPending(true);
+    onGenerationPending(1);
     setError("");
     setNotice("");
     setExtraction(null);
@@ -73,6 +82,7 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
       const body = new FormData();
       body.append("file", file);
       body.append("expectedVersion", String(eventVersion));
+      body.append("expectedPreparationRevision", String(preparationRevision));
       body.append("revisions", JSON.stringify(revisions));
       const response = await fetch(`/api/organiser/events/${eventId}/proposal-extraction`, {
         method: "POST",
@@ -80,26 +90,37 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
         signal: controller.signal,
       });
       const payload = await response.json() as ApiResult;
-      if (requestRevision.current !== requestId || controller.signal.aborted) return;
       if (!response.ok || !payload.ok) {
-        setError(messageForOutcome(payload && "outcome" in payload ? payload.outcome : "unavailable"));
+        if (requestRevision.current === requestId && !controller.signal.aborted) {
+          setError(messageForOutcome(payload && "outcome" in payload ? payload.outcome : "unavailable"));
+        }
         return;
       }
-      if (requestRevision.current !== requestId || controller.signal.aborted ||
+      // The server may have durably recorded issues even when this response is
+      // stale against newer local edits. Reconcile that authoritative revision
+      // without applying extracted values to those edits.
+      onServerPreparation(payload.eventVersion, payload.preparation);
+      if (requestRevision.current !== requestId || controller.signal.aborted) return;
+      if (
         revisions.source !== sourceRevision.current || revisions.facts !== factsRevision.current ||
         revisions.editor !== currentEditorRevision() || payload.revisions.source !== revisions.source ||
         payload.revisions.facts !== revisions.facts || payload.revisions.editor !== revisions.editor) {
-        setNotice("The proposal or event changed while findings were being generated. Generate again to review current values.");
+        setNotice("The proposal or event changed while findings were being generated. Its saved clarifications were refreshed; generate again to review current values.");
         return;
       }
 
       factsRevision.current += 1;
-      const prefill = prepareEventPrefill(payload.extraction);
+      const preservedFields = new Set([...fieldsToPreserve, ...(payload.preparation?.issues
+        .filter((issue) => issue.confirmedValue !== undefined || issue.resolution !== null)
+        .map((issue) => issue.field) ?? [])]);
+      const prefill = prepareEventPrefill(payload.extraction, preservedFields);
       onPrefill(prefill.values, prefill.feedback);
       setExtraction(payload.extraction);
     } catch {
       if (requestRevision.current === requestId && !controller.signal.aborted) setError("Proposal assistance is unavailable. Your event fields were not changed by this request.");
     } finally {
+      generationActive.current = false;
+      onGenerationPending(-1);
       if (requestRevision.current === requestId) {
         controllerRef.current = null;
         setPending(false);
@@ -109,7 +130,7 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
 
   return <section className="proposal-assistance" aria-labelledby="proposal-assistance-title">
     <h3 id="proposal-assistance-title">Proposal assistance</h3>
-    <p className="muted">Selecting a file sends nothing. Generate uploads it to TurnUp for temporary text extraction and sends the embedded text to the configured AI service. The PDF and findings are not saved with the event and clear when you leave or refresh. Generate pre-fills only supported values; review them and Save Draft to keep them.</p>
+    <p className="muted">Selecting a file sends nothing. Generate uploads it to TurnUp for temporary text extraction and sends the embedded text to the configured AI service. The PDF and full extracted text are not saved. Structured private clarification issues and their short evidence are saved with the draft; other generated evidence clears when you leave or refresh. Review supported values and Save Draft to keep them.</p>
     <div className="proposal-file-controls">
       <div className="proposal-file-picker" role="group" aria-labelledby="proposal-file-label">
         <span id="proposal-file-label" className="proposal-file-label">Proposal PDF</span>
@@ -125,15 +146,15 @@ export function ProposalAssistance({ eventId, eventVersion, eventBusy, currentEd
           resetSource(selected);
         }} />
         <div className="proposal-file-picker-row">
-          <button type="button" className="secondary" disabled={pending || eventBusy} aria-describedby="proposal-file-status" onClick={() => fileInput.current?.click()}>Choose PDF</button>
+          <button type="button" className="secondary" disabled={pending || eventBusy || generationBusy} aria-describedby="proposal-file-status" onClick={() => fileInput.current?.click()}>Choose PDF</button>
           <span id="proposal-file-status" className="proposal-file-status field-help" role="status" aria-live="polite" aria-atomic="true">
             {file ? `${file.name} (${(file.size / 1_000_000).toFixed(2)} MB)` : "No file chosen"}
           </span>
         </div>
       </div>
       <div className="event-actions">
-        <button type="button" className="primary" disabled={!file || pending || eventBusy} onClick={() => void generate()}>{pending ? "Generating…" : "Generate Findings"}</button>
-        {file && <button type="button" className="secondary" disabled={pending || eventBusy} onClick={() => resetSource(null)}>Remove proposal</button>}
+        <button type="button" className="primary" disabled={!file || pending || eventBusy || generationBusy} onClick={() => void generate()}>{pending ? "Generating…" : "Generate Findings"}</button>
+        {file && <button type="button" className="secondary" disabled={pending || eventBusy || generationBusy} onClick={() => resetSource(null)}>Remove proposal</button>}
       </div>
     </div>
     {error && <p className="error-panel" role="alert">{error}</p>}

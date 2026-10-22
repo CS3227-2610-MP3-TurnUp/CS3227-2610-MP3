@@ -40,12 +40,23 @@ vi.mock("next/link", async () => {
 import { renderToStaticMarkup } from "react-dom/server";
 import { EMPTY_EVENT, type EventFields } from "../../src/lib/event-fields";
 import type { PrivateExtraction, ProposalRevisions } from "../../src/features/proposal-assistance/types";
+import type { EventPreparationResponse } from "../../src/features/proposal-assistance/clarification";
 import { EventEditor } from "../../src/components/events/editor";
 
 type ElementLike = { type: unknown; key?: string | null; props: Record<string, unknown> };
 
 const savedFields: EventFields = { ...EMPTY_EVENT, title: "Current title", description: "Current description", location: "Current venue", fee: "Paid", openTo: "Current audience", capacity: 50 };
-const view = { id: "event-1", version: 2, state: "DRAFT", fields: savedFields, published: null };
+const view = { id: "event-1", version: 2, state: "DRAFT", fields: savedFields, published: null, preparation: null };
+const preparation: EventPreparationResponse = {
+  revision: 3,
+  issues: [
+    { field: "purpose", reason: "source_missing", alternatives: [], resolution: null },
+    { field: "location", reason: "source_conflict", alternatives: [
+      { value: "Innovation Hall", evidence: [{ quote: "Innovation Hall", page: 1 }] },
+      { value: "Business School Foyer", evidence: [{ quote: "Business School Foyer", page: 1 }] },
+    ], resolution: null },
+  ],
+};
 const extraction: PrivateExtraction = {
   facts: {
     title: { status: "known", value: "Campus Arts Night", evidence: [{ quote: "Campus Arts Night", page: 1 }] },
@@ -69,7 +80,7 @@ const extraction: PrivateExtraction = {
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  hooks.states = [view, { ...savedFields }, "editor", null, false, false, false, "", "", "", {}, 0];
+  hooks.states = [view, { ...savedFields }, "editor", null, false, false, false, "", "", "", {}, {}, 0, 0];
   hooks.refs = [];
   hooks.stateIndex = 0;
   hooks.refIndex = 0;
@@ -77,7 +88,7 @@ beforeEach(() => {
   fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
     const body = init?.body as FormData;
     const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
-    return json({ ok: true, revisions, extraction });
+    return json({ ok: true, revisions, eventVersion: 3, preparation, extraction });
   });
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -97,8 +108,8 @@ function nodes(root: unknown): ElementLike[] {
   if (typeof element.type === "function") {
     const stateIndex = hooks.stateIndex;
     const refIndex = hooks.refIndex;
-    hooks.stateIndex = 12;
-    hooks.refIndex = 5;
+    hooks.stateIndex = 14;
+    hooks.refIndex = 7;
     const result = nodes((element.type as (props: Record<string, unknown>) => unknown)(element.props));
     hooks.stateIndex = stateIndex;
     hooks.refIndex = refIndex;
@@ -177,7 +188,8 @@ describe("EventEditor proposal prefill integration", () => {
     expect(markup).toContain("When the source gives a complete date and time without a timezone, it is interpreted as Singapore Time (SGT).");
     expect(textOf(byId(updated, "proposal-feedback-location").props.children)).toContain("Innovation Hall");
     expect(textOf(byId(updated, "proposal-feedback-location").props.children)).toContain("Business School Foyer");
-    expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("existing field was kept");
+    expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("does not provide an event description");
+    expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Confirm this value");
     expect(textOf(byId(updated, "proposal-feedback-openTo").props.children)).toContain("No safe value");
     expect(markup).toContain("Save Draft");
     expect(markup).not.toContain("Apply to");
@@ -187,6 +199,144 @@ describe("EventEditor proposal prefill integration", () => {
     const manuallyEdited = render();
     expect(byId(manuallyEdited, "event-title").props.value).toBe("Manually edited title");
     expect(nodes(manuallyEdited).some((element) => element.props.id === "proposal-feedback-title")).toBe(false);
+  });
+
+  it("keeps suggestion and manual confirmations local until Save Draft, then submits their exact intent", async () => {
+    hooks.states[0] = { ...view, preparation };
+    const manualDescription = "  Cafe\u0301 Arts Hall  ";
+    const canonicalDescription = "Café Arts Hall";
+    hooks.states[1] = { ...savedFields, description: manualDescription };
+    const savedPreparation: EventPreparationResponse = {
+      revision: 4,
+      issues: [
+        { field: "purpose", reason: "source_missing", alternatives: [], confirmedValue: canonicalDescription, resolution: {
+          method: "organiser", value: canonicalDescription, resolvedBy: "organiser-1", resolvedAt: "2026-10-23T03:00:00.000Z", evidence: [],
+        } },
+        { field: "location", reason: "source_conflict", alternatives: preparation.issues[1]!.alternatives, confirmedValue: "Innovation Hall", resolution: {
+          method: "suggestion", value: "Innovation Hall", resolvedBy: "organiser-1", resolvedAt: "2026-10-23T03:00:00.000Z", evidence: [{ quote: "Innovation Hall", page: 1 }],
+        } },
+      ],
+    };
+    const savedFieldsAfterResolution = { ...savedFields, description: canonicalDescription, location: "Innovation Hall" };
+    let submitted: Record<string, unknown> | undefined;
+    fetchMock.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        submitted = JSON.parse(String(init.body)) as Record<string, unknown>;
+        return json({ ok: true });
+      }
+      return json({ ...view, version: 3, fields: savedFieldsAfterResolution, preparation: savedPreparation });
+    });
+
+    const initial = render();
+    (byText(initial, "button", "Use Innovation Hall").props.onClick as () => void)();
+    let updated = render();
+    expect((hooks.states[1] as EventFields).location).toBe("Innovation Hall");
+    expect(hooks.states[11]).toMatchObject({ location: { method: "suggestion", alternative: { value: "Innovation Hall", evidence: [{ quote: "Innovation Hall", page: 1 }] } } });
+    expect(textOf(byId(updated, "proposal-feedback-location").props.children)).toContain("ready to save");
+    expect(nodes(updated).some((element) => element.type === "button" && textOf(element.props.children) === "Use Innovation Hall")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    (byText(updated, "button", "Confirm this value").props.onClick as () => void)();
+    updated = render();
+    expect(hooks.states[11]).toMatchObject({ purpose: { method: "organiser" }, location: { method: "suggestion" } });
+    expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Your confirmation is ready to save");
+    expect(byText(updated, "button", "Preview saved draft").props.disabled).toBe(true);
+    expect(byText(updated, "button", "Save Draft").props.disabled).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const form = nodes(updated).find((element) => element.type === "form");
+    if (!form) throw new Error("Event editor form missing");
+    (form.props.onSubmit as (event: unknown) => void)({ preventDefault: vi.fn() });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(submitted).toMatchObject({ action: "save", expectedVersion: 2, expectedPreparationRevision: 3, resolutions: [
+      { field: "location", method: "suggestion", value: "Innovation Hall" },
+      { field: "purpose", method: "organiser", value: canonicalDescription },
+    ] });
+    expect((submitted?.fields as EventFields).description).toBe(manualDescription);
+    updated = render();
+    expect((hooks.states[0] as typeof view).preparation).toEqual(savedPreparation);
+    expect(hooks.states[11]).toEqual({});
+    expect(byText(updated, "button", "Preview saved draft").props.disabled).toBe(false);
+    expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Confirmed by you");
+  });
+
+  it("preserves a locally confirmed field during new extraction and requires review against the new issue", async () => {
+    hooks.states[0] = { ...view, preparation };
+    const newDescriptionEvidence = [{ quote: "A newly proposed description", page: 2 }];
+    const newerExtraction: PrivateExtraction = {
+      ...extraction,
+      facts: { ...extraction.facts, purpose: { status: "known", value: "A newly proposed description", evidence: newDescriptionEvidence } },
+    };
+    const newerPreparation: EventPreparationResponse = {
+      revision: 4,
+      issues: [
+        { field: "purpose", reason: "source_candidate", alternatives: [{ value: "A newly proposed description", evidence: newDescriptionEvidence }], resolution: null },
+        preparation.issues[1]!,
+      ],
+    };
+    fetchMock.mockImplementationOnce(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body as FormData;
+      const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
+      return json({ ok: true, revisions, eventVersion: 3, preparation: newerPreparation, extraction: newerExtraction });
+    });
+
+    let current = render();
+    (byText(current, "button", "Confirm this value").props.onClick as () => void)();
+    expect(hooks.states[11]).toMatchObject({ purpose: { method: "organiser" } });
+    current = render();
+    const fileInput = nodes(current).find((element) => element.type === "input" && element.props.type === "file");
+    if (!fileInput) throw new Error("PDF picker missing from EventEditor");
+    const file = new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" });
+    (fileInput.props.onChange as (event: unknown) => void)({ currentTarget: { files: [file], value: "" } });
+    (byText(render(), "button", "Generate Findings").props.onClick as () => void)();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    current = render();
+    expect((hooks.states[1] as EventFields).description).toBe("Current description");
+    expect(hooks.states[11]).toEqual({});
+    expect((hooks.states[0] as typeof view).preparation).toEqual(newerPreparation);
+    expect(textOf(byId(current, "proposal-feedback-description").props.children)).toContain("needs your confirmation");
+    expect(textOf(byId(current, "proposal-feedback-description").props.children)).toContain("A newly proposed description");
+  });
+
+  it("blocks clarification choices and Save Draft while generation is in flight", async () => {
+    hooks.states[0] = { ...view, preparation };
+    let resolveResponse!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body as FormData;
+      const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
+      return await new Promise<Response>((resolve) => { resolveResponse = (response) => { void revisions; resolve(response); }; });
+    });
+    let current = render();
+    const fileInput = nodes(current).find((element) => element.type === "input" && element.props.type === "file");
+    if (!fileInput) throw new Error("PDF picker missing from EventEditor");
+    const file = new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" });
+    (fileInput.props.onChange as (event: unknown) => void)({ currentTarget: { files: [file], value: "" } });
+    current = render();
+    const staleChoice = byText(current, "button", "Use Innovation Hall").props.onClick as () => void;
+    const staleConfirm = byText(current, "button", "Confirm this value").props.onClick as () => void;
+    (byText(render(), "button", "Generate Findings").props.onClick as () => void)();
+
+    expect(hooks.states[12]).toBe(1);
+    current = render();
+    const choice = byText(current, "button", "Use Innovation Hall");
+    const confirm = byText(current, "button", "Confirm this value");
+    expect(choice.props.disabled).toBe(true);
+    expect(confirm.props.disabled).toBe(true);
+    expect(byText(current, "button", "Save Draft").props.disabled).toBe(true);
+    staleChoice();
+    staleConfirm();
+    (choice.props.onClick as () => void)();
+    (confirm.props.onClick as () => void)();
+    expect(hooks.states[11]).toEqual({});
+    expect((hooks.states[1] as EventFields).location).toBe("Current venue");
+
+    const form = fetchMock.mock.calls[0]?.[1]?.body as FormData;
+    const revisions = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
+    resolveResponse(json({ ok: true, revisions, eventVersion: 3, preparation, extraction }));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(hooks.states[12]).toBe(0);
   });
 
   it("rejects a deferred Generate result after Cancel Editing restores the saved values", async () => {
@@ -208,11 +358,11 @@ describe("EventEditor proposal prefill integration", () => {
     expect(byId(render(), "event-title").props.value).toBe("Unsaved working title");
     (byText(render(), "button", "Cancel Editing").props.onClick as () => void)();
     expect(hooks.states[1]).toMatchObject({ title: "Current title" });
-    expect(hooks.setterCalls[11]).toBe(1);
+    expect(hooks.setterCalls[13]).toBe(1);
 
     const form = fetchMock.mock.calls[0]?.[1]?.body as FormData;
     const revisions = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
-    resolveResponse(json({ ok: true, revisions, extraction }));
+    resolveResponse(json({ ok: true, revisions, eventVersion: 3, preparation, extraction }));
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     expect(hooks.states[1]).toMatchObject({ title: "Current title", start: "" });
@@ -284,7 +434,17 @@ describe("EventEditor proposal prefill integration", () => {
     fetchMock.mockImplementationOnce(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const body = init?.body as FormData;
       const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
-      return json({ ok: true, revisions, extraction: alternatives });
+      const alternativePreparation: EventPreparationResponse = {
+        revision: 4,
+        issues: [
+          { field: "purpose", reason: "source_conflict", alternatives: alternatives.facts.purpose?.status === "conflicting" ? alternatives.facts.purpose.alternatives : [], resolution: null },
+          { field: "location", reason: "source_conflict", alternatives: extraction.facts.location?.status === "conflicting" ? extraction.facts.location.alternatives : [], resolution: null },
+          { field: "start", reason: "source_conflict", alternatives: alternatives.facts.start?.status === "conflicting" ? alternatives.facts.start.alternatives : [], resolution: null },
+          { field: "end", reason: "source_conflict", alternatives: alternatives.facts.end?.status === "conflicting" ? alternatives.facts.end.alternatives : [], resolution: null },
+          { field: "capacity", reason: "source_conflict", alternatives: alternatives.facts.capacity?.status === "conflicting" ? alternatives.facts.capacity.alternatives : [], resolution: null },
+        ],
+      };
+      return json({ ok: true, revisions, eventVersion: 3, preparation: alternativePreparation, extraction: alternatives });
     });
 
     const initial = render();
@@ -303,19 +463,16 @@ describe("EventEditor proposal prefill integration", () => {
 
     (byText(generated, "button", "Use You will explore robotics").props.onClick as () => void)();
     expect(hooks.states[1]).toEqual({ ...original, description: "You will explore robotics" });
-    expect(hooks.states[10]).toMatchObject({
-      description: { status: "prefilled", generatedValue: "You will explore robotics", evidence: [{ quote: "You will explore robotics.", page: 1 }] },
-      location: { status: "conflicting" },
-      start: { status: "conflicting" },
-      end: { status: "conflicting" },
-      capacity: { status: "conflicting" },
+    expect(hooks.states[11]).toMatchObject({
+      purpose: { method: "suggestion", alternative: { value: "You will explore robotics", evidence: [{ quote: "You will explore robotics.", page: 1 }] } },
     });
     expect(renderToStaticMarkup(render())).toContain("<q>You will explore robotics.</q>");
+    expect(nodes(render()).some((element) => element.type === "button" && textOf(element.props.children).includes("Use You will explore robotics"))).toBe(false);
 
     let current = render();
     (byText(current, "button", "Use 14/11/2026, 09:00 PM SGT").props.onClick as () => void)();
     expect((hooks.states[1] as EventFields).start).toBe("2026-11-14T13:00:00.000Z");
-    expect(hooks.states[10]).toMatchObject({ start: { status: "prefilled", generatedValue: "2026-11-14T13:00:00.000Z", evidence: [{ quote: "14 November 2026, 09:00 PM SGT", page: 1 }] }, end: { status: "conflicting" } });
+    expect(hooks.states[11]).toMatchObject({ start: { method: "suggestion", alternative: { value: "2026-11-14T13:00:00.000Z", evidence: [{ quote: "14 November 2026, 09:00 PM SGT", page: 1 }] } } });
     expect(byId(render(), "event-start").props.value).toBe("2026-11-14T21:00");
 
     current = render();
@@ -326,11 +483,12 @@ describe("EventEditor proposal prefill integration", () => {
     current = render();
     (byText(current, "button", "Use 80").props.onClick as () => void)();
     expect((hooks.states[1] as EventFields).capacity).toBe(80);
-    expect(hooks.states[10]).toMatchObject({ capacity: { status: "prefilled", generatedValue: 80, evidence: [{ quote: "Capacity: 80", page: 1 }] }, location: { status: "conflicting" } });
+    expect(hooks.states[11]).toMatchObject({ capacity: { method: "suggestion", alternative: { value: "80", evidence: [{ quote: "Capacity: 80", page: 1 }] } } });
 
     const selected = render();
     (byId(selected, "event-description").props.onChange as (event: unknown) => void)({ target: { value: "My manual description" } });
-    expect(nodes(render()).some((element) => element.props.id === "proposal-feedback-description")).toBe(false);
+    expect(nodes(render()).some((element) => element.props.id === "proposal-feedback-description")).toBe(true);
+    expect(textOf(byId(render(), "proposal-feedback-description").props.children)).toContain("gives conflicting event descriptions");
     expect(nodes(render()).some((element) => element.props.id === "proposal-feedback-location")).toBe(true);
   });
 
@@ -349,7 +507,7 @@ describe("EventEditor proposal prefill integration", () => {
     staleChoice();
     expect((hooks.states[1] as EventFields).title).toBe("New manual title");
     expect((hooks.states[1] as EventFields).location).toBe("Current venue");
-    expect(hooks.states[10]).toMatchObject({ location: { status: "conflicting" } });
+    expect(hooks.states[11]).toEqual({});
 
     hooks.refs[2]!.current = true;
     const freshChoice = byText(render(), "button", "Use Innovation Hall").props.onClick as () => void;

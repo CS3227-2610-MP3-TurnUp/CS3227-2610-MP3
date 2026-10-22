@@ -9,6 +9,7 @@ const mocked = vi.hoisted(() => ({
   complete: vi.fn(),
   extract: vi.fn(),
   process: vi.fn(),
+  record: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -29,6 +30,7 @@ vi.mock("../../src/server/proposal-assistance/pdf-text", () => ({
   MAX_PROPOSAL_PDF_BYTES: 4_000_000,
 }));
 vi.mock("../../src/server/proposal-assistance/processor", () => ({ processProposalExtraction: mocked.process }));
+vi.mock("../../src/server/events/service", () => ({ recordProposalExtraction: mocked.record }));
 vi.mock("../../src/server/db/client", () => ({ prisma: {} }));
 
 import { AuthError } from "../../src/server/auth/policy";
@@ -43,6 +45,7 @@ function request(expectedVersion = 4): Request {
   const form = new FormData();
   form.append("file", new File(["synthetic"], "event.pdf", { type: "application/pdf" }));
   form.append("expectedVersion", String(expectedVersion));
+  form.append("expectedPreparationRevision", "0");
   form.append("revisions", JSON.stringify(revisions));
   return new Request(`http://127.0.0.1:3107/api/organiser/events/${eventId}/proposal-extraction`, {
     method: "POST",
@@ -57,11 +60,12 @@ beforeEach(() => {
     if (requestValue.headers.get("origin") !== "http://127.0.0.1:3107") throw new AuthError(403, "Origin rejected.");
   });
   mocked.token.mockReset().mockReturnValue("presented-session-token");
-  mocked.access.mockReset().mockResolvedValue("owner-account-id");
+  mocked.access.mockReset().mockResolvedValue({ ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 0 });
   mocked.admission.mockReset().mockResolvedValue(undefined);
   mocked.availability.mockReset().mockReturnValue({ available: true });
   mocked.complete.mockReset().mockResolvedValue({ ok: true, text: "{}" });
   mocked.extract.mockReset().mockResolvedValue({ ok: true, pageTexts: ["Campus Orchestra"] });
+  mocked.record.mockReset().mockResolvedValue({ eventVersion: 5, preparation: { revision: 1, issues: [] } });
   mocked.process.mockReset().mockImplementation(async (_pages: readonly string[], complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>, signal?: AbortSignal) => {
     await complete({ system: "system prompt", user: "user prompt", signal });
     return { ok: true, value: extraction };
@@ -71,15 +75,19 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("owner authenticated proposal extraction route", () => {
-  it("checks owner access before reading the body, then returns findings with unchanged revisions", async () => {
+  it("checks owner and both revisions before work, then durably returns findings and preparation state", async () => {
     const requestValue = request();
     const response = await POST(requestValue, { params: Promise.resolve({ id: eventId }) });
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, revisions, extraction });
+    expect(await response.json()).toEqual({ ok: true, revisions, extraction, eventVersion: 5, preparation: { revision: 1, issues: [] } });
     expect(response.headers.get("cache-control")).toContain("no-store");
-    expect(mocked.access).toHaveBeenCalledTimes(4);
+    expect(mocked.access).toHaveBeenCalledTimes(3);
+    expect(mocked.access).toHaveBeenNthCalledWith(1, {}, "presented-session-token", eventId);
+    expect(mocked.access).toHaveBeenNthCalledWith(2, {}, "presented-session-token", eventId, 4, 0);
+    expect(mocked.access).toHaveBeenNthCalledWith(3, {}, "presented-session-token", eventId, 4, 0);
     expect(mocked.admission).toHaveBeenCalledWith({}, "owner-account-id", "a".repeat(64));
     expect(mocked.extract).toHaveBeenCalledOnce();
+    expect(mocked.record).toHaveBeenCalledWith({}, "presented-session-token", eventId, 4, 0, extraction);
     expect(mocked.complete).toHaveBeenCalledWith({ system: "system prompt", user: "user prompt", signal: requestValue.signal });
   });
 
@@ -107,6 +115,7 @@ describe("owner authenticated proposal extraction route", () => {
     const form = new FormData();
     form.append("file", new File(["synthetic"], "event.pdf", { type: "application/pdf" }));
     form.append("expectedVersion", "04");
+    form.append("expectedPreparationRevision", "0");
     form.append("revisions", JSON.stringify(revisions));
     const requestValue = new Request(`http://127.0.0.1:3107/api/organiser/events/${eventId}/proposal-extraction`, {
       method: "POST", headers: { origin: "http://127.0.0.1:3107" }, body: form,
@@ -117,12 +126,20 @@ describe("owner authenticated proposal extraction route", () => {
     expect(mocked.complete).not.toHaveBeenCalled();
   });
 
-  it("discards a result when event access or version becomes stale during inference", async () => {
-    mocked.access.mockResolvedValueOnce("owner-account-id").mockResolvedValueOnce("owner-account-id").mockResolvedValueOnce("owner-account-id")
-      .mockRejectedValueOnce(new EventError(409, "Event changed."));
+  it("discards an inference result if the locked record step finds either revision stale", async () => {
+    mocked.record.mockRejectedValueOnce(new EventError(409, "Event or preparation changed."));
     const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ ok: false, outcome: "stale_event" });
+    expect(mocked.record).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a stale preparation revision before PDF extraction", async () => {
+    mocked.access.mockResolvedValueOnce({ ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 1 });
+    const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });
+    expect(response.status).toBe(409);
+    expect(mocked.extract).not.toHaveBeenCalled();
+    expect(mocked.process).not.toHaveBeenCalled();
   });
 
   it("rejects a foreign origin before identity, database, upload or provider work", async () => {

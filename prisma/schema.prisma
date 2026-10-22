@@ -104,6 +104,8 @@ model Event {
   version Int @default(0)
   draft Json
   draftVersion Int @default(0) @map("draft_version")
+  preparation Json?
+  preparationVersion Int @default(0) @map("preparation_version")
   firstPublishedAt DateTime? @map("first_published_at") @db.Timestamptz(6)
   currentPublicationId String? @unique @map("current_publication_id") @db.Uuid
   currentPublication EventPublication? @relation("CurrentPublication", fields: [currentPublicationId], references: [id], onDelete: Restrict)

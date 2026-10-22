@@ -5,6 +5,16 @@ import { EMPTY_EVENT, sameEventFields, type EventFields, type EventSummary } fro
 import { authenticatedAccount, requireSelf } from "../accounts/service";
 import type { Transaction } from "../auth/session";
 import { digest, EventError, parseFields, publicationSnapshot, validatePublication } from "./policy";
+import type { EventPreparation, ClarificationResolutionIntent } from "../../features/proposal-assistance/clarification";
+import type { PrivateExtraction } from "../../features/proposal-assistance/types";
+import {
+  applyPreparationResolutions,
+  clarificationPersistenceEnabled,
+  mergeGeneratedPreparation,
+  preparationJson,
+  readPreparation,
+  unresolvedClarificationFields,
+} from "../proposal-assistance/clarification";
 
 type Snapshot = ReturnType<typeof publicationSnapshot>;
 type Db = PrismaClient;
@@ -75,13 +85,18 @@ export async function createEvent(db: Db, token: string | undefined) {
 export async function readEvent(db: Db, token: string | undefined, id: string) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
+    const preparationEnabled = clarificationPersistenceEnabled();
+    assertPreparationMode(event, preparationEnabled);
     return { id: event.id, state: event.state, version: event.version, draftVersion: event.draftVersion,
-      fields: event.draft as unknown as EventFields, published: await previousSnapshot(tx, event) };
+      fields: event.draft as unknown as EventFields,
+      preparation: preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null,
+      published: await previousSnapshot(tx, event) };
   });
 }
 export type EventAction = "save" | "preview" | "publish" | "withdraw" | "cancel" | "delete" | "discard";
+export type EventClarificationMutation = { expectedPreparationRevision: number; resolutions: ClarificationResolutionIntent[] };
 export async function mutateEvent(db: Db, token: string | undefined, id: string, expected: number,
-  action: EventAction, fields?: EventFields, approvalId?: string) {
+  action: EventAction, fields?: EventFields, approvalId?: string, clarification?: EventClarificationMutation) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     currentVersion(event, expected);
@@ -92,15 +107,41 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
     }
     editable(event);
     if (action === "save" || action === "discard") {
+      const preparationEnabled = clarificationPersistenceEnabled();
+      assertPreparationMode(event, preparationEnabled);
       const snapshot = action === "discard" ? await previousSnapshot(tx, event) : null;
       if (action === "discard" && !snapshot) throw new EventError(409, "Use Delete Draft for a never-published event.");
+      const oldFields = parseFields(event.draft);
       const next = action === "save" ? parseFields(fields) : snapshot!.fields;
-      await tx.event.update({ where: { id }, data: { draft: next, version: { increment: 1 }, draftVersion: { increment: 1 }, editedAt: await stamp(tx) } });
+      const priorPreparation = preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null;
+      if (action === "save") {
+        if (priorPreparation && !clarification) throw new EventError(409, "Reload the proposal clarification state before saving.");
+        if (preparationEnabled && clarification && clarification.expectedPreparationRevision !== event.preparationVersion) {
+          throw new EventError(409, "Proposal clarifications changed. Reload and review them before saving.");
+        }
+      }
+      const now = await stamp(tx);
+      const preparation = applyPreparationResolutions(priorPreparation, oldFields, next,
+        action === "save" ? clarification?.resolutions ?? [] : [], actor, now, event.preparationVersion + 1);
+      const data: Prisma.EventUpdateInput = {
+        draft: next as unknown as Prisma.InputJsonValue,
+        version: { increment: 1 },
+        draftVersion: { increment: 1 },
+        editedAt: now,
+        ...(preparation ? {
+          preparation: preparationJson(preparation) as unknown as Prisma.InputJsonValue,
+          preparationVersion: { increment: 1 },
+        } : {}),
+      };
+      await tx.event.update({ where: { id }, data });
       await tx.eventApproval.deleteMany({ where: { eventId: id } });
       return { saved: true };
     }
     if (action === "preview") {
+      const preparationEnabled = clarificationPersistenceEnabled();
+      assertPreparationMode(event, preparationEnabled);
       const fields = parseFields(event.draft);
+      assertClarificationsResolved(preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null, fields);
       const previous = await previousSnapshot(tx, event);
       validatePublication(fields, event.state, previous?.fields.start, await stamp(tx));
       const snapshot = publicationSnapshot(fields, randomUUID());
@@ -111,6 +152,10 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       return { approvalId: approval.id, snapshot, digest: approval.digest, version: event.version };
     }
     if (action === "publish") {
+      const preparationEnabled = clarificationPersistenceEnabled();
+      assertPreparationMode(event, preparationEnabled);
+      const currentFields = parseFields(event.draft);
+      assertClarificationsResolved(preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null, currentFields);
       if (!approvalId) throw new EventError(409, "Preview this exact saved draft again before publishing.");
       const approval = await tx.eventApproval.findFirst({ where: { id: approvalId, eventId: id, actorId: actor,
         eventVersion: event.version, draftVersion: event.draftVersion } });
@@ -134,4 +179,46 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
     await tx.eventApproval.deleteMany({ where: { eventId: id } });
     return { updated: true };
   });
+}
+
+/** Persist one successful local extraction while rechecking owner, event and preparation revisions. */
+export async function recordProposalExtraction(
+  db: Db,
+  token: string | undefined,
+  id: string,
+  expectedVersion: number,
+  expectedPreparationRevision: number,
+  extraction: PrivateExtraction,
+) {
+  if (!clarificationPersistenceEnabled()) throw new EventError(503, "Proposal clarification is available only in local development.");
+  return asOrganiser(db, token, async (tx, actor) => {
+    const event = await owned(tx, actor, id);
+    currentVersion(event, expectedVersion);
+    if (event.preparationVersion !== expectedPreparationRevision) throw new EventError(409, "Proposal clarifications changed. Reload and try again.");
+    editable(event);
+    const prior = readPreparation(event.preparation, event.preparationVersion);
+    const fields = parseFields(event.draft);
+    const next = mergeGeneratedPreparation(prior, extraction, fields, event.preparationVersion + 1);
+    const now = await stamp(tx);
+    const nextEventVersion = event.version + 1;
+    await tx.event.update({ where: { id }, data: {
+      preparation: preparationJson(next) as unknown as Prisma.InputJsonValue,
+      preparationVersion: { increment: 1 },
+      version: { increment: 1 },
+      editedAt: now,
+    } });
+    await tx.eventApproval.deleteMany({ where: { eventId: id } });
+    return { eventVersion: nextEventVersion, preparation: next };
+  });
+}
+
+function assertClarificationsResolved(preparation: EventPreparation | null, fields: EventFields) {
+  const unresolved = unresolvedClarificationFields(preparation, fields);
+  if (unresolved.length) throw new EventError(409, "Resolve the proposal clarifications before previewing or publishing.", unresolved[0]);
+}
+
+function assertPreparationMode(event: Event, preparationEnabled: boolean) {
+  if (!preparationEnabled && (event.preparation !== null || event.preparationVersion !== 0)) {
+    throw new EventError(503, "Saved proposal clarifications are unavailable outside local development.");
+  }
 }

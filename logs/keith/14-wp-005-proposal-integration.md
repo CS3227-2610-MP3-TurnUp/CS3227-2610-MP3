@@ -134,3 +134,53 @@ Keith requests readable formatting of prompts.ts instead of single-line prompt t
 Application_foundation_engineer (gpt-6-luna/xhigh) reformatted prompts.ts into readable short string segments joined without changing assembled output. Independent implementation_verifier (gpt-6.1-sol/high) confirmed exact system/user UTF-8 bytes and v6 equality against the captured pre-edit source across four synthetic page-input cases, including Unicode and whitespace. Processor6/6, targeted ESLint and whitespace passed; no review defects. Coordinator updated tasks/evidence and this log. Source SHA256e775ebc0504d6e46b54cf62c9cb617d51c0a76dd59fd129d85f313d4eeccc1cb.
 
 No prompt wording/version, behaviour/spec, permanent tests, build/typegen, private/generated configuration, provider/DB/gate calls, budget use, commit or deployment changes.
+
+
+# 11 - Implement Targeted Clarification and Server Resolution - 23 October 2026
+
+## Request
+
+Keith requests implementation of the accepted clarification plan after committing the extraction integration. Decisions: inline issues/summary; explicit manual confirmation; block before preview; issues recorded at Generate, answers saved with Save Draft; PDF removal retains issues; regeneration preserves confirmed values and reopens disagreement; organiser-confirmed answers need no PDF quote/reason; edits require reconfirmation; local synthetic delivery first.
+
+## Results
+
+Implemented CHG-K-011 from9d651e8 using the disclosed backend/UI application_foundation_engineer agents (gpt-6-luna/xhigh) and independent implementation_verifier (gpt-6.1-sol/high). Backend added bounded private structured preparation, additive Event JSONB/revision migration, owner/session/revision-locked recording/resolution and preview/publication guards. UI added inline fixed clarification questions/summary, explicit organiser confirmations, suggestion intents saved only with Save Draft, field-scoped reopening, issue preservation after PDF removal and stale-result/value protection. Prompt v6 unchanged; public snapshots exclude private preparation. Null-preparation manual flow remains; existing assisted records fail closed outside local mode.
+
+Final integrated331tests/34files, proposal72/11, backend47/5 and UI14/2passed; ESLint/TypeScript and sanitized Prisma/build passed. Independent review reproduced331/34/lint/whitespace and rechecked P1capacity persistence, P2inactive-environment bypass and P2Unicode/trim/CRLF intent normalization fixes; no unresolved defects.19-file fingerprint6a5e1f5198a284c4094045e87984f1b310b038505238a40f50c0d2966cc5f772. Exact checks, environment/tooling incidents and limits in K-011 verification.
+
+Parent verified existing assigned non-production direct/pooled target and applied the additive migration; rollback-only synthetic SQL checks passed after correcting an invalid test username, with no residual fixtures. No model/gate/probe quota operation, production migration/deployment or commit/push. Private env was intentionally read for that authorized database operation without printing/changing values; generation/build environment caveats are recorded. Existing next-env bytes/user servers preserved. Native browser/full-model/hosted evidence and retention activation remain deferred. Usage-limit interruption was resumed on continuation; entry13 records completion.
+
+
+# 12 - Attribute Agent Usage Across the Clarification Boundary - 23 October 2026
+
+## Request
+
+Keith requests all agent usage in this thread under CHG-K-010 until the most recent implement-the-plan turn, with that turn onward under CHG-K-011.
+
+## Results
+
+Used existing offline tools.agent_usage collection/binding/report commands against the local ledger. Root thread01a15f3d-e008-7b92-abbe-0f768bc23d96 has baseline CHG-K-010/WP-005 and a CHG-K-011/WP-005 override from turn01a164f4-5356-7aa3-a9f2-52a53966c9d4 (2026-10-22T18:51:36UTC), verified against native task-start/user-message metadata for the most recent implementation request. Bindings include descendant agents through the existing ancestry mechanism. Read back persisted bindings and refreshed report: at this checkpoint1384observed responses attributed to K-010 and71to K-011 for this root, with no third/unassigned bucket. Counts are a snapshot of an active session and will grow with collection; coverage/pricing diagnostics are preserved, not fabricated as zero or proof of acceptance. Reports/ledger remain outside Git; no provider quota/refill/model/hosted operation. CHG-K-011 implementation continues concurrently.
+
+
+# 13 - Continue Clarification Verification After Agent Interruption - 23 October 2026
+
+## Request
+
+Keith requests continuation after configured agents encountered usage-limit interruptions during CHG-K-011 verification. Preserve the implementation and complete remaining checks/evidence.
+
+## Results
+
+Primary resumed final checks; independent verifier resumed its source review and reproduced331tests/34files, lint/whitespace, material-fix checks and an inert in-memory injection check, with no unresolved actionable defects. Parent passed sanitized webpack production build including TypeScript/static generation and source/mirror identity checks. Independent disposable SQL replay timed out with all7tests skipped; direct assigned non-production migration/rollback checks had passed separately and are not misrepresented as that replay. No fresh native-browser/live-model check, production deployment or commit. Usage remains attributed to CHG-K-011 via the existing from-turn binding. Final evidence, source fingerprint and preservation limits are in changes/CHG-K-011-wp-005-clarification/verification.md.
+
+
+# 14 - Reconcile Clarification Handoff and Commit the Increment - 23 October 2026
+
+## Request
+
+Keith requests updated handoff/relevant documentation, permits a commit of the delivered increment, and explicitly requests no next-increment plan.
+
+## Results
+
+Orchestrator added CHG-K-011/handoff.md with exact GET/extraction/Save Draft preparation contract, canonical intent values, revision/approval behaviour, private/public separation, migration/client-restart requirements, tested snapshot and outstanding boundaries. Updated integration handoffs, WP-005 package/current implementation status, local testing guide and change records. Historical evidence remains intact; no new plan or product behaviour was introduced.
+
+Confirmed the19-file implementation/schema/test fingerprint is unchanged from independent review:6a5e1f5198a284c4094045e87984f1b310b038505238a40f50c0d2966cc5f772. Reused331tests/34files, lint/type/schema/build and scoped assigned non-production migration evidence; native-browser/live-model and skipped isolated-replay limits remain explicit. Documentation links/whitespace and final staged contents are checked before the authorized local commit. Exclude/preserve pre-existing generated next-env.d.ts and ignored private environment/usage files. No push, deployment, model/gate operation, dependency change or next-increment work.

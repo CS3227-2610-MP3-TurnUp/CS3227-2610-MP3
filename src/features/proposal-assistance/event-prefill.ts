@@ -1,4 +1,5 @@
 import { EVENT_LIMITS, FIELD_LABELS, type EventFields, type TextField } from "../../lib/event-fields";
+import { PROPOSAL_TO_EVENT_FIELD } from "./clarification";
 import type { PageEvidence, PrivateExtraction, ProposalField } from "./types";
 import { normalizeProposalDateTime } from "./validation";
 
@@ -19,7 +20,7 @@ export interface EventPrefill {
 }
 
 export function prepareEventAlternative(field: EventFieldKey, value: string): { ok: true; value: string | number } | { ok: false; reason: string } {
-  const proposalField = (Object.entries(eventTargets) as Array<[ProposalField, EventFieldKey]>).find(([, target]) => target === field)?.[0];
+  const proposalField = (Object.entries(PROPOSAL_TO_EVENT_FIELD) as Array<[ProposalField, EventFieldKey]>).find(([, target]) => target === field)?.[0];
   if (!proposalField) return { ok: false, reason: "This field cannot use a proposal alternative." };
   return convertKnownValue(proposalField, value);
 }
@@ -41,23 +42,14 @@ export function formatEventAlternative(field: EventFieldKey, value: string): str
   return `${part("day")}/${part("month")}/${part("year")}, ${part("hour")}:${part("minute")} ${part("dayPeriod").toUpperCase()} SGT`;
 }
 
-const eventTargets: Record<ProposalField, EventFieldKey> = {
-  title: "title",
-  purpose: "description",
-  start: "start",
-  end: "end",
-  location: "location",
-  capacity: "capacity",
-  feeStatus: "fee",
-  openTo: "openTo",
-  preparation: "preparation",
-};
-
-export function prepareEventPrefill(extraction: PrivateExtraction): EventPrefill {
+export function prepareEventPrefill(extraction: PrivateExtraction, preserveFields: ReadonlySet<ProposalField> = new Set()): EventPrefill {
   const values: Partial<EventFields> = {};
   const feedback: ProposalFeedbackMap = {};
 
-  for (const [proposalField, target] of Object.entries(eventTargets) as Array<[ProposalField, EventFieldKey]>) {
+  for (const [proposalField, target] of Object.entries(PROPOSAL_TO_EVENT_FIELD) as Array<[ProposalField, EventFieldKey]>) {
+    // Previously confirmed private answers remain authoritative during later extraction.
+    // A newly persisted clarification issue is rendered from server preparation state.
+    if (preserveFields.has(proposalField)) continue;
     const finding = extraction.facts[proposalField];
     if (!finding) {
       feedback[target] = { status: "unprocessed" };
@@ -98,8 +90,8 @@ function convertKnownValue(field: ProposalField, value: string): { ok: true; val
     return { ok: true, value: Number(value) };
   }
 
-  const target = eventTargets[field] as TextField;
-  const normalized = value.normalize("NFC").trim();
+  const target = PROPOSAL_TO_EVENT_FIELD[field] as TextField;
+  const normalized = value.normalize("NFC").trim().replaceAll("\r\n", "\n");
   if (normalized.length === 0 || [...normalized].length > EVENT_LIMITS[target] ||
     /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(normalized)) {
     return { ok: false, reason: `${targetLabel(target)} is outside the event field's allowed text limits.` };

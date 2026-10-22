@@ -45,7 +45,22 @@ it("requires explicit action/version, exact payload keys and a real approval ref
     { action: "preview", expectedVersion: 0, snapshot: {} }]) expect((await POST(request(body), context)).status).toBe(400);
   expect(service.mutate).not.toHaveBeenCalled();
   expect((await POST(request({ action: "save", expectedVersion: 0, fields: EMPTY_EVENT }), context)).status).toBe(200);
-  expect(service.mutate).toHaveBeenCalledWith({}, token, id, 0, "save", EMPTY_EVENT, undefined);
+  expect(service.mutate).toHaveBeenCalledWith({}, token, id, 0, "save", EMPTY_EVENT, undefined, undefined);
+});
+it("accepts only server-owned resolution intents on Save Draft", async () => {
+  const body = { action: "save", expectedVersion: 2, fields: EMPTY_EVENT, expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "A title" }] };
+  expect((await POST(request(body), context)).status).toBe(200);
+  expect(service.mutate).toHaveBeenCalledWith({}, token, id, 2, "save", EMPTY_EVENT, undefined, {
+    expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "A title" }],
+  });
+  for (const malformed of [
+    { ...body, resolutions: [{ ...body.resolutions[0], quote: "forged" }] },
+    { ...body, expectedPreparationRevision: undefined },
+    { ...body, resolutions: [{ ...body.resolutions[0], value: 10_001 }] },
+    { ...body, action: "preview" },
+  ]) expect((await POST(request(malformed), context)).status).toBe(400);
 });
 it("rejects oversized/malformed bodies before operations", async () => {
   expect((await create(request({ data: "x".repeat(524289) }))).status).toBe(413);

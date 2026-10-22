@@ -1,12 +1,13 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const auth = vi.hoisted(() => ({ self: vi.fn(), commit: vi.fn() }));
 vi.mock("../../src/server/accounts/service", () => ({ requireSelf: auth.self, authenticatedAccount: auth.commit }));
-import { createEvent, listEvents, mutateEvent, readEvent } from "../../src/server/events/service";
+import { createEvent, listEvents, mutateEvent, readEvent, recordProposalExtraction } from "../../src/server/events/service";
 import { currentPublication } from "../../src/server/publication/reader";
 import { EMPTY_EVENT } from "../../src/lib/event-fields";
+import type { PrivateExtraction } from "../../src/features/proposal-assistance/types";
 import type { PrismaClient } from "../../src/server/db/generated/client";
-const actor = "owner", id = "event-1";
+const actor = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587", id = "8aa3c13d-d179-46bc-aec9-d24873953e32";
 const fields = { ...EMPTY_EVENT, title: "Workshop", description: "Description", location: "Hall", fee: "Free", openTo: "Anyone", preparation: "None", start: "2099-11-01T02:00:00.000Z", end: "2099-11-01T04:00:00.000Z", capacity: 10 };
 // Transactional test double exercises service decisions/rollback, not PostgreSQL locking.
 let dbNow: Date;
@@ -36,10 +37,12 @@ const fake = {
 };
 const db = fake as unknown as PrismaClient;
 beforeEach(() => {
+  vi.unstubAllEnvs();
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
-  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
 });
+afterEach(() => vi.unstubAllEnvs());
 async function previewAndPublish() {
   const preview = await mutateEvent(db, "token", id, state.events[0].version as number, "preview") as { approvalId: string };
   await mutateEvent(db, "token", id, state.events[0].version as number, "publish", undefined, preview.approvalId);
@@ -154,4 +157,93 @@ it("publishing rechecks changed-start time after an earlier future reschedule wa
   await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 400 });
   expect(state.publications).toHaveLength(1);
   expect((await readEvent(db, "token", id)).published?.fields.start).toBe(fields.start);
+});
+
+function localPreparationEnvironment() {
+  vi.stubEnv("TURNUP_ENVIRONMENT", "development");
+  vi.stubEnv("NODE_ENV", "development");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("VERCEL_ENV", "development");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC", "false");
+}
+
+function missingTitleExtraction(): PrivateExtraction {
+  return { facts: { title: { status: "missing", evidence: [] } }, privateFindings: [], completeness: "incomplete",
+    incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["title"], technicalIssues: 0 };
+}
+
+it("records issues atomically, increments both revisions, and invalidates an earlier preview", async () => {
+  localPreparationEnvironment();
+  await mutateEvent(db, "token", id, 0, "preview");
+  const result = await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  expect(result).toMatchObject({ eventVersion: 1, preparation: { revision: 1, issues: [{ field: "title", reason: "source_missing", resolution: null }] } });
+  expect(state.events[0]).toMatchObject({ version: 1, preparationVersion: 1, preparation: { issues: result.preparation.issues } });
+  expect(state.approvals).toHaveLength(0);
+  expect(await readEvent(db, "token", id)).toMatchObject({ preparation: result.preparation, version: 1 });
+  await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("rejects stale extraction revisions without changing saved draft or clarifications", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  const before = structuredClone(state.events[0]);
+  await expect(recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction())).rejects.toMatchObject({ status: 409 });
+  expect(state.events[0]).toEqual(before);
+});
+
+it("saves an explicit manual confirmation, then reopens only that issue when its value changes", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  await mutateEvent(db, "token", id, 1, "save", { ...fields, title: "Owner chosen title" }, undefined, {
+    expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "Owner chosen title" }],
+  });
+  expect(state.events[0]).toMatchObject({ version: 2, preparationVersion: 2, preparation: { issues: [{
+    field: "title", confirmedValue: "Owner chosen title",
+    resolution: { method: "organiser", value: "Owner chosen title", evidence: [] },
+  }] } });
+  await mutateEvent(db, "token", id, 2, "preview");
+
+  await mutateEvent(db, "token", id, 2, "save", { ...fields, title: "Changed without confirmation" }, undefined, {
+    expectedPreparationRevision: 2, resolutions: [],
+  });
+  expect(state.events[0]).toMatchObject({ version: 3, preparationVersion: 3, preparation: { issues: [{
+    field: "title", reason: "answer_changed", confirmedValue: "Owner chosen title", resolution: null,
+  }] } });
+  await expect(mutateEvent(db, "token", id, 3, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+  await expect(mutateEvent(db, "token", id, 3, "publish", undefined, "forged-approval")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("keeps clarification issues through Discard and reopens an answer changed by restoring publication fields", async () => {
+  localPreparationEnvironment();
+  await previewAndPublish();
+  await recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction());
+  await mutateEvent(db, "token", id, 2, "save", { ...fields, title: "Private answer" }, undefined, {
+    expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "Private answer" }],
+  });
+  await mutateEvent(db, "token", id, 3, "discard");
+  expect(state.events[0]).toMatchObject({ version: 4, draft: fields, preparationVersion: 3, preparation: { issues: [{
+    field: "title", reason: "answer_changed", confirmedValue: "Private answer", resolution: null,
+  }] } });
+});
+
+it("fails closed on assisted records outside local scope while preserving the null-preparation manual path", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  vi.stubEnv("TURNUP_ENVIRONMENT", "production");
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "production");
+  vi.stubEnv("VERCEL_ENV", "production");
+  await expect(readEvent(db, "token", id)).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "save", { ...fields, title: "Changed" })).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "discard")).rejects.toMatchObject({ status: 503 });
+  expect(state.events[0]).toMatchObject({ preparationVersion: 1, preparation: { issues: [{ field: "title" }] } });
+
+  state.events[0].preparation = null;
+  state.events[0].preparationVersion = 0;
+  const preview = await mutateEvent(db, "token", id, 1, "preview") as { approvalId: string };
+  await mutateEvent(db, "token", id, 1, "publish", undefined, preview.approvalId);
+  expect(state.events[0].state).toBe("PUBLISHED");
 });

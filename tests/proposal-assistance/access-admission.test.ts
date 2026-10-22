@@ -25,21 +25,31 @@ describe("proposal event access", () => {
 
   it("hides foreign events and rejects cancelled or stale versions", async () => {
     requireSelf.mockResolvedValue({ id: "owner-id", role: "ORGANISER" });
-    const findUnique = vi.fn().mockResolvedValueOnce({ ownerId: "other-id", state: "DRAFT", version: expectedVersion });
+    const findUnique = vi.fn().mockResolvedValueOnce({ ownerId: "other-id", state: "DRAFT", version: expectedVersion, preparationVersion: 0 });
     const db = { event: { findUnique } } as never;
     await expect(assertProposalEventAccess(db, "token", eventId, expectedVersion)).rejects.toMatchObject({ status: 404 });
-    findUnique.mockResolvedValueOnce({ ownerId: "owner-id", state: "CANCELLED", version: expectedVersion });
+    findUnique.mockResolvedValueOnce({ ownerId: "owner-id", state: "CANCELLED", version: expectedVersion, preparationVersion: 0 });
     await expect(assertProposalEventAccess(db, "token", eventId, expectedVersion)).rejects.toBeInstanceOf(EventError);
-    findUnique.mockResolvedValueOnce({ ownerId: "owner-id", state: "DRAFT", version: expectedVersion + 1 });
+    findUnique.mockResolvedValueOnce({ ownerId: "owner-id", state: "DRAFT", version: expectedVersion + 1, preparationVersion: 0 });
     await expect(assertProposalEventAccess(db, "token", eventId, expectedVersion)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("rechecks the persisted preparation revision independently from the event version", async () => {
+    requireSelf.mockResolvedValue({ id: "owner-id", role: "ORGANISER" });
+    const findUnique = vi.fn().mockResolvedValue({ ownerId: "owner-id", state: "DRAFT", version: expectedVersion, preparationVersion: 4 });
+    const db = { event: { findUnique } } as never;
+    await expect(assertProposalEventAccess(db, "token", eventId, expectedVersion, 3)).rejects.toMatchObject({ status: 409 });
+    expect(await assertProposalEventAccess(db, "token", eventId, expectedVersion, 4)).toEqual({
+      ownerId: "owner-id", eventVersion: expectedVersion, preparationRevision: 4,
+    });
   });
 
   it("uses the authenticated owner identity and current event state", async () => {
     requireSelf.mockResolvedValueOnce({ id: "owner-id", role: "ORGANISER" });
-    const findUnique = vi.fn().mockResolvedValueOnce({ ownerId: "owner-id", state: "PUBLISHED", version: expectedVersion });
-    const id = await assertProposalEventAccess({ event: { findUnique } } as never, "token", eventId, expectedVersion);
-    expect(id).toBe("owner-id");
-    expect(findUnique).toHaveBeenCalledWith({ where: { id: eventId }, select: { ownerId: true, state: true, version: true } });
+    const findUnique = vi.fn().mockResolvedValueOnce({ ownerId: "owner-id", state: "PUBLISHED", version: expectedVersion, preparationVersion: 2 });
+    const access = await assertProposalEventAccess({ event: { findUnique } } as never, "token", eventId, expectedVersion);
+    expect(access).toEqual({ ownerId: "owner-id", eventVersion: expectedVersion, preparationRevision: 2 });
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: eventId }, select: { ownerId: true, state: true, version: true, preparationVersion: true } });
   });
 });
 
