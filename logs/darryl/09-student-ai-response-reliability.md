@@ -165,3 +165,57 @@ Prompt explicitly requests friendly clarification for unknown intent without key
 Final checks: scoped ESLint passed; nonincremental TypeScript passed; git diff --check passed. Structured log initially failed because a closing JSON fence shared its line with the object; corrected before delivery. No independent review is claimed.
 
 Delivery: pipeline committed as48b48ec. Six affected suites106/106passed; final wording-only rendering recheck17/17passed. Scoped lint, nonincremental types, diff whitespace and all3structured log entries passed. Main-agent review only. Two focused commits prepared; authorised push/new PR follows. No live/provider/SQL/config/allowance changes or subagent use.
+
+# 04 - Hosted account attempt window - 22 October 2026
+
+## Request
+
+Darryl authorises20attempts per account per15minutes and push, explicitly for both Preview and Production. Keep separate200attempttotal pools, cooldown/output/time caps and existing spend/expiry. Main agent only.
+
+## Results
+
+Shared HOSTED_LIMITS changes from5to20; database acceptance tests cover both target environments, twenty accepted requests, twenty-first denial and rolling-window recovery without a reset. Checks passed:10disposableSQLtests and15policytests;scopedESLint passed. No external database/provider requests. Bothenvironmentboundary/expirychecks use isolated throwaway local databases. Main-agent-only review under existing human override;historical independent evidence retained. PR30remainsopen;push will update it. No migration/reset/activation or total-pool change.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 4,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "3ef32a6",
+  "captured_at": null,
+  "delegation": "Explicit main-agent-only instruction retained;no subagents.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Increase Student hosted per-account admission to20attempts per15minutes in both Preview and Production; test and push.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Hosted limit20inbothenvironments;10disposableSQLand15policychecks passed;scopedlint passed.No live inference, external DB, resets, migration or budget-pool changes. Main-agent review only.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Prompt-scoped telemetry unavailable;root active."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

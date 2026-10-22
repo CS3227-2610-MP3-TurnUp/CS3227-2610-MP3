@@ -58,3 +58,7 @@ Darryl authorised the D006hosted Preview extension and200total-attempt budget. P
 ## Production activation authorised — 22 October2026
 
 Darryl requests Production Student chat,push/merge and explicitly chooses a separate200attemptProductionpoolwithsamePreviewlimits. NewProductionapproval and matchingVercel/app/DBlabels preserve Preview counters and strict environment isolation. Additive20261022020000migration expands the budgetenvironmentCHECKonly;target-specificactivationneverresets/replacesexistingrows. ProductionusesitsownSTUDENT_SOCLAAS_API_KEY;Organiserkeyunchanged. Existingcandidate/root/sourceguard and protectedpromotionworkflowretained. See docs/plans/wp-006-production-activation.md and ownerlog08forcurrentchecks/outcomes;earlierProduction-disabledstatementsarehistoricalforthisapprovedextension. Noagentliveinferenceorfullpackagecompletion.
+
+## Hosted Student account window - 22 October 2026, log09entry04
+
+Darryl increased the shared hosted per-account ceiling from5to20attempts in a rolling15minute window for both Preview and Production. The separate200attempttotal pools,200000output reservation cap,1000output/request,20second timeout,10second shared spacing,lease,deduplication,existing spend and expiry remain unchanged. No migration,activation,reset or live inference. Focused disposable SQL checks verify20admissions,21st denial and window recovery in each environment; actual check results are recorded in log09. New verification remains main-agent-only.
