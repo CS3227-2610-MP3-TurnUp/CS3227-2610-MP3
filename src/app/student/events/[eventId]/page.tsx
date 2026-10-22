@@ -15,5 +15,5 @@ export default async function StudentEventPage({ params }: { params: Promise<{ e
   const { eventId } = await params;
   return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/student">TurnUp</Link><AccountMenu username={access.user.username} studentNavigation /></header>
     <StudentEventDetails key={eventId} eventId={eventId} />
-    {(localDevelopment() || hostedPolicy()) && <PublicationChat key={`chat-${eventId}`} eventId={eventId} mode={localDevelopment() ? "local" : "hosted"} />}</main>;
+    {(localDevelopment() || hostedPolicy()) && <PublicationChat key={`chat-${access.user.id}-${eventId}`} eventId={eventId} mode={localDevelopment() ? "local" : "hosted"} />}</main>;
 }

@@ -5,6 +5,7 @@ vi.mock("../../src/server/student-assistant/hosted-http", () => ({ hostedResourc
 vi.mock("../../src/server/student-assistant/publication-http", () => ({ publicationResource: mocks.guard }));
 vi.mock("../../src/server/student-assistant/history", () => ({ readHistory: mocks.read }));
 vi.mock("../../src/server/auth/request-security", () => ({ authConfig: () => ({ secure: false }) }));
+vi.mock("../../src/server/accounts/service", () => ({ privateHeaders: { "Cache-Control": "no-store, private" }, requireSelf: vi.fn(async () => ({ id: "11111111-1111-4111-8111-111111111111", role: "STUDENT" })) }));
 vi.mock("../../src/server/db/client", () => ({ prisma: { synthetic: true } }));
 import { historyResource } from "../../src/server/student-assistant/history-http";
 import { PublicationSourceError } from "../../src/server/student-assistant/publication-source";
@@ -19,7 +20,7 @@ it.each(["local", "hosted"] as const)("%s history uses authenticated source guar
  const response = await historyResource(request(), eventId, mode);
  expect(response.status).toBe(200);
  expect(response.headers.get("cache-control")).toBe("no-store, private");
- expect(await response.json()).toEqual({ ok: true, eventId, revision, turns: [] });
+ expect(await response.json()).toEqual({ ok: true, eventId, revision, accountScope: eventId, turns: [] });
  expect(mocks.read).toHaveBeenCalledWith({ synthetic: true }, token, eventId, revision);
 });
 it.each([401,403,404])("source guard denial %s prevents history access", async status => {
