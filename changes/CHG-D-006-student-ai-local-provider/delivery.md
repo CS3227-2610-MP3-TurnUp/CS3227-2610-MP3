@@ -159,3 +159,7 @@ Darryl approved keeping existing conversation/draft visible during routine open/
 ## Production activation authorised — 22 October2026
 
 Darryl requests Production Student chat,push/merge and explicitly chooses a separate200attemptProductionpoolwithsamePreviewlimits. NewProductionapproval and matchingVercel/app/DBlabels preserve Preview counters and strict environment isolation. Additive20261022020000migration expands the budgetenvironmentCHECKonly;target-specificactivationneverresets/replacesexistingrows. ProductionusesitsownSTUDENT_SOCLAAS_API_KEY;Organiserkeyunchanged. Existingcandidate/root/sourceguard and protectedpromotionworkflowretained. See docs/plans/wp-006-production-activation.md and ownerlog08forcurrentchecks/outcomes;earlierProduction-disabledstatementsarehistoricalforthisapprovedextension. Noagentliveinferenceorfullpackagecompletion.
+
+## Response reliability increment - log09
+
+Ready for focused PR delivery: compact provider output bound to trusted source identity, friendly conversational/clarification instructions, complete JSON-fence handling, truncation metadata, metadata-only failure classification, friendly retry copy and offline regressions. Existing strict evidence/lifecycle checks, Student key isolation and local/Preview/Production budgets are unchanged. No live-inference quality result; organiser contact-field integration and other full WP006 dependencies remain pending. See log09 and verification.md for exact checks.

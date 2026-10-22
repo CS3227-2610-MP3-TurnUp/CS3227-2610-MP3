@@ -123,3 +123,14 @@ it("keeps a clear organiser follow-up once and never invents a contact action", 
   const html = render(answered({ ...identity, kind: "unanswered", reply }));
   expect(html.match(/Please contact the organiser to confirm\./g)).toHaveLength(1); expect(html).not.toContain("Please check with"); expect(html).not.toContain("<a ");
 });
+
+it("shows friendly technical-failure guidance, preserves the valid question and offers an explicit retry", () => {
+  const draft = assistantReducer(createAssistantState(SAMPLE_SOURCE), { type: "draft_changed", value: "yoo can i join" });
+  const pending = assistantReducer(draft, { type: "request_started", requestId: "casual" });
+  const failed = assistantReducer(pending, { type: "request_failed", requestId: "casual", ...identity, reason: "invalid_response" });
+  const html = render(failed);
+  expect(html).toContain("yoo can i join");
+  expect(html).toContain("finish that reply");
+  expect(html).toContain("Try again");
+  expect(html).not.toMatch(/could not be read|JSON|schema|invalid question/);
+});
