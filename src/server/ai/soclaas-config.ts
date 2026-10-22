@@ -16,13 +16,23 @@ export type SoCConfigResult =
 
 export type SoCEnvironment = Record<string, string | undefined>;
 
+/** Timeout exception used only by an explicitly opted-in local synthetic run. */
+export type SoCConfigTimeoutScope = "local-synthetic-proposal";
+
+export interface SoCConfigOptions {
+  timeoutScope?: SoCConfigTimeoutScope;
+}
+
+export const LOCAL_SYNTHETIC_PROPOSAL_MODEL = "qwen3.5:9b";
+
 const expectedBaseUrl = "https://soclaas-api.comp.nus.edu.sg/v1";
 const maxInputByteLimit = 65_536;
 const maxOutputTokenLimit = 4_096;
-const maxTimeoutMs = 30_000;
+const sharedMaxTimeoutMs = 30_000;
+const localSyntheticProposalMaxTimeoutMs = 60_000;
 
 /** Read server-only settings; no defaults silently select a model or budget. */
-export function readSoCConfig(env: SoCEnvironment): SoCConfigResult {
+export function readSoCConfig(env: SoCEnvironment, options: SoCConfigOptions = {}): SoCConfigResult {
   const required = [
     env.SOCLAAS_API_KEY,
     env.SOCLAAS_BASE_URL,
@@ -41,6 +51,12 @@ export function readSoCConfig(env: SoCEnvironment): SoCConfigResult {
   const maxInputBytes = parsePositiveInteger(inputBytesValue);
   const maxOutputTokens = parsePositiveInteger(outputTokensValue);
   const timeoutMs = parsePositiveInteger(timeoutMsValue);
+  const timeoutLimitMs =
+    options.timeoutScope === "local-synthetic-proposal" &&
+    isLocalSyntheticProposalAssistanceEnabled(env) &&
+    isLocalSyntheticProposalAssistanceEnabled(process.env)
+      ? localSyntheticProposalMaxTimeoutMs
+      : sharedMaxTimeoutMs;
 
   if (
     !apiKey ||
@@ -54,7 +70,7 @@ export function readSoCConfig(env: SoCEnvironment): SoCConfigResult {
     maxOutputTokens === undefined ||
     maxOutputTokens > maxOutputTokenLimit ||
     timeoutMs === undefined ||
-    timeoutMs > maxTimeoutMs
+    timeoutMs > timeoutLimitMs
   ) {
     return { ok: false, outcome: "invalid_configuration" };
   }
@@ -63,6 +79,24 @@ export function readSoCConfig(env: SoCEnvironment): SoCConfigResult {
     ok: true,
     config: { apiKey, model, maxInputBytes, maxOutputTokens, timeoutMs },
   };
+}
+
+export function isLocalDevelopmentEnvironment(env: SoCEnvironment): boolean {
+  return (
+    env.TURNUP_ENVIRONMENT === "development" &&
+    env.NODE_ENV === "development" &&
+    env.DATABASE_ENVIRONMENT === "non-production" &&
+    (env.VERCEL_ENV === undefined || env.VERCEL_ENV === "development")
+  );
+}
+
+/**
+ * Proposal extraction is deliberately available only for a local synthetic
+ * exercise. Both the caller's view and the real process environment must opt
+ * in, so an injected test/config object cannot enable a hosted process.
+ */
+export function isLocalSyntheticProposalAssistanceEnabled(env: SoCEnvironment): boolean {
+  return isLocalDevelopmentEnvironment(env) && env.PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC === "true";
 }
 
 function parsePositiveInteger(value: string | undefined): number | undefined {

@@ -1,6 +1,12 @@
 import "server-only";
 
-import { readSoCConfig, type SoCEnvironment } from "./soclaas-config";
+import {
+  isLocalSyntheticProposalAssistanceEnabled,
+  LOCAL_SYNTHETIC_PROPOSAL_MODEL,
+  readSoCConfig,
+  type SoCConfigTimeoutScope,
+  type SoCEnvironment,
+} from "./soclaas-config";
 
 const chatCompletionsUrl = "https://soclaas-api.comp.nus.edu.sg/v1/chat/completions";
 const maxResponseBytes = 65_536;
@@ -11,6 +17,9 @@ export interface SoCInput {
   user: string;
   signal?: AbortSignal;
 }
+
+/** Fixed provider profile; callers cannot select model, format, or reasoning mode. */
+export type SoCCompletionProfile = "local_synthetic_proposal_json_v1";
 
 export type SoCOutcome =
   | "not_configured"
@@ -26,10 +35,15 @@ export type SoCOutcome =
   | "invalid_response";
 
 export type SoCFailure =
-  | { ok: false; outcome: Exclude<SoCOutcome, "unavailable"> }
+  | { ok: false; outcome: Exclude<SoCOutcome, "unavailable" | "invalid_response"> }
+  | { ok: false; outcome: "invalid_response"; finishReason?: SoCFinishReason }
   | { ok: false; outcome: "unavailable"; failureSource: "http_response" | "transport" };
 
-export type SoCResult = { ok: true; text: string; usage?: SoCUsage } | SoCFailure;
+export type SoCFinishReason = "stop" | "length" | "other";
+
+export type SoCResult =
+  | { ok: true; text: string; usage?: SoCUsage; finishReason?: SoCFinishReason }
+  | SoCFailure;
 
 export interface SoCUsage {
   promptTokens?: number;
@@ -42,11 +56,47 @@ export type FetchLike = typeof fetch;
 /** One bounded Chat Completions attempt. Provider bodies and exception text never escape. */
 export async function requestSoCCompletion(
   input: SoCInput,
-  options: { env?: SoCEnvironment; fetchImpl?: FetchLike } = {},
+  options: {
+    env?: SoCEnvironment;
+    fetchImpl?: FetchLike;
+    /** Explicit local-only JSON extraction profile; never selected from request data. */
+    profile?: SoCCompletionProfile;
+  } = {},
 ): Promise<SoCResult> {
-  const configResult = readSoCConfig(options.env ?? process.env);
+  const env = options.env ?? process.env;
+  if (
+    options.profile !== undefined &&
+    (
+      options.profile !== "local_synthetic_proposal_json_v1" ||
+      !isLocalSyntheticProposalAssistanceEnabled(env) ||
+      !isLocalSyntheticProposalAssistanceEnabled(process.env) ||
+      env.SOCLAAS_MODEL !== LOCAL_SYNTHETIC_PROPOSAL_MODEL ||
+      process.env.SOCLAAS_MODEL !== LOCAL_SYNTHETIC_PROPOSAL_MODEL
+    )
+  ) {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
+
+  const timeoutScope: SoCConfigTimeoutScope | undefined = options.profile
+    ? "local-synthetic-proposal"
+    : undefined;
+  const configResult = readSoCConfig(env, {
+    ...(timeoutScope ? { timeoutScope } : {}),
+  });
   if (!configResult.ok) return configResult;
   const config = configResult.config;
+
+  if (
+    options.profile &&
+    (
+      config.model !== LOCAL_SYNTHETIC_PROPOSAL_MODEL ||
+      config.maxInputBytes !== 65_536 ||
+      config.maxOutputTokens !== 4_096 ||
+      config.timeoutMs !== 60_000
+    )
+  ) {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
 
   const inputBytes =
     new TextEncoder().encode(input.system).byteLength + new TextEncoder().encode(input.user).byteLength;
@@ -81,6 +131,13 @@ export async function requestSoCCompletion(
         ],
         max_tokens: config.maxOutputTokens,
         stream: false,
+        ...(options.profile === "local_synthetic_proposal_json_v1"
+          ? {
+              temperature: 0,
+              response_format: { type: "json_object" },
+              reasoning_effort: "none",
+            }
+          : {}),
       }),
       signal: controller.signal,
     });
@@ -90,6 +147,9 @@ export async function requestSoCCompletion(
       clearTimeout(timer);
       await cancelResponseBodyBounded(response);
       const outcome = classifyStatus(response.status);
+      if (options.profile && outcome === "bad_request") {
+        return { ok: false, outcome: "invalid_configuration" };
+      }
       return outcome === "unavailable"
         ? { ok: false, outcome, failureSource: "http_response" }
         : { ok: false, outcome };
@@ -188,7 +248,19 @@ function readCompletion(body: unknown): SoCResult {
   }
 
   const usage = readUsage(body.usage);
-  return usage ? { ok: true, text: first.message.content, usage } : { ok: true, text: first.message.content };
+  const finishReason = readFinishReason(first.finish_reason);
+  return {
+    ok: true,
+    text: first.message.content,
+    ...(usage ? { usage } : {}),
+    ...(finishReason ? { finishReason } : {}),
+  };
+}
+
+function readFinishReason(value: unknown): SoCFinishReason | undefined {
+  if (value === "stop" || value === "length") return value;
+  if (value === "content_filter" || value === "tool_calls" || value === "function_call") return "other";
+  return undefined;
 }
 
 function readUsage(value: unknown): SoCUsage | undefined {

@@ -1,0 +1,9 @@
+# CHG-K-010 — WP-005 proposal integration
+
+Keith owns this increment. Base: 1f0aa87. Branch/worktree: wp-005-proposal-integration / .worktrees/wp-005-proposal-integration. Status: locally implemented and independently reviewed; full WP-005 and hosted/live acceptance remain incomplete.
+
+Implement the approved plan: port reusable dirty CHG-K-007 code read-only into current Event Creation; authenticated bounded extraction, private page-local findings/evidence, manual correction and Generate-to-prefill preparation with inline evidence. Applied fields use existing Save Draft/Preview/Publish. No automatic saving/publication. Required targets ORG03–06/08/18, SEC01–06, SHR05/06/08; scoped T02–05/T13/T14/T22/T26. ORG07 public drafting remains deferred, not removed from baseline. No new persistent preparation schema, Student work, real private proposal processing, deployment, commit, push or remote issue changes. Provider checks use deterministic doubles; live calls require a valid assigned allowance/target, never assumed from prototype history.
+
+Read AGENTS.md, CONTRIBUTING.md, specs/README.md reading map, baseline, decisions G04/G06/G08, implementation plan/handoffs, full WP-005, accounts/access, AI/privacy, domain/deployment contracts, Organiser proposal/event contracts and complete applicable scenarios. UI follows docs/ui-guidelines.md and ui-screen-patterns.md. Prototype current entry: ../proposal-evaluation/changes/CHG-K-007-proposal-evaluation/handoff.md (relative to integration worktree). Preserve original worktree and private configuration.
+
+Keith confirms prior publication Preview/Production verification in this conversation; no exact tested hosted revision/results supplied here. Do not repeat verification solely because old records say pending, or invent hosted evidence.

@@ -16,7 +16,10 @@ const configured: SoCEnvironment = {
 
 const input = { system: "Answer only with synthetic status.", user: "Return OK." };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 
 describe("server-side SoCLaaS boundary", () => {
   it("fails closed when configuration or explicit caps are missing", async () => {
@@ -86,6 +89,87 @@ describe("server-side SoCLaaS boundary", () => {
         { role: "user", content: input.user },
       ],
     });
+  });
+
+  it("enables the fixed JSON/no-thinking profile only in explicitly opted-in local development", async () => {
+    const localEnv = {
+      TURNUP_ENVIRONMENT: "development",
+      NODE_ENV: "development",
+      DATABASE_ENVIRONMENT: "non-production",
+      VERCEL_ENV: "development",
+      PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC: "true",
+      SOCLAAS_API_KEY: "synthetic-provider-key",
+      SOCLAAS_BASE_URL: "https://soclaas-api.comp.nus.edu.sg/v1",
+      SOCLAAS_MODEL: "qwen3.5:9b",
+      SOCLAAS_MAX_INPUT_BYTES: "65536",
+      SOCLAAS_MAX_OUTPUT_TOKENS: "4096",
+      SOCLAAS_TIMEOUT_MS: "60000",
+    };
+    for (const [key, value] of Object.entries(localEnv)) vi.stubEnv(key, value);
+
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        choices: [{ message: { content: "{\"ok\":true}" }, finish_reason: "stop" }],
+      }),
+    );
+    await expect(
+      requestSoCCompletion(input, {
+        env: localEnv,
+        fetchImpl,
+        profile: "local_synthetic_proposal_json_v1",
+      }),
+    ).resolves.toEqual({ ok: true, text: "{\"ok\":true}", finishReason: "stop" });
+
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe("https://soclaas-api.comp.nus.edu.sg/v1/chat/completions");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      model: "qwen3.5:9b",
+      max_tokens: 4096,
+      stream: false,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      reasoning_effort: "none",
+    });
+  });
+
+  it("rejects the local extraction profile when process opt-in or exact bounds do not match", async () => {
+    const localEnv = {
+      TURNUP_ENVIRONMENT: "development",
+      NODE_ENV: "development",
+      DATABASE_ENVIRONMENT: "non-production",
+      VERCEL_ENV: "development",
+      PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC: "true",
+      SOCLAAS_API_KEY: "synthetic-provider-key",
+      SOCLAAS_BASE_URL: "https://soclaas-api.comp.nus.edu.sg/v1",
+      SOCLAAS_MODEL: "qwen3.5:9b",
+      SOCLAAS_MAX_INPUT_BYTES: "65536",
+      SOCLAAS_MAX_OUTPUT_TOKENS: "4096",
+      SOCLAAS_TIMEOUT_MS: "60000",
+    };
+    const fetchImpl = vi.fn<typeof fetch>();
+    expect(
+      await requestSoCCompletion(input, {
+        env: localEnv,
+        fetchImpl,
+        profile: "local_synthetic_proposal_json_v1",
+      }),
+    ).toEqual({ ok: false, outcome: "invalid_configuration" });
+
+    for (const [key, value] of Object.entries(localEnv)) vi.stubEnv(key, value);
+    for (const changed of [
+      { ...localEnv, SOCLAAS_MODEL: "qwen3.8:27b" },
+      { ...localEnv, SOCLAAS_MAX_OUTPUT_TOKENS: "4095" },
+      { ...localEnv, SOCLAAS_TIMEOUT_MS: "30000" },
+    ]) {
+      await expect(
+        requestSoCCompletion(input, {
+          env: changed,
+          fetchImpl,
+          profile: "local_synthetic_proposal_json_v1",
+        }),
+      ).resolves.toEqual({ ok: false, outcome: "invalid_configuration" });
+    }
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("rejects input above the explicitly configured UTF-8 byte bound without a request", async () => {

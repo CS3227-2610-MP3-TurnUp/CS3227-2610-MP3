@@ -1,6 +1,6 @@
 # WP-005 - Temporary proposal assistance
 
-Planned work under B1/D12; no implementation or passing runtime evidence is implied. Read the [common planning rules and ownership](../implementation-plan.md), the [task reading map](../README.md#task-reading-map), applicable [decision gates](../decisions.md) (G03/G04/G06/G08) and the relevant [integration handoff](../integration-handoffs.md). Exact file writers and change IDs remain per-change assignments.
+Full package remains incomplete under B1/D12; the local extraction-integration slice is recorded in [CHG-K-010](../../changes/CHG-K-010-wp-005-proposal-integration/verification.md). Scoped checks do not establish full package or hosted acceptance. Read the [common planning rules and ownership](../implementation-plan.md), the [task reading map](../README.md#task-reading-map), applicable [decision gates](../decisions.md) (G03/G04/G06/G08) and the relevant [integration handoff](../integration-handoffs.md). Exact file writers and change IDs remain per-change assignments.
 
 ## Scope and dependencies
 
@@ -21,3 +21,7 @@ Planned work under B1/D12; no implementation or passing runtime evidence is impl
 | WP-005 | T03–05/T13/T14/T22/T26 |
 
 Read each applicable scenario's complete Given/When/Then and method, including coverage and evaluation guidance. Partial package evidence does not pass an entire scenario.
+
+## Assigned extraction integration — 22 October 2026
+
+Keith assigned [CHG-K-010](../../changes/CHG-K-010-wp-005-proposal-integration/change.md) from master1f0aa87, selectively reusing the paused uncommitted CHG-K-007 prototype in a new worktree. This is working authenticated extraction and Generate-to-prefill field preparation in the current editor, with page-local findings and existing draft/publication operations. Public drafting/FAQ suggestions, durable private-preparation storage and hosted activation are outside this slice. Scoped targets and actual checks are tracked in its verification; planned work above remains the full WP-005 target.
