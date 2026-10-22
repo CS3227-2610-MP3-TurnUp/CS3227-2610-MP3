@@ -17,23 +17,30 @@ const require = createRequire(import.meta.url), prismaRequire = createRequire(re
 const { PGlite } = await import(devRequire.resolve("@electric-sql/pglite"));
 const { PGLiteSocketServer } = await import(devRequire.resolve("@electric-sql/pglite-socket"));
 const engine = await PGlite.create(), socket = new PGLiteSocketServer({ db: engine, host: "127.0.0.1", port: 0, maxConnections: 1 });
-let db: PrismaClient;
+const productionEngine = await PGlite.create(), productionSocket = new PGLiteSocketServer({ db: productionEngine, host: "127.0.0.1", port: 0, maxConnections: 1 });
+let db: PrismaClient, productionDb: PrismaClient;
 const model = "qwen3.8:27b", config = { apiKey: "synthetic", model, maxInputBytes: 65536, maxOutputTokens: 4096, timeoutMs: 30000 };
 beforeAll(async () => {
-  for (const name of (await readdir("prisma/migrations")).filter(n => /^\d/.test(n)).sort()) await engine.exec(await readFile(resolve("prisma/migrations", name, "migration.sql"), "utf8"));
+  for (const name of (await readdir("prisma/migrations")).filter(n => /^\d/.test(n)).sort()) {
+    const sql = await readFile(resolve("prisma/migrations", name, "migration.sql"), "utf8");
+    await engine.exec(sql); await productionEngine.exec(sql);
+  }
   await socket.start(); const endpoint = socket.getServerConn(); if (!/^127\.0\.0\.1:\d+$/.test(endpoint)) throw Error("Loopback only.");
   db = new PrismaClient({ adapter: new PrismaPg({ connectionString: `postgresql://postgres@${endpoint}/postgres`, max: 1 }) });
+  await productionSocket.start(); const productionEndpoint = productionSocket.getServerConn(); if (!/^127\.0\.0\.1:\d+$/.test(productionEndpoint)) throw Error("Loopback only.");
+  productionDb = new PrismaClient({ adapter: new PrismaPg({ connectionString: `postgresql://postgres@${productionEndpoint}/postgres`, max: 1 }) });
 });
-afterAll(async () => { await db?.$disconnect(); await socket.stop(); await engine.close(); });
+afterAll(async () => { await db?.$disconnect(); await productionDb?.$disconnect(); await socket.stop(); await productionSocket.stop(); await engine.close(); await productionEngine.close(); });
 beforeEach(async () => {
   actor.id = "11111111-1111-4111-8111-111111111111"; actor.role = "STUDENT";
   await db.$executeRaw`DELETE FROM student_ai_reservation`; await db.$executeRaw`DELETE FROM student_ai_budget`;
+  await productionDb.$executeRaw`DELETE FROM student_ai_reservation`; await productionDb.$executeRaw`DELETE FROM student_ai_budget`;
 });
-async function activate() {
-  return db.$transaction(tx => helper.activate({ query: async (sql: string, args: unknown[] = []) => {
+async function activate(environment: "preview" | "production" = "preview", target = db) {
+  return target.$transaction(tx => helper.activate({ query: async (sql: string, args: unknown[] = []) => {
     if (["BEGIN", "COMMIT", "ROLLBACK"].includes(sql)) return { rows: [] };
     return { rows: await tx.$queryRawUnsafe(sql, ...args) };
-  } }, model));
+  } }, model, environment));
 }
 async function reserve(id = randomUUID()) { return reserveHosted(db, "synthetic-token", id, config); }
 async function space() { await db.$executeRaw`UPDATE student_ai_budget SET last_admission_at = clock_timestamp() - interval '11 seconds'`; }
@@ -68,7 +75,7 @@ it("enforces aggregate attempt/output caps and expiration without resets", async
   await activate(); await db.$executeRaw`UPDATE student_ai_budget SET attempts=199,reserved_output_tokens=199000`;
   await spend(); expect(await reserve()).toEqual({ ok: false, reason: "limited" }); expect((await counters()).attempts).toBe(200);
   await db.$executeRaw`UPDATE student_ai_budget SET expires_at=clock_timestamp()-interval '1 second'`;
-  expect(await reserve()).toEqual({ ok: false, reason: "blocked" }); await expect(activate()).rejects.toThrow("preview_budget_operator_action_required");
+  expect(await reserve()).toEqual({ ok: false, reason: "blocked" }); await expect(activate()).rejects.toThrow("hosted_budget_operator_action_required");
   expect((await counters()).attempts).toBe(200);
 });
 it("disabled, mismatched model/approval and Organiser never spend", async () => {
@@ -77,6 +84,27 @@ it("disabled, mismatched model/approval and Organiser never spend", async () => 
   await db.$executeRaw`UPDATE student_ai_budget SET approval_id=${PREVIEW_APPROVAL}`;
   expect(await reserveHosted(db, "synthetic", randomUUID(), { ...config, model: "other" })).toMatchObject({ ok: false, reason: "blocked" });
   actor.role = "ORGANISER"; await expect(reserve()).rejects.toMatchObject({ status: 403 }); expect((await counters()).attempts).toBe(0);
+});
+it("Production has an independent pool and refuses accidental Preview database reuse", async () => {
+  await activate(); await spend();
+  await expect(activate("production", db)).rejects.toThrow("hosted_budget_operator_action_required");
+  expect(await counters()).toEqual({ attempts: 1, reserved_output_tokens: 1000 });
+  await activate("production", productionDb);
+  expect(await reserveHosted(productionDb, "synthetic", randomUUID(), config, "preview")).toMatchObject({ ok: false, reason: "blocked" });
+  const first = await reserveHosted(productionDb, "synthetic", randomUUID(), config, "production");
+  expect(first.ok).toBe(true); if (first.ok) await first.release();
+  const [before] = await productionDb.$queryRaw<{ attempts: number; expires_at: Date }[]>`SELECT attempts,expires_at FROM student_ai_budget`;
+  await activate("production", productionDb);
+  expect(await productionDb.$queryRaw`SELECT attempts,expires_at FROM student_ai_budget`).toEqual([before]);
+  expect(await counters()).toEqual({ attempts: 1, reserved_output_tokens: 1000 });
+});
+it("Production enforces the same200attempt cap without spending Preview allowance", async () => {
+  await activate(); await activate("production", productionDb);
+  await productionDb.$executeRaw`UPDATE student_ai_budget SET attempts=199,reserved_output_tokens=199000`;
+  const final = await reserveHosted(productionDb, "synthetic", randomUUID(), config, "production"); expect(final.ok).toBe(true); if (final.ok) await final.release();
+  await productionDb.$executeRaw`UPDATE student_ai_budget SET last_admission_at=clock_timestamp()-interval '11 seconds'`;
+  expect(await reserveHosted(productionDb, "synthetic", randomUUID(), config, "production")).toMatchObject({ ok: false, reason: "limited" });
+  expect(await counters()).toEqual({ attempts: 0, reserved_output_tokens: 0 });
 });
 it("database errors propagate so inference cannot fall back to local admission", async () => {
   await db.$executeRaw`DROP TABLE student_ai_reservation`; await db.$executeRaw`DROP TABLE student_ai_budget`;

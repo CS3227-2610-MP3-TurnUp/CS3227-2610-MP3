@@ -16,16 +16,24 @@ it("explicit Preview policy caps existing config without selecting a new model o
   expect(result.config).toMatchObject({ model: "qwen3.8:27b", maxOutputTokens: 1000, timeoutMs: 20000 });
   expect(hostedPolicy({ ...env, SOCLAAS_MAX_OUTPUT_TOKENS: "500", SOCLAAS_TIMEOUT_MS: "10000" })?.config).toMatchObject({ maxOutputTokens: 500, timeoutMs: 10000 });
 });
+it("enables Production only with matching target/database labels and its separate Student key", () => {
+  const production = { ...env, VERCEL_ENV: "production", TURNUP_ENVIRONMENT: "production", DATABASE_ENVIRONMENT: "production", AUTH_ORIGIN: "https://production.example.test" };
+  expect(hostedPolicy(production)).toMatchObject({ environment: "production", origin: production.AUTH_ORIGIN, config: { apiKey: env.STUDENT_SOCLAAS_API_KEY, maxOutputTokens: 1000, timeoutMs: 20000 } });
+  expect(hostedPolicy({ ...production, DATABASE_ENVIRONMENT: "non-production" })).toBeNull();
+  expect(hostedPolicy({ ...production, STUDENT_ASSISTANT_ENABLED: "false" })).toBeNull();
+  expect(hostedPolicy({ ...production, STUDENT_SOCLAAS_API_KEY: undefined })).toBeNull();
+});
 it.each([["STUDENT_ASSISTANT_ENABLED", "false"], ["VERCEL", ""], ["VERCEL_ENV", "production"], ["TURNUP_ENVIRONMENT", "production"],
   ["DATABASE_ENVIRONMENT", "production"], ["AUTH_SOURCE_MODE", "local"], ["AUTH_ORIGIN", "http://preview.example.test"],
   ["SOCLAAS_MODEL", "other-model"], ["STUDENT_SOCLAAS_API_KEY", ""], ["SOCLAAS_BASE_URL", "https://evil.test"], ["DATABASE_URL", ""],
   ["DATABASE_URL", env.DATABASE_URL + "&host=evil.test"]])("fails closed for %s", (key, value) => {
   expect(hostedPolicy({ ...env, [key]: value })).toBeNull();
 });
-it("activation accepts only the assigned Preview environment and model", () => {
+it("activation requires the exact assigned environment/database pair and model", () => {
   const values = { ...env, SOCLAAS_API_KEY: undefined, MIGRATION_DATABASE_URL: "postgresql://fixture:fixture@ep-fixture.region.neon.tech/fixture?sslmode=require&sslaccept=strict" };
   expect(helper.activationConfig(values, "preview").model).toBe(env.SOCLAAS_MODEL);
-  expect(() => helper.activationConfig(values, "production")).toThrow("preview_target_required");
+  expect(() => helper.activationConfig(values, "production")).toThrow("hosted_target_required");
+  expect(helper.activationConfig({ ...values, TURNUP_ENVIRONMENT: "production", DATABASE_ENVIRONMENT: "production" }, "production").model).toBe(env.SOCLAAS_MODEL);
   expect(() => helper.activationConfig({ ...values, DATABASE_ENVIRONMENT: "production" }, "preview")).toThrow();
   expect(() => helper.activationConfig({ ...values, SOCLAAS_MODEL: "other" }, "preview")).toThrow();
   expect(() => helper.activationConfig({ ...values, MIGRATION_DATABASE_URL: "postgresql://localhost/fixture" }, "preview")).toThrow();

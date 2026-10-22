@@ -46,7 +46,7 @@ model SoCProbeReservation {
   @@map("soc_probe_reservation")
 }
 
-// Separate Preview product budget; activation never resets counters on redeploy.
+// Separate per-database hosted product budget; activation never resets counters.
 model StudentAiBudget {
   id Int @id
   approvalId String @unique @map("approval_id")

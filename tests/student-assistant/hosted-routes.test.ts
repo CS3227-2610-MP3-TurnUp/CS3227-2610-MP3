@@ -36,7 +36,7 @@ it("serves only authenticated rechecked source without calling admission/inferen
   expect(response.headers.get("cache-control")).toContain("no-store"); expect(response.headers.get("vary")).toBe("Cookie");
   expect(mocks.check).toHaveBeenCalledWith(expect.anything(), token, loaded.binding); expect(mocks.reserve).not.toHaveBeenCalled(); expect(mocks.answer).not.toHaveBeenCalled();
 });
-it.each(["source", "answer"] as const)("denies anonymous/cross-origin and Production %s before DB/provider", async op => {
+it.each(["source", "answer"] as const)("denies anonymous/cross-origin and mismatched hosted target %s before DB/provider", async op => {
   const call = op === "source" ? GET : POST;
   expect((await call(request(op, { cookie: "" }), context)).status).toBe(401);
   expect((await call(request(op, { origin: "https://evil.test" }), context)).status).toBe(403);
@@ -46,12 +46,20 @@ it.each(["source", "answer"] as const)("denies anonymous/cross-origin and Produc
 });
 it("binds hosted admission to server cookie/request, caps config and rejects client overrides", async () => {
   const response = await POST(request("answer"), context); expect(response.status).toBe(429); expect(await response.json()).toEqual({ ok: false, reason: "budget_exhausted" });
-  expect(mocks.reserve).toHaveBeenCalledWith(expect.anything(), token, input.requestId, expect.objectContaining({ apiKey: "synthetic-student-key", maxOutputTokens: 1000, timeoutMs: 20000 }));
+  expect(mocks.reserve).toHaveBeenCalledWith(expect.anything(), token, input.requestId, expect.objectContaining({ apiKey: "synthetic-student-key", maxOutputTokens: 1000, timeoutMs: 20000 }), "preview");
   mocks.answer.mockClear();
   for (const extra of [{ source: loaded.source }, { actor: "foreign" }, { maxAttempts: 999 }, { provider: "https://evil.test" }]) {
     expect((await POST(request("answer", {}, { ...input, ...extra }), context)).status).toBe(400);
   }
   expect((await POST(request("answer", {}, input, "?source=private"), context)).status).toBe(400); expect(mocks.answer).not.toHaveBeenCalled();
+});
+it("Production uses its own budget environment while preserving the same authentication and caps", async () => {
+  vi.stubEnv("VERCEL_ENV", "production"); vi.stubEnv("TURNUP_ENVIRONMENT", "production"); vi.stubEnv("DATABASE_ENVIRONMENT", "production");
+  expect((await GET(request("source", { cookie: "" }), context)).status).toBe(401);
+  expect((await GET(request("source"), context)).status).toBe(200);
+  expect((await POST(request("answer"), context)).status).toBe(429);
+  expect(mocks.reserve).toHaveBeenCalledWith(expect.anything(), token, input.requestId, expect.objectContaining({ apiKey: "synthetic-student-key", maxOutputTokens: 1000, timeoutMs: 20000 }), "production");
+  expect((await POST(request("answer", {}, { ...input, environment: "preview" }), context)).status).toBe(400);
 });
 it("denies Organiser and changed/withdrawn/session-invalid sources without disclosing content", async () => {
   for (const [status, code] of [[403, "student_required"], [404, "event_unavailable"], [409, "source_changed"], [401, "login_required"]] as const) {
