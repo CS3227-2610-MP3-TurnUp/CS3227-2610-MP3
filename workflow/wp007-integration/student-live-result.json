@@ -1,0 +1,18 @@
+{
+  "sourceRevision": "53931890ff3d3ec91bd7b1505770ba846113688e",
+  "sharedCallsUsed": 13,
+  "sharedMaxCalls": 15,
+  "case": {
+    "id": "WP007-S09",
+    "category": "local-browser-integration",
+    "calls": 1,
+    "sourceRevision": "53931890ff3d3ec91bd7b1505770ba846113688e",
+    "evaluation": "PASS: actual local signed-in route answered tools provided and water bottle required; history survived reload",
+    "tokens": null,
+    "dispatchCount": 1,
+    "model": "qwen3.8:27b"
+  },
+  "localAllowanceAttempts": 1,
+  "historyAfterReload": true,
+  "studentDeniedOrganiserPage": true
+}

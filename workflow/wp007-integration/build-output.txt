@@ -1,0 +1,67 @@
+$ prisma generate && next build
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (7.10.1) to .\src\server\db\generated in 430ms
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 105ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 29.1s
+  Running TypeScript ...
+  Finished TypeScript in 17.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/12) ...
+  Generating static pages using 11 workers (3/12)
+  Generating static pages using 11 workers (6/12)
+  Generating static pages using 11 workers (9/12)
+✓ Generating static pages using 11 workers (12/12) in 696ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /account
+├ ƒ /api/account/credentials
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/signup
+├ ƒ /api/dev/student-assistant
+├ ƒ /api/dev/student-assistant/publication/[eventId]
+├ ƒ /api/dev/student-assistant/publication/[eventId]/answer
+├ ƒ /api/dev/student-assistant/publication/[eventId]/history
+├ ƒ /api/internal/draft-retention
+├ ƒ /api/internal/foundation-probe
+├ ƒ /api/internal/generation-usage-retention
+├ ƒ /api/organiser/ai-usage
+├ ƒ /api/organiser/events
+├ ƒ /api/organiser/events/[id]
+├ ƒ /api/organiser/events/[id]/proposal-extraction
+├ ƒ /api/organiser/events/[id]/public-candidates
+├ ƒ /api/student/events
+├ ƒ /api/student/events/[eventId]
+├ ƒ /api/student/events/[eventId]/assistant/answer
+├ ƒ /api/student/events/[eventId]/assistant/history
+├ ƒ /api/student/events/[eventId]/assistant/source
+├ ƒ /api/student/events/[eventId]/registrations
+├ ƒ /api/student/profile
+├ ƒ /api/student/registrations
+├ ƒ /api/student/registrations/[registrationId]
+├ ƒ /api/student/registrations/[registrationId]/cancel
+├ ƒ /dev/student-assistant
+├ ƒ /dev/student-assistant/publication/[eventId]
+├ ○ /login
+├ ƒ /organiser
+├ ƒ /organiser/events/[id]
+├ ○ /signup
+├ ƒ /student
+├ ƒ /student/events/[eventId]
+├ ƒ /student/events/[eventId]/register
+├ ƒ /student/my-events
+└ ƒ /student/registrations/[registrationId]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

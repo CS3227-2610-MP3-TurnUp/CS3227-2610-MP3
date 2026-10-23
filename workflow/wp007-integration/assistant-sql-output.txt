@@ -1,0 +1,8 @@
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  13:33:12
+   Duration  21.31s (import 49%, tests 44%, transform 7%)
