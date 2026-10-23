@@ -330,3 +330,14 @@ Canonicalpnpmtracecorrection2paths independentlyreviewed, nofindings; hash9f2339
 
 
 Finalreviewedruntime19edbf4 deployedvia39900982605(off), then39901355236(on); bothpassedactualprebuiltpackaging/upload/alias. Exactly2actualinferencecalls passed: extraction200/persisted+saved, FAQ200/6supportedFAQs. Saveharnesswrongresponseshapecorrectedwithoutrepeatingextraction. Freshusage2/10attempts,8192/40960tokens,noinflight,nextmidnightSGTreset. Syntheticnever-publishedeventdeleted/404verified, owner/historypreserved. Previewremainstrue; later39901786996same-sourcealiasdeploymentmetadataalsoverified. NoProductionoperation, additionalmodelcall, quotarefillorreset. Handoff/guide/tasks/evidenceupdated;comprehensivelabeledevaluation/privateproviderhandling/Productionremainseparate. AgentusagecollectedunderexistingK015bindingwithhistoricalcoverage/legacydiagnosticsretained.
+
+
+# 24 - Integrate Hosted Generation into WP-005 - 23 October 2026
+
+## Request
+
+Merge the completed hosted-generation branch into preview/wp-005 and push the integration, performed by the root agent alone without spawning a subagent.
+
+## Results
+
+Fetched both remote refs and confirmed preview/wp-005 at1c3785d is an ancestor of preview/wp-005-hosted at1523725. Fast-forwarded the existing WP-005 worktree to1523725 without conflicts, preserving its pre-existing next-env.d.ts edit and private environment. This integrates K-014 daily allowances and K-015 hosted adapter, retention, parser/packaging fixes and verified delivery notes. Only this log entry is newly authored; application code is identical to the independently reviewed and hosted-tested source. Existing test/provider evidence is reused; no new model call, dependency operation or Production change. Prepared the integration and this evidence-only log update for push to origin/preview/wp-005. No subagent was used for this integration.
