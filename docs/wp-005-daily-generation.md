@@ -50,3 +50,8 @@ The test checks target labels and matching URLs, creates a uniquely named synthe
 The privileged server-only helper is `recoverDailyGenerationReservation(db, environment, reservationId, confirmationId)` in `src/server/ai/daily-generation.ts`. The confirmation must equal the exact reservation UUID. Establish the target environment and inspect its active reservation/status without retrieving proposal content; establish separately that provider execution has ended before calling the helper through trusted operator tooling. The helper refuses mismatched environment/confirmation, refunds only an undispatched RESERVED reservation, and releases DISPATCHED/UNCERTAIN work without changing its original daily counters. Repeated recovery is idempotent. Never expose this helper through an unauthenticated route or release another active reservation.
 
 Usage-record/audit cleanup and actual backup expiry must be addressed before hosted activation under the shared retention contract. This dormant-policy increment does not implement a metadata expiry job or claim backup erasure.
+
+
+## Hosted continuation
+
+[CHG-K-015 hosted setup](wp-005-hosted-generation.md) replaces the earlier code-disabled placeholder with an explicit default-off hosted adapter, dedicated ORGANISER_SOCLAAS_* settings and a separate protected usage-history cleanup route. The earlier sections describe the K-014 delivery boundary; follow the hosted guide for current activation and actual verification evidence. Local/probe configuration remains unchanged.

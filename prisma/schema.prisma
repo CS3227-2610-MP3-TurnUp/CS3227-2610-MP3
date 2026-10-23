@@ -180,6 +180,7 @@ model GenerationDailyUsage {
   reservations GenerationReservation[]
 
   @@id([environment, ownerId, sgtDay])
+  @@index([environment, sgtDay], map: "generation_daily_usage_retention_idx")
   @@map("generation_daily_usage")
 }
 
@@ -211,6 +212,7 @@ model GenerationReservation {
   activeForGate GenerationEnvironmentGate? @relation("ActiveGenerationReservation")
 
   @@index([environment, status, createdAt])
+  @@index([environment, status, sgtDay], map: "generation_reservation_retention_idx")
   @@index([ownerId, environment, sgtDay])
   @@map("generation_reservation")
 }

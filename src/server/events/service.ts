@@ -299,7 +299,7 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
   });
 }
 
-/** Persist one successful local extraction while rechecking owner, event and preparation revisions. */
+/** Persist one successful extraction while rechecking owner, event and preparation revisions. */
 export async function recordProposalExtraction(
   db: Db,
   token: string | undefined,
@@ -308,7 +308,7 @@ export async function recordProposalExtraction(
   expectedPreparationRevision: number,
   extraction: PrivateExtraction,
 ) {
-  if (!clarificationPersistenceEnabled()) throw new EventError(503, "Proposal clarification is available only in local development.");
+  if (!clarificationPersistenceEnabled()) throw new EventError(503, "Proposal clarification is unavailable in this environment.");
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     currentVersion(event, expectedVersion);
@@ -340,6 +340,6 @@ function assertClarificationsResolved(preparation: EventPreparation | null, fiel
 
 function assertPreparationMode(event: Event, preparationEnabled: boolean) {
   if (!preparationEnabled && (event.preparation !== null || event.preparationVersion !== 0)) {
-    throw new EventError(503, "Saved proposal clarifications are unavailable outside local development.");
+    throw new EventError(503, "Saved proposal clarifications are unavailable in this environment.");
   }
 }

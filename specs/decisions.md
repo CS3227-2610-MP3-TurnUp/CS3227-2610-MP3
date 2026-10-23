@@ -78,3 +78,8 @@ Keith accepted the proposed next increment and requested CHG-K-012: editable des
 ### Per-Organiser daily generation — 23 October 2026
 
 Keith explicitly selected 10 attempts per Organiser per day per environment, 4,096 output tokens/request and 40,960 reserved output tokens/Organiser/day/environment. Follow-up answers selected a shared PDF/FAQ allowance resetting at midnight SGT, dispatched failures counting, one in-flight call per environment, operator recovery for uncertain calls, and policy-first delivery with hosted generation disabled. CHG-K-014 implements this SEC05 policy; it neither closes G04/G08 nor activates Preview/Production inference. See [canonical policy](shared/ai-and-privacy.md#organiser-daily-hosted-generation-allowance--accepted-23-october-2026).
+
+
+### Hosted adapter and Preview rollout — 23 October 2026
+
+Keith approved CHG-K-015 after K-014: reuse local9B JSON/no-thinking/60s profile for hosted generation, Preview deployment plus exactly bounded two synthetic inference calls, Production off, keep Preview enabled only after success. Settled usage history expires90days after its SGT usage day; unresolved reservations protected; Preview maintenance uses a protected daily operator invocation, automation deferred. See canonical SEC05/06 hosted activation policy. Commit/push/Preview configuration and deployment are authorised within this sequence; no Production operations or additional inference calls.

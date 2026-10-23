@@ -5,6 +5,7 @@ const mocked = vi.hoisted(() => ({
   identity: vi.fn(),
   usage: vi.fn(),
   token: vi.fn(),
+  hosted: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -15,9 +16,9 @@ vi.mock("../../src/server/accounts/service", () => ({
   requireSelf: mocked.identity,
 }));
 vi.mock("../../src/server/ai/daily-generation-config", () => ({
-  HOSTED_DAILY_GENERATION_ENABLED: false,
   readDailyGenerationEnvironment: mocked.env,
 }));
+vi.mock("../../src/server/ai/daily-generation-coordinator", () => ({ hostedGenerationAvailability: mocked.hosted }));
 vi.mock("../../src/server/ai/daily-generation", () => ({ readDailyGenerationUsage: mocked.usage }));
 vi.mock("../../src/server/db/client", () => ({ prisma: {} }));
 
@@ -29,6 +30,7 @@ beforeEach(() => {
   mocked.identity.mockReset().mockResolvedValue({ id: "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0", role: "ORGANISER" });
   mocked.usage.mockReset();
   mocked.token.mockReset().mockReturnValue("synthetic-session-token");
+  mocked.hosted.mockReset().mockReturnValue({ available: false, outcome: "disabled" });
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -59,6 +61,20 @@ describe("organiser AI usage endpoint", () => {
       usage: null,
     });
     expect(mocked.usage).not.toHaveBeenCalled();
+  });
+
+  it("reads only the authenticated organiser's usage after the hosted provider profile is available", async () => {
+    mocked.env.mockReturnValue({ status: "supported", environment: "preview" });
+    mocked.hosted.mockReturnValue({ available: true, environment: "preview", adapter: {} });
+    mocked.usage.mockResolvedValue({ environment: "preview", attempts: { used: 2, limit: 10, remaining: 8 } });
+    const response = await GET(new Request("http://localhost/api/organiser/ai-usage"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      status: "active",
+      usage: { environment: "preview", attempts: { used: 2, limit: 10, remaining: 8 } },
+    });
+    expect(mocked.usage).toHaveBeenCalledWith({}, "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0", "preview");
   });
 
   it("keeps the endpoint self-only and rejects Student identities", async () => {

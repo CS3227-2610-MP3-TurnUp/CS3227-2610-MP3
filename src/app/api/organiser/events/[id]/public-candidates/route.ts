@@ -15,6 +15,7 @@ const maxBodyBytes = 1_024;
 const bodyReadTimeoutMs = 5_000;
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   try {

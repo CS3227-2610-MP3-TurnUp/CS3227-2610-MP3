@@ -97,8 +97,8 @@ export async function requestProposalCompletion(input: ProposalCompletionInput):
 
   const dailyEnvironment = readDailyGenerationEnvironment(process.env);
   if (dailyEnvironment.status === "supported") {
-    // Delegates through daily accounting, which remains hard-disabled until a
-    // later reviewed hosted provider profile is supplied.
+    // Hosted inference uses the explicit activation guard and selected server
+    // profile before entering durable daily accounting.
     return requestHostedDailyCompletion(input);
   }
   if (dailyEnvironment.status === "invalid" && process.env.TURNUP_ENVIRONMENT !== "development") {

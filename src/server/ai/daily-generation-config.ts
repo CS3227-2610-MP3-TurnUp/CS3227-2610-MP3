@@ -8,8 +8,15 @@ export type DailyGenerationEnvironmentResult =
   | { status: "unsupported_local" }
   | { status: "invalid" };
 
-/** The hosted policy is deliberately code-disabled; there is no environment-variable activation path. */
-export const HOSTED_DAILY_GENERATION_ENABLED = false as const;
+/**
+ * Hosted generation requires both an explicit server-side opt-in and a
+ * validated hosted environment/database pair. Callers should still validate
+ * the concrete provider profile before accepting input or dispatching.
+ */
+export function hostedDailyGenerationEnabled(env: EnvironmentSource = process.env): boolean {
+  return env.PROPOSAL_ASSISTANCE_HOSTED_ENABLED === "true" &&
+    readDailyGenerationEnvironment(env).status === "supported";
+}
 
 export function readDailyGenerationEnvironment(env: EnvironmentSource): DailyGenerationEnvironmentResult {
   const local = env.TURNUP_ENVIRONMENT === "development" &&

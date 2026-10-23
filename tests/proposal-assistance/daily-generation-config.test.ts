@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { readDailyGenerationEnvironment } from "../../src/server/ai/daily-generation-config";
+import {
+  hostedDailyGenerationEnabled,
+  readDailyGenerationEnvironment,
+} from "../../src/server/ai/daily-generation-config";
 
 const preview = {
   TURNUP_ENVIRONMENT: "preview",
@@ -43,5 +46,18 @@ describe("daily generation server environment pairing", () => {
     expect(readDailyGenerationEnvironment({ ...preview, VERCEL: undefined })).toEqual({ status: "invalid" });
     expect(readDailyGenerationEnvironment({ ...preview, DATABASE_URL: undefined })).toEqual({ status: "invalid" });
     expect(readDailyGenerationEnvironment({ ...preview, DATABASE_URL: "postgresql://synthetic:synthetic@ep-wrong.us-east-1.aws.neon.tech/synthetic?sslmode=require" })).toEqual({ status: "invalid" });
+  });
+
+  it("requires the explicit opt-in and a supported environment/database pair", () => {
+    expect(hostedDailyGenerationEnabled({ ...preview })).toBe(false);
+    expect(hostedDailyGenerationEnabled({ ...preview, PROPOSAL_ASSISTANCE_HOSTED_ENABLED: "true" })).toBe(true);
+    expect(hostedDailyGenerationEnabled({ ...preview, PROPOSAL_ASSISTANCE_HOSTED_ENABLED: "True" })).toBe(false);
+    expect(hostedDailyGenerationEnabled({ ...preview, PROPOSAL_ASSISTANCE_HOSTED_ENABLED: "true", VERCEL_ENV: "production" })).toBe(false);
+    expect(hostedDailyGenerationEnabled({
+      TURNUP_ENVIRONMENT: "development",
+      DATABASE_ENVIRONMENT: "non-production",
+      NODE_ENV: "development",
+      PROPOSAL_ASSISTANCE_HOSTED_ENABLED: "true",
+    })).toBe(false);
   });
 });

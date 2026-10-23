@@ -227,6 +227,7 @@ describe("proposal SoCLaaS transport", () => {
     vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
     vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-synthetic-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
     vi.stubEnv("HOSTED_DAILY_GENERATION_ENABLED", "true");
+    vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "false");
     const fetchImpl = successfulFetch();
     vi.stubGlobal("fetch", fetchImpl);
 

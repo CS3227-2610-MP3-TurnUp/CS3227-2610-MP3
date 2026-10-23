@@ -1,14 +1,40 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const auth = vi.hoisted(() => ({ self: vi.fn(), commit: vi.fn() }));
-vi.mock("../../src/server/accounts/service", () => ({ requireSelf: auth.self, authenticatedAccount: auth.commit }));
+const proposalRoute = vi.hoisted(() => ({ db: undefined as unknown, complete: vi.fn(), extract: vi.fn(), process: vi.fn() }));
+vi.mock("../../src/server/accounts/service", () => ({
+  privateHeaders: { "Cache-Control": "no-store, private", Vary: "Cookie" },
+  requireSelf: auth.self,
+  authenticatedAccount: auth.commit,
+}));
+vi.mock("../../src/server/auth/request-security", () => ({
+  authConfig: () => ({ origin: "https://turnup.example", secret: "a".repeat(64), secure: true, sourceMode: "vercel" }),
+  requireOrigin: () => undefined,
+}));
+vi.mock("../../src/server/auth/session", () => ({ presentedToken: () => "token" }));
+vi.mock("../../src/server/proposal-assistance/admission", () => ({ admitProposalExtraction: vi.fn() }));
+vi.mock("../../src/server/proposal-assistance/transport", () => ({
+  proposalCompletionAvailability: () => ({ available: true }),
+  requestProposalCompletion: proposalRoute.complete,
+}));
+vi.mock("../../src/server/proposal-assistance/pdf-text", () => ({
+  MAX_PROPOSAL_PDF_BYTES: 4_000_000,
+  extractPdfPageText: proposalRoute.extract,
+}));
+vi.mock("../../src/server/proposal-assistance/processor", () => ({ processProposalExtraction: proposalRoute.process }));
+vi.mock("../../src/server/db/client", () => ({ prisma: proposalRoute.db }));
 import { createEvent, listEvents, mutateEvent, readEvent, readSavedPublicCandidateSnapshot, recordProposalExtraction } from "../../src/server/events/service";
+import { POST as proposalExtractionPost } from "../../src/app/api/organiser/events/[id]/proposal-extraction/route";
 import { currentPublication } from "../../src/server/publication/reader";
 import { EMPTY_EVENT } from "../../src/lib/event-fields";
 import type { PrivateExtraction } from "../../src/features/proposal-assistance/types";
 import type { PrismaClient } from "../../src/server/db/generated/client";
 const actor = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587", id = "8aa3c13d-d179-46bc-aec9-d24873953e32";
 const fields = { ...EMPTY_EVENT, title: "Workshop", description: "Description", location: "Hall", fee: "Free", openTo: "Anyone", preparation: "None", start: "2099-11-01T02:00:00.000Z", end: "2099-11-01T04:00:00.000Z", capacity: 10 };
+const titleExtraction: PrivateExtraction = {
+  facts: { title: { status: "known", value: "Workshop", evidence: [{ quote: "Workshop", page: 1 }] } },
+  privateFindings: [], completeness: "incomplete", incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["purpose"], technicalIssues: 0,
+};
 // Transactional test double exercises service decisions/rollback, not PostgreSQL locking.
 let dbNow: Date;
 let state: { events: Record<string, unknown>[], publications: Record<string, unknown>[], approvals: Record<string, unknown>[] };
@@ -41,6 +67,15 @@ beforeEach(() => {
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
   state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, privateActivityAt: new Date(dbNow), retentionCheckedAt: null, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  proposalRoute.db = fake;
+  proposalRoute.complete.mockResolvedValue({ ok: true, text: "synthetic completion" });
+  proposalRoute.extract.mockResolvedValue({ ok: true, pageTexts: ["Workshop"] });
+  proposalRoute.process.mockImplementation(async (_pages: readonly string[], complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>) => {
+    const completion = await complete({ system: "synthetic system", user: "synthetic user" });
+    return completion && typeof completion === "object" && "ok" in completion && completion.ok
+      ? { ok: true, value: titleExtraction }
+      : { ok: false, outcome: "unavailable" };
+  });
 });
 afterEach(() => vi.unstubAllEnvs());
 async function previewAndPublish() {
@@ -169,6 +204,16 @@ function localPreparationEnvironment() {
   vi.stubEnv("PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC", "false");
 }
 
+function hostedPreviewEnvironment(enabled: boolean) {
+  vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("VERCEL_ENV", "preview");
+  vi.stubEnv("VERCEL", "1");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", String(enabled));
+}
+
 function missingTitleExtraction(): PrivateExtraction {
   return { facts: { title: { status: "missing", evidence: [] } }, privateFindings: [], completeness: "incomplete",
     incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["title"], technicalIssues: 0 };
@@ -210,6 +255,42 @@ it("records issues atomically, increments both revisions, and invalidates an ear
   expect(state.approvals).toHaveLength(0);
   expect(await readEvent(db, "token", id)).toMatchObject({ preparation: result.preparation, version: 1 });
   await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("persists a hosted Preview extraction and keeps its saved clarification, FAQ readiness, and publishing usable when inference is disabled", async () => {
+  hostedPreviewEnvironment(true);
+  const form = new FormData();
+  form.append("file", new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" }));
+  form.append("expectedVersion", "0");
+  form.append("expectedPreparationRevision", "0");
+  form.append("revisions", JSON.stringify({ source: 0, facts: 0, editor: 0 }));
+  const response = await proposalExtractionPost(new Request(`https://turnup.example/api/organiser/events/${id}/proposal-extraction`, {
+    method: "POST", headers: { origin: "https://turnup.example" }, body: form,
+  }), { params: Promise.resolve({ id }) });
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    ok: true,
+    extraction: titleExtraction,
+    eventVersion: 1,
+    preparation: { revision: 1, issues: [] },
+  });
+  expect(state.events[0]).toMatchObject({ version: 1, preparationVersion: 1, preparation: { issues: [] } });
+
+  // The hosted inference opt-in can later be disabled without making existing
+  // private clarification data inaccessible or blocking manual publication.
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "false");
+  await expect(readEvent(db, "token", id)).resolves.toMatchObject({
+    preparation: { revision: 1, issues: [] },
+    version: 1,
+  });
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, { expectedPreparationRevision: 1, resolutions: [] });
+  const snapshot = await readSavedPublicCandidateSnapshot(db, "token", id, 2, 2);
+  expect(snapshot.source.title).toBe("Workshop");
+  expect(snapshot).not.toHaveProperty("preparation");
+  const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  await mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId);
+  expect(state.events[0].state).toBe("PUBLISHED");
+  expect(proposalRoute.complete).toHaveBeenCalledOnce();
 });
 
 it("rejects stale extraction revisions without changing saved draft or clarifications", async () => {

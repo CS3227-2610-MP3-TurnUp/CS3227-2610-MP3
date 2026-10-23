@@ -34,3 +34,15 @@ Database time at admission determines the reservation’s SGT day and reset time
 Identity comes from the authoritative session and environment from validated server configuration. Owner-only, private/no-store usage reporting reveals remaining attempts/reserved allowance and reset time, never another Organiser's usage or proposal/model text. UI distinguishes daily exhaustion from temporary busy/spacing limits; enforcement remains server-side.
 
 CHG-K-014 is policy-first. Hosted activation remains disabled pending a separately reviewed hosted profile and G04/G08 evidence; this policy does not select a hosted model, provider timeout or course permission. The existing local synthetic cumulative allowance and protected Preview foundation probe remain separate and unchanged. Student chat accounting is outside this Organiser increment.
+
+
+## Hosted Organiser activation — accepted 23 October 2026
+
+CHG-K-015 follows the daily policy with a default-off hosted adapter. Keith selected qwen3.5:9b, JSON/no-thinking,65,536inputbytes,4,096outputtokens and60s model timeout; generation routes allow120s total only after verifying host support. Enable only with explicit server-only PROPOSAL_ASSISTANCE_HOSTED_ENABLED=true and validated environment/database/profile. Local synthetic and foundation-probe scopes remain unchanged; no model/profile setting in public request bodies. The durable dispatch marker is immediately before actual provider fetch, after input/configuration checks. Existing evidence/schema/publication/stale guards and manual completion remain authoritative.
+
+The authorised rollout is Preview-only, synthetic/non-private inputs and at most two inference calls (one extraction, one FAQ), after provider/host prerequisites. Leave Preview enabled only after both pass; on failure disable and report without extra model retries. Production stays disabled. Synthetic results neither establish real private-data provider handling/course compliance nor complete model-quality acceptance; G04/G08 unresolved portions remain visible.
+
+Settled usage reservations and unreferenced daily counters expire90days after their SGT usage day ends. Cleanup never releases an active or unresolved reservation, rewrites current quotas or refunds dispatched usage. Unresolved history survives until operator resolution, after which ordinary expiry applies. A separately enabled strong-secret operator route supports bounded dry-run/count-only cleanup. Preview daily invocation is an operator responsibility; scheduling automation is deferred. Provider/backup expiry remains separately evidenced, not inferred from active-row deletion.
+
+
+CHG-K-015 runtime preparation storage supports validated hosted environment/database pairs independently of the inference switch, as local preparation storage already does. Disabling inference must not prevent reading, editing, resolving or manually publishing existing assisted drafts. Hosted provider credentials/profile use dedicated server-only ORGANISER_SOCLAAS_* settings; the shared/local SoCLaaS settings remain separate. This preserves other Preview consumers on the existing Git-unlinked CLI project.

@@ -45,3 +45,8 @@ The [retention handoff](../../changes/CHG-K-013-wp-005-draft-retention/handoff.m
 ## Per-Organiser daily hosted usage — CHG-K-014
 
 The [accepted SEC05 policy](../shared/ai-and-privacy.md#organiser-daily-hosted-generation-allowance--accepted-23-october-2026) gives each Organiser10shared PDF/FAQ attempts per SGT day per environment,4096reserved output tokens/call and40960/day. [Change record](../../changes/CHG-K-014-wp-005-daily-generation/change.md) tracks implementation/evidence. This is policy-first with hosted generation disabled; existing local synthetic/probe counters and Student chat remain separate.
+
+
+## Hosted adapter/Preview rollout — CHG-K-015
+
+The [hosted guide](../../docs/wp-005-hosted-generation.md) defines default-off Organiser-specific provider configuration, fixed9B JSON/no-thinking/60s profile, daily-limit integration, hosted preparation storage independent of inference activation, and bounded90day settled usage cleanup. Rollout and actual evidence are tracked in [verification](../../changes/CHG-K-015-wp-005-hosted-generation/verification.md). Production activation, real private-data provider handling/course evidence and comprehensive labelled evaluation remain separate.

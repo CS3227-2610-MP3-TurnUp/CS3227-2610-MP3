@@ -3,7 +3,7 @@ import { AuthError } from "../../../../server/auth/policy";
 import { authConfig } from "../../../../server/auth/request-security";
 import { presentedToken } from "../../../../server/auth/session";
 import { privateHeaders, requireSelf } from "../../../../server/accounts/service";
-import { HOSTED_DAILY_GENERATION_ENABLED, readDailyGenerationEnvironment } from "../../../../server/ai/daily-generation-config";
+import { readDailyGenerationEnvironment } from "../../../../server/ai/daily-generation-config";
 import type { GenerationUsageResponse } from "../../../../lib/generation-usage";
 
 export const runtime = "nodejs";
@@ -27,8 +27,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (environment.status === "invalid") {
       return response({ ok: false, outcome: "unavailable" }, 503);
     }
-    if (!HOSTED_DAILY_GENERATION_ENABLED) {
-      return response({ ok: true, status: "disabled", reason: "hosted_generation_disabled", usage: null });
+    const { hostedGenerationAvailability } = await import("../../../../server/ai/daily-generation-coordinator");
+    const hosted = hostedGenerationAvailability();
+    if (!hosted.available) {
+      if (hosted.outcome === "disabled") {
+        return response({ ok: true, status: "disabled", reason: "hosted_generation_disabled", usage: null });
+      }
+      return response({ ok: false, outcome: "unavailable" }, 503);
     }
 
     const { readDailyGenerationUsage } = await import("../../../../server/ai/daily-generation");

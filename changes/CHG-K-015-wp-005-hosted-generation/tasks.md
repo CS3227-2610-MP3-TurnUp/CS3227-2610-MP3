@@ -1,0 +1,22 @@
+# Ownership and ordered tasks
+
+Root configured sdd_coordinator(gpt-6.1-sol/high): canonical policy/scenarios/change/docs/memberlog23/usage attribution, isolated schema/build/checks, all remote config/deployment/operator actions and two authorised synthetic calls, evidence/handoff. Preserve existing work; no application authorship. Read official provider docs and exact project metadata before root remote mutations; documented APIs/known pinned workflow only, no unknown CLI subcommands.
+
+Application application_foundation_engineer(gpt-6-luna/xhigh), explicit application integration: sole writer src/server/ai/daily-generation-config.ts, daily-generation-coordinator.ts, new generation-retention modules and new internal route, existing organiser ai-usage route, proposal/public-candidate route duration exports, src/server/proposal-assistance/transport.ts only if needed, .env.example, optional prisma schema/index migration if necessary. Own related config/coordinator/usage/cleanup/route and opt-in SQL tests, no providerclient/config/adapter files, no UI/docs/log. Shared runtime function contract publish first to provider agent. Defaultoff strictflag+validatedenv; sameadapterforavailability/inference. Cleanup bounded exactenv locks, settled90day expiry, protectallactive/unresolved and originaldailycounters, deleteunuseddailyrows only; new protected route defaultoff GENERATION_USAGE_RETENTION_ENABLED plus strongCRON_SECRET beforeDBimport/dryrun/countsonly. Never invoke private-draft cleanup implicitly.
+
+Provider hosting_soc_engineer(gpt-6-luna/xhigh), explicit provider application assignment: sole writer src/server/ai/soclaas-config.ts, soclaas-client.ts, new hosted-proposal-adapter.ts, soclaas-client.test.ts and new hosted-adapter tests. New hosted profile with60stimeout exception only explicitlyenabledvalidatedhost/realprocess, old shared30/local60unchanged. Hook durable marker immediately before actualfetch afterpreflight; no public caller config/profile, no rawprivateoutputs. Publish adapter factory/module interface before consumer integration. No remote commands/provider/model/env/DB ops by subagent; root handles all remote work. No deps/manifests/schema/configotherfiles/docs/logwrites.
+
+Independent implementation_verifier(gpt-6.1-sol/high): completed frozen code/config/migration review, reproducechecks and inert injection, noimplementationfixes/privateconfig/remoteDB/provider calls; root records report/fixes. Final review after authors freeze; authors recheck material fixes. HumanPRreview outsideagentassessment.
+
+- [x] Canonical policy/scenarios and exact shared interface
+- [x] Hosted profile/adapter/activation and bounded cleanup/route/tests
+- [x] Full/static/isolated schema/build/SQL checks and independent review
+- [ ] Provider/host preflight, configuration, commit/push/Preview deployment with activationoff
+- [ ] Protected cleanup verification, activate/redeploy, at most2synthetic modelcalls or documentedblocked/failure+off
+- [ ] Final evidence/handoff/docs/log/usage attribution and clean assigned fixtures
+
+Root additionally assigned the application writer the Preview workflow pull command and its regression test: use the exact validated GITHUB_REF_NAME for branch-specific settings, leaving Production pull unchanged. This preserves shared Preview model/auth settings. Actual operator endpoint name is /api/internal/generation-usage-retention (clearer than the plan shorthand), approved by root before consumer documentation.
+
+Actual project preflight found the intended Vercel CLI project has no Git link and rejects gitBranch-scoped env creation (HTTP400, no variables created). Root disposition: preserve the chosen CLI project; use new Preview-only ORGANISER_SOCLAAS_* variables for hosted Organiser profile, leaving existing shared SOCLAAS27B/30s untouched. Provider owns mapping/guard tests, application owns .env.example/availability and reverts unneeded workflow branch-pull change. No Git connection or extra project is introduced.
+
+Independent P1 integration finding expands the application writer assignment to proposal-assistance/clarification.ts, affected events/service.ts and corresponding actual service/http tests: validated hosted preparation storage must work independently of inference enablement, so extraction can persist and rollback-off preserves manual reads/saves. Provider dispatch remains explicitly flag/profile-gated. No live call until fixed/rechecked.

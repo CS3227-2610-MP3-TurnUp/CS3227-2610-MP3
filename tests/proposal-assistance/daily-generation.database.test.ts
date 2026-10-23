@@ -62,6 +62,7 @@ databaseTests("daily generation isolated SQL integration", () => {
     await admin.query("CREATE TABLE app_user(id UUID PRIMARY KEY)");
     await admin.query("INSERT INTO app_user(id) VALUES($1),($2)", [owners.first, owners.second]);
     await admin.query(readFileSync(resolve(repoRoot, "prisma/migrations/20261023020000_daily_generation/migration.sql"), "utf8"));
+    await admin.query(readFileSync(resolve(repoRoot, "prisma/migrations/20261023030000_generation_usage_retention/migration.sql"), "utf8"));
     gate = await import("../../src/server/ai/daily-generation");
     db = makeDatabaseAdapter(pool, schema) as unknown as PrismaClient;
   }, 120_000);
@@ -207,6 +208,58 @@ databaseTests("daily generation isolated SQL integration", () => {
     expect(await gate.readDailyGenerationUsage(db, owners.second, "preview")).toMatchObject({
       attempts: { used: before.attempts.used + 1 },
       inFlight: false,
+    });
+  });
+
+  it("sweeps only settled accounting older than 90 SGT days for the current environment", async () => {
+    const retention = await import("../../src/server/ai/generation-retention");
+    const settledReservationId = randomUUID();
+    const activeReservationId = randomUUID();
+    const retentionOwners = { preview: randomUUID(), production: randomUUID() };
+    await raw(pool, schema, "INSERT INTO app_user(id) VALUES ($1), ($2)", [retentionOwners.preview, retentionOwners.production]);
+    await raw(pool, schema, `
+      INSERT INTO generation_daily_usage(environment, owner_id, sgt_day, attempt_count, reserved_output_tokens)
+      VALUES
+        ('PREVIEW', $1, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 91, 1, 4096),
+        ('PREVIEW', $2, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 91, 0, 0),
+        ('PREVIEW', $2, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 90, 0, 0),
+        ('PRODUCTION', $2, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 91, 1, 4096)
+    `, [retentionOwners.preview, retentionOwners.production]);
+    await raw(pool, schema, `
+      INSERT INTO generation_reservation(id, environment, owner_id, sgt_day, status, dispatched_at, finished_at)
+      VALUES
+        ($1, 'PREVIEW', $2, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 91, 'COMPLETED', clock_timestamp(), clock_timestamp()),
+        ($3, 'PRODUCTION', $4, (clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 91, 'UNCERTAIN', clock_timestamp(), NULL)
+    `, [settledReservationId, retentionOwners.preview, activeReservationId, retentionOwners.production]);
+    await raw(pool, schema, "UPDATE generation_environment_gate SET active_reservation_id = $1 WHERE environment = 'PRODUCTION'", [activeReservationId]);
+
+    await expect(retention.runGenerationUsageRetentionSweep(db, "preview", { dryRun: true })).resolves.toEqual({
+      ok: true,
+      reservations: 1,
+      dailyUsageRows: 2,
+    });
+    await expect(retention.runGenerationUsageRetentionSweep(db, "preview")).resolves.toEqual({
+      ok: true,
+      reservations: 1,
+      dailyUsageRows: 2,
+    });
+
+    const previewRows = await raw(pool, schema,
+      "SELECT sgt_day::text AS day, owner_id::text AS owner FROM generation_daily_usage WHERE environment = 'PREVIEW' AND owner_id = $1 ORDER BY sgt_day", [retentionOwners.production]);
+    expect(previewRows.rows).toEqual([{ day: expect.any(String), owner: retentionOwners.production }]);
+    const retainedBoundary = await raw(pool, schema,
+      "SELECT ((clock_timestamp() AT TIME ZONE 'Asia/Singapore')::date - 90)::text AS day");
+    expect(previewRows.rows[0]?.day).toBe(retainedBoundary.rows[0]?.day);
+
+    const productionRows = await raw(pool, schema,
+      "SELECT usage.sgt_day::text AS day, reservation.status::text AS status, gate.active_reservation_id::text AS active FROM generation_daily_usage AS usage JOIN generation_reservation AS reservation USING (environment, owner_id, sgt_day) JOIN generation_environment_gate AS gate USING (environment) WHERE usage.environment = 'PRODUCTION' AND usage.owner_id = $1",
+      [retentionOwners.production]);
+    expect(productionRows.rows).toHaveLength(1);
+    expect(productionRows.rows[0]).toMatchObject({ status: "UNCERTAIN", active: activeReservationId });
+    await expect(retention.runGenerationUsageRetentionSweep(db, "production")).resolves.toEqual({
+      ok: true,
+      reservations: 0,
+      dailyUsageRows: 0,
     });
   });
 

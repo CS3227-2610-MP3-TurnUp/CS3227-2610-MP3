@@ -31,10 +31,35 @@ afterEach(() => {
 });
 
 describe("hosted daily-generation coordinator", () => {
-  it("keeps runtime availability and requests hard-disabled without an activation setting", async () => {
+  it("ignores the old activation variable and stays disabled without the explicit hosted opt-in", async () => {
+    vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+    vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
     vi.stubEnv("HOSTED_DAILY_GENERATION_ENABLED", "true");
+    vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "false");
     expect(hostedGenerationAvailability()).toEqual({ available: false, outcome: "disabled" });
     await expect(requestHostedDailyCompletion(input)).resolves.toEqual({ ok: false, outcome: "disabled" });
+  });
+
+  it("requires a validated provider profile before reporting hosted generation as available", async () => {
+    vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+    vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+    vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "true");
+    vi.stubEnv("ORGANISER_SOCLAAS_API_KEY", "");
+    vi.stubEnv("ORGANISER_SOCLAAS_BASE_URL", "https://soclaas-api.comp.nus.edu.sg/v1");
+    vi.stubEnv("ORGANISER_SOCLAAS_MODEL", "qwen3.5:9b");
+    vi.stubEnv("ORGANISER_SOCLAAS_MAX_INPUT_BYTES", "65536");
+    vi.stubEnv("ORGANISER_SOCLAAS_MAX_OUTPUT_TOKENS", "4096");
+    vi.stubEnv("ORGANISER_SOCLAAS_TIMEOUT_MS", "60000");
+    expect(hostedGenerationAvailability()).toEqual({ available: false, outcome: "not_configured" });
+    await expect(requestHostedDailyCompletion(input)).resolves.toEqual({ ok: false, outcome: "not_configured" });
   });
 
   it("fails provider preflight before reservation when configuration is absent", async () => {

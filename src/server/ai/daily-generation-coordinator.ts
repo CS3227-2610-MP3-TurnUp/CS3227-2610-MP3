@@ -11,7 +11,8 @@ import {
   executeDailyGeneration,
   type DailyGenerationExecution,
 } from "./daily-generation";
-import { HOSTED_DAILY_GENERATION_ENABLED, readDailyGenerationEnvironment } from "./daily-generation-config";
+import { createHostedProposalAdapter } from "./hosted-proposal-adapter";
+import { hostedDailyGenerationEnabled, readDailyGenerationEnvironment } from "./daily-generation-config";
 
 const MAX_GENERATION_INPUT_BYTES = 65_536;
 
@@ -24,7 +25,7 @@ export type HostedProviderResult =
       failureSource?: "http_response" | "transport";
     };
 
-/** The selected provider is supplied only by a later reviewed server profile. */
+/** Server-owned hosted profile. Public request input cannot select a provider or model. */
 export interface HostedGenerationAdapter {
   availability():
     | { available: true; maxInputBytes: number; outputTokens: typeof DAILY_GENERATION_TOKENS_PER_ATTEMPT }
@@ -46,26 +47,27 @@ type DailyExecutor = (
   isAmbiguous: (result: HostedProviderResult) => boolean,
 ) => Promise<DailyGenerationExecution<HostedProviderResult>>;
 
-/**
- * Hosted generation is hard-disabled in this increment. With no configured
- * adapter, an environment variable cannot choose a model or activate it.
- */
+/** Hosted generation requires the explicit server opt-in, a validated deployment pair, and provider profile. */
 export function hostedGenerationAvailability(
   adapter?: HostedGenerationAdapter,
 ): HostedAdapterAvailability {
-  if (!HOSTED_DAILY_GENERATION_ENABLED) return { available: false, outcome: "disabled" };
   const configured = readDailyGenerationEnvironment(process.env);
-  if (configured.status !== "supported") {
-    return { available: false, outcome: configured.status === "invalid" ? "invalid_configuration" : "disabled" };
+  if (configured.status === "unsupported_local") return { available: false, outcome: "disabled" };
+  if (configured.status === "invalid") return { available: false, outcome: "invalid_configuration" };
+  if (!hostedDailyGenerationEnabled(process.env)) return { available: false, outcome: "disabled" };
+
+  let selectedAdapter = adapter;
+  if (!selectedAdapter) {
+    try { selectedAdapter = createHostedProposalAdapter(process.env); }
+    catch { return { available: false, outcome: "invalid_configuration" }; }
   }
-  if (!adapter) return { available: false, outcome: "not_configured" };
-  const profile = validateAdapterAvailability(adapter);
+  const profile = validateAdapterAvailability(selectedAdapter);
   return profile.ok
-    ? { available: true, environment: configured.environment, adapter }
+    ? { available: true, environment: configured.environment, adapter: selectedAdapter }
     : { available: false, outcome: profile.outcome };
 }
 
-/** Runtime entry used by transport; the adapter remains absent until a later approved profile. */
+/** Runtime entry used by transport; availability and completion share one adapter instance. */
 export async function requestHostedDailyCompletion(input: {
   ownerId: string;
   system: string;
@@ -85,7 +87,7 @@ export async function requestHostedDailyCompletion(input: {
 }
 
 /**
- * The deterministic integration seam used to test the future provider handoff.
+ * The deterministic integration seam used to test the hosted daily gate.
  * Every provider send must go through `dispatch`, which durably marks the
  * reservation immediately before invoking the send callback.
  */
