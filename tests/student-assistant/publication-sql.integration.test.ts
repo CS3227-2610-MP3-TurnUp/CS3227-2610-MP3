@@ -107,7 +107,7 @@ it.each(["unchanged", "draft", "replace", "withdraw", "cancel", "revoke", "expir
  const identity = await client().user.findUniqueOrThrow({ where: { username: "qa_sql_student" } });
  const activeToken = await client().$transaction(tx => replaceSession(tx, identity.id));
  const event = await createEvent(client(), token);
- await mutateEvent(client(), token, event.id, 0, "save", fields, undefined, { questions: [{ type: "single_choice", label: "Choose a workshop", required: true, help: "Select one session", options: [{ label: "Morning" }, { label: "Afternoon" }] }] });
+ await mutateEvent(client(), token, event.id, 0, "save", fields, undefined, undefined, { questions: [{ type: "single_choice", label: "Choose a workshop", required: true, help: "Select one session", options: [{ label: "Morning" }, { label: "Afternoon" }] }] });
  await publish(event.id, 1);
  const first = await loadPublicationSource(client(), activeToken, event.id);
  expect(first.source.sections.some(section => section.text.includes("Morning") && section.text.includes("Afternoon"))).toBe(true);

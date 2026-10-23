@@ -52,6 +52,10 @@ Roster desktop tables and mobile labelled cards show only the owning Organiser's
 
 The complete event card is one semantic link with visible hover/focus states and native keyboard/new-tab behaviour, without nested interactive elements. Cards for previously published events use publication content and an applicable Saved changes badge; drafts use saved private fields. Canonical [event presentation](../specs/shared/domain-and-data-contracts.md#organiser-event-presentation--accepted-refinement-21-october-2026) defines transitions and removal semantics. Keep actions wrapping on narrow screens, confirmation/failure feedback accessible, and focus meaningful after a content-mode transition. Preview/editor/publication content must not be simultaneously rendered merely hidden with CSS.
 
+### Calendar evidence layout — CHG-K-010
+
+Keep the two calendar field containers aligned to the top with intrinsic label/input row sizing. Inline proposal evidence belongs below its own input. Editing or clearing one date removes its source evidence without stretching or lowering that date input to match a sibling’s remaining feedback. The narrow-screen single-column layout still applies.
+
 ## Silent publication refresh — log28,22October2026
 
 Darryl approved keeping existing conversation/draft visible during routine open/focus/source-only checks,without loading-status flicker or composer disruption. Focus during an active answer does not cancel or replace that request;server initial/final source/session/evidence checks remain authoritative. Unchanged checks preserve edits/history;overlapping/stopped/superseded requests cannot publish old results. A confirmed replacement immediately invalidates old replies and reloads the current source without resending the draft;actual unavailability/checkfailure still clears stale source and shows a friendly status. This supersedes earlier instructions to clear the transcript at the start of every routine check. No new inference,provider/key/budget/schema behavior.

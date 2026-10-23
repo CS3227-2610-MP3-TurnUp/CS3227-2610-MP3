@@ -9,6 +9,9 @@ export default defineConfig({
       "src/server/ai/**/*.test.ts",
       "tests/auth/**/*.test.ts",
       "tests/events/**/*.test.ts",
+      "tests/proposal-assistance/**/*.test.ts",
+      "tests/proposal-assistance/**/*.test.tsx",
+
       "tests/registration/**/*.test.ts",
       "tests/student-assistant/**/*.test.ts",
     ],

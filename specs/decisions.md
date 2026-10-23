@@ -53,6 +53,43 @@ Keith selected the original Organiser-only WP-003 scope (CHG-K-009); Student dis
 
 Keith answered nine layout/behaviour questions and explicitly requested implementation of the resulting plan. The [current canonical event policy](shared/domain-and-data-contracts.md#organiser-event-presentation--accepted-refinement-21-october-2026) separates viewing/editing/preview, uses publication-based full-card links and content-based saved-change badges, and distinguishes never-published deletion from discarding private edits. The approved G05 amendment supersedes Keith’s earlier blanket no-earlier-start choice: an already published event may adopt any changed future start, even earlier or after the former start has passed; unchanged past starts remain permitted for content-only replacements. First publication/withdrawn republication still require future starts, and end must follow start. Validation runs again at publication. Form/answer bounds, registration cutoffs and remaining cross-role G05/G06/G07 remain open; no Darryl agreement is inferred. Existing requirement/scenario IDs are preserved; runtime evidence is separate.
 
+## 22 October 2026 — WP-005 extraction integration slice
+
+Keith approved CHG-K-010 to integrate the existing prototype into Event Creation in a new worktree, with working extraction, page-local private findings and public drafting deferred to a later ORG07 slice. Explicitly applied fields persist only through existing Save Draft. This is no removal of ORG07 and no adoption of persistent private-preparation retention details. The imported9B/JSON-object/no-thinking/60s profile is restricted to separately configured local synthetic evaluation; hosted inference remains disabled. G04 provider handling/intended-host validation, G06 persistent-preparation operations and broader G08 remain open for their dependent work. No live-model or hosted result is established by plan approval.
+
+## 22 October 2026 — Generate-to-prefill amendment
+
+Keith requested replacing individual Apply controls and duplicate calendar confirmation with automatic prefilling of successfully extracted known values into original Event Creation inputs, accompanied by inline source quotes. Generate authorizes replacing working values present at request time; it does not authorize saving/publishing or replacing newer concurrent edits. Missing/conflicting/invalid results preserve values. Complete dates normalize to normal stored UTC ISO and display as SGT. No missing day/month/year/time is inferred; Keith explicitly selected Singapore time as the default for a complete source date/time whose timezone is omitted; an explicit source zone takes precedence, and ambiguous stated zones do not silently become SGT. This supersedes the earlier per-field Apply/manual date-reentry UI for CHG-K-010; G04/retention/ORG07 boundaries remain unchanged.
+
+
+## 23 October 2026 — WP-005 clarification decisions
+
+Keith accepted and requested CHG-K-011 after extraction integration9d651e8: inline clarification/summary; explicit confirmation of manual or unchanged existing answers; supported suggestion selection resolves locally; issues recorded at Generate, answers/resolutions committed with Save Draft; unresolved required issues block before preview and again at publication. PDF removal retains issues; regeneration preserves confirmed values and reopens contradictory findings while absence alone does not invalidate them. Organiser-confirmed facts need no PDF quote or reason; editing a confirmation reopens that field. Delivery remains local synthetic/non-production, with production retention/cleanup and hosted provider activation deferred under G06/G04. This resolves the local clarification UX and resolution contract, not global retention or full ORG07 acceptance. Comprehensive model evaluation remains deferred until remaining WP-005 functionality is implemented; regression tests continue per change.
+
+
+## 23 October 2026 — ORG07 public-candidate increment
+
+Keith accepted the proposed next increment and requested CHG-K-012: editable description and FAQ/Other candidates from saved resolved intended-public facts; optional unsupported questions ask the organiser rather than inventing an answer; explicit field-specific replacement/application and normal Save/Preview/Publish; page-local unapplied candidates. Reuse existing local synthetic provider limits and privacy/revision/readiness guards. Production retention/hosted activation and comprehensive model evaluation remain deferred; no registration/thread prerequisite is introduced. The separate candidate prompt does not alter extraction prompt v6. Implementation/evidence status remains in the assigned change record.
+
+
+23 October2026 — Keith approved the CHG-K-012 FAQ-only refinement: remove redundant final description rephrasing, focus separate generation on relevant participant questions, populate supported FAQ candidates, request optional organiser answers for unsupported questions, and retain explicit Other-only Apply/Save. Empty FAQ generation is rejected rather than shown as successful; no change to private/public sources, provider policy, publication rules or G04/G06.
+
+
+23October2026 — Keith confirmed the current WP-005 browser walkthrough. He requested retention/cleanup work first, then commit and push to a Preview branch, then hosted AI verification; comprehensive labelled model evaluation is deferred to a post-WP-005 refinement. This changes scheduling, not evidence standards: model-quality and hosted/G04/G06 acceptance remain unverified until separately evidenced. Draft inactivity/notice/expiry operational choices remain pending, with no implementation-dependent policy inferred.
+
+
+23October2026 — Keith answered retention questions: successful Save Draft or accepted PDF extraction resets30days, viewing/FAQ generation do not; warningfromday23, expiryday30; apply to all inactive private drafts, delete never-published drafts and restore latest publication/clear private prep for previously published events while preserving event/publication/registrations. CHG-K-013 implements Organiser mechanics only, without inferring Darryl policy for Student personal records or closing global G06/G04.
+
+
+### Per-Organiser daily generation — 23 October 2026
+
+Keith explicitly selected 10 attempts per Organiser per day per environment, 4,096 output tokens/request and 40,960 reserved output tokens/Organiser/day/environment. Follow-up answers selected a shared PDF/FAQ allowance resetting at midnight SGT, dispatched failures counting, one in-flight call per environment, operator recovery for uncertain calls, and policy-first delivery with hosted generation disabled. CHG-K-014 implements this SEC05 policy; it neither closes G04/G08 nor activates Preview/Production inference. See [canonical policy](shared/ai-and-privacy.md#organiser-daily-hosted-generation-allowance--accepted-23-october-2026).
+
+
+### Hosted adapter and Preview rollout — 23 October 2026
+
+Keith approved CHG-K-015 after K-014: reuse local9B JSON/no-thinking/60s profile for hosted generation, Preview deployment plus exactly bounded two synthetic inference calls, Production off, keep Preview enabled only after success. Settled usage history expires90days after its SGT usage day; unresolved reservations protected; Preview maintenance uses a protected daily operator invocation, automation deferred. See canonical SEC05/06 hosted activation policy. Commit/push/Preview configuration and deployment are authorised within this sequence; no Production operations or additional inference calls.
+
 ## 22 October 2026 — Darryl's WP-004 plan v1.0 approval
 
 Darryl explicitly approved [WP-004 plan v1.0](../docs/plans/wp-004-student-registration-plan.md), allocating CHG-D-007. This expands the earlier local Attend-only plan to PAR01–05/13–15, with dependencies preserved. Student discovery uses Upcoming by default (published start strictly after database now), a separate Started/past filter (start at or before now), ascending start with event UUID tie-break, and current published details remain readable after start/end. Times display in Asia/Singapore. Anonymous and Organiser access remains denied. This settles Darryl's Student discovery/post-start read choice; it assigns no FAQ/WP-006 work.

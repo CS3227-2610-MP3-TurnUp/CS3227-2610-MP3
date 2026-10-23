@@ -131,14 +131,14 @@ it("atomically joins, corrects captured values, cancels once and rejoins without
 });
 it("publisher capacity floor and captured nonempty form survive replacement and withdrawal", async () => {
   const db = client(), event = await createEvent(db, ownerToken), id = event.id;
-  await mutateEvent(db, ownerToken, id, 0, "save", { ...publicFields, capacity: 2 }, undefined, { questions: [{ type: "short_text", label: "Original wording", required: true }] });
+  await mutateEvent(db, ownerToken, id, 0, "save", { ...publicFields, capacity: 2 }, undefined, undefined, { questions: [{ type: "short_text", label: "Original wording", required: true }] });
   let preview = await mutateEvent(db, ownerToken, id, 1, "preview") as { approvalId: string };
   await mutateEvent(db, ownerToken, id, 1, "publish", undefined, preview.approvalId);
   const screen = await registrationScreen(db, studentToken, id), foreign = await registrationScreen(db, foreignToken, id);
   const payload = (s: typeof screen) => ({ expectedPublicationId: s.publicationId, expectedFormRevisionId: s.form.formRevisionId, idempotencyKey: randomUUID(), name: "Student", phone: "+6512345678", answers: { [s.form.questions[0].id]: "Confirmed answer" }, sharingConfirmed: true });
   const first = await mutateRegistration(db, studentToken, id, "JOIN", payload(screen));
   await mutateRegistration(db, foreignToken, id, "JOIN", payload(foreign));
-  await mutateEvent(db, ownerToken, id, 2, "save", { ...publicFields, capacity: 1 }, undefined, { questions: [] });
+  await mutateEvent(db, ownerToken, id, 2, "save", { ...publicFields, capacity: 1 }, undefined, undefined, { questions: [] });
   preview = await mutateEvent(db, ownerToken, id, 3, "preview") as { approvalId: string };
   await expect(mutateEvent(db, ownerToken, id, 3, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 409 });
   await mutateEvent(db, ownerToken, id, 3, "save", { ...publicFields, capacity: 2, location: "New location" });

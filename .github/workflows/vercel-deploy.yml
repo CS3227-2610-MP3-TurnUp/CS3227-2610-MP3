@@ -218,7 +218,7 @@ jobs:
             if [[ "$GITHUB_REF_NAME" == "preview/WP-006" ]]; then
               student_ai_args+=(--env STUDENT_ASSISTANT_ENABLED=true)
             fi
-            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" "${student_ai_args[@]}" --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
+            deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=preview --token="$VERCEL_TOKEN" ${student_ai_args[@]+"${student_ai_args[@]}"} --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=preview")"
           else
             deployment_output="$(corepack pnpm dlx vercel@58.4.4 deploy --prebuilt --target=production --skip-domain --token="$VERCEL_TOKEN" --env STUDENT_ASSISTANT_ENABLED=true --meta "turnupCommit=$GITHUB_SHA" --meta "turnupRef=$GITHUB_REF_NAME" --meta "turnupTarget=production")"
           fi

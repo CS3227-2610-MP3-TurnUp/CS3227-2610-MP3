@@ -12,6 +12,14 @@ Contract leads: Keith for AI budgets/provider calls/private-public context separ
 | SEC06 | Keep credentials server-side; logs contain minimal actor/action/revision/outcome metadata, no raw private proposals/answers/credentials/prompts. Retention covers audits/derived copies. |
 | SEC07 | Only submitting Student and owning Organiser read event submissions. Scope queries before disclosure; form labels/answers are inert and cannot overwrite permissions. Failed joins expose no partial submission. |
 
+WP-005 PDF injection safeguards (CHG-K-016; implemented locally with deterministic tests, live model behaviour not yet verified):
+- **Parsing:** extracted page text is NFKC-normalised, with zero-width, bidirectional-control and Unicode tag characters removed. Text items under 1 pt or whose origin is outside the page are dropped before inference. Not detected: white-on-white text, invisible rendering mode (common in OCR layers), near-zero horizontal scaling, clipped text and runs that start on the page but extend off it.
+- **Prompts:** extraction and FAQ-candidate system prompts start with a shared security-rules block, and an end-of-untrusted-data reminder follows the supplied data.
+- **Evidence:** the server rejects an evidence quote unless it occurs at least once outside every sentence that contains an assistant-directed instruction marker.
+- **Contacts:** a model-written value or conflict alternative may not contain a URL, domain, email or phone-like number absent from its cited quotes. A private note may not contain a URL, domain or email absent from the pages. Values are NFKC-normalised with invisible characters removed, and dot look-alikes, bracketed dots and a space before a dot are read as dots. Not detected: a bare spelled-out "dot", "name. domain" (indistinguishable from a sentence ending) and letter-spaced text. Any letters-only ending of 2–24 characters counts as a domain, so a value that rewrites a dotted name (for example `Mr.Ng` from "Mr Ng") or turns a time range into an 8-digit run is withheld for manual entry.
+- **Review note:** a page with such markers always gains the private review note "Page N contains text addressed to an automated assistant; check values cited from this page."
+- **Limits:** an injection split across sentences without marker words, and ordinary-looking false statements, cannot be distinguished from real facts. A genuine sentence such as "ignore the instructions on the old flyer" is treated as an instruction marker, so a fact quoted from it is withheld and the page gets the review note. Organiser review of every prefilled value remains the control.
+
 Organiser assistance may use temporary proposals/necessary private preparation, producing candidates and review findings without approval authority. Student assistance cannot reuse Organiser conversations/indexes/caches, PDFs/private extracts/clarifications/notes/replies/rosters, another event or historical model replies as factual evidence.
 
 Server resolves the current publication, supplies complete bounded public content and rechecks source before delivery. Replacement discards stale context/cache/output; withdrawal/cancellation denies new chat. Do not silently truncate approved documents. A vector database is unnecessary for the proposed bounded single-event source; future retrieval needs a scoped design/change.
@@ -21,6 +29,31 @@ Darryl's22October2026 conversational/contact amendment requires short natural re
 Local PDF selection alone transmits nothing. Generate starts temporary authenticated processing; release bytes/fulltext and clean temporary files on all exits. Necessary structured facts/short evidence/page references/clarifications/drafts may be retained privately. Verify provider handling before claiming deletion outside application control. Sensitivity detection can miss secrets; owner review remains required. Previously delivered information cannot be retracted; historical-message suppression is G07.
 
 Verification: T04/06/09–14/18/21/26/27; [retention](deployment-and-retention.md), [gates](../decisions.md).
+
+
+## Organiser daily hosted generation allowance — accepted 23 October 2026
+
+Under SEC05/06, each authenticated Organiser has 10 dispatched generation attempts per Asia/Singapore calendar day per environment (Preview and Production independently). PDF extraction and public FAQ generation share this allowance across all owned events and sessions. Every dispatched attempt reserves 4,096 output tokens, up to 40,960 reserved output tokens per Organiser/day/environment; shorter output does not refund the difference. This is application accounting, not provider credit or a bound on input-token cost.
+
+Authentication, ownership, configuration and invalid-input failures before dispatch consume no daily allowance. Atomically reserve before dispatch; definitively unused reservations refund idempotently. Persist a dispatch marker immediately before contacting the provider. Once dispatched, provider failures, invalid output, cancellation and timeout consume the attempt/full reservation; a crash where dispatch is uncertain is counted conservatively. No automatic retries. Manual completion and existing saved/newer working fields remain available.
+
+Database time at admission determines the reservation’s SGT day and reset timestamp. Dispatch/completion/refund after midnight still belongs to that original admission day. A new daily record begins at midnight without a scheduler; redeploy/restart does not reset usage. Enforce one in-flight generation per environment and a minimum 2,100ms admission interval across all Organisers. Pending/uncertain work survives midnight and blocks overlapping requests until completion or guarded operator recovery. Timeout/transport ambiguity never automatically releases the shared slot. Recovery of dispatched reservations releases the slot only, without refunds.
+
+Identity comes from the authoritative session and environment from validated server configuration. Owner-only, private/no-store usage reporting reveals remaining attempts/reserved allowance and reset time, never another Organiser's usage or proposal/model text. UI distinguishes daily exhaustion from temporary busy/spacing limits; enforcement remains server-side.
+
+CHG-K-014 is policy-first. Hosted activation remains disabled pending a separately reviewed hosted profile and G04/G08 evidence; this policy does not select a hosted model, provider timeout or course permission. The existing local synthetic cumulative allowance and protected Preview foundation probe remain separate and unchanged. Student chat accounting is outside this Organiser increment.
+
+
+## Hosted Organiser activation — accepted 23 October 2026
+
+CHG-K-015 follows the daily policy with a default-off hosted adapter. Keith selected qwen3.5:9b, JSON/no-thinking,65,536inputbytes,4,096outputtokens and60s model timeout; generation routes allow120s total only after verifying host support. Enable only with explicit server-only PROPOSAL_ASSISTANCE_HOSTED_ENABLED=true and validated environment/database/profile. Local synthetic and foundation-probe scopes remain unchanged; no model/profile setting in public request bodies. The durable dispatch marker is immediately before actual provider fetch, after input/configuration checks. Existing evidence/schema/publication/stale guards and manual completion remain authoritative.
+
+The authorised rollout is Preview-only, synthetic/non-private inputs and at most two inference calls (one extraction, one FAQ), after provider/host prerequisites. Leave Preview enabled only after both pass; on failure disable and report without extra model retries. Production stays disabled. Synthetic results neither establish real private-data provider handling/course compliance nor complete model-quality acceptance; G04/G08 unresolved portions remain visible.
+
+Settled usage reservations and unreferenced daily counters expire90days after their SGT usage day ends. Cleanup never releases an active or unresolved reservation, rewrites current quotas or refunds dispatched usage. Unresolved history survives until operator resolution, after which ordinary expiry applies. A separately enabled strong-secret operator route supports bounded dry-run/count-only cleanup. Preview daily invocation is an operator responsibility; scheduling automation is deferred. Provider/backup expiry remains separately evidenced, not inferred from active-row deletion.
+
+
+CHG-K-015 runtime preparation storage supports validated hosted environment/database pairs independently of the inference switch, as local preparation storage already does. Disabling inference must not prevent reading, editing, resolving or manually publishing existing assisted drafts. Hosted provider credentials/profile use dedicated server-only ORGANISER_SOCLAAS_* settings; the shared/local SoCLaaS settings remain separate. This preserves other Preview consumers on the existing Git-unlinked CLI project.
 
 ## Account-owned event chat history - 22 October 2026, log10
 

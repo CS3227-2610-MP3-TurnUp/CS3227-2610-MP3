@@ -43,11 +43,44 @@ Username-session amendment: Darryl subsequently required username changes to kee
 
 CHG-D-003 implementation handoff,20 October2026: source remains uncommitted on codex/wp-002-credentials-profile with full CHG-D-002 prerequisite; [final verification](../changes/CHG-D-003-credentials-profile/verification.md) records24-file snapshot,176unit/15SQL/build/browser and independent fixes/rechecks. Identity remains id/username/role. Username changes keep all sessions and refresh canonical identity/revision; only password changes atomically revoke all sessions. Login issuance rechecks locked username/version, and protected mutations revalidate session at commit. New profile reader studentProfile in src/server/accounts/profile.ts returns private nullable name/phone/profileVersion for self Students only; consumers still confirm event-specific values and must not rewrite historical submissions. Additive20261020010000_account_settings was applied only on assigned dev/darryl after metadata verification; Keith coordinates shared integration separately. No common Identity/AI/public profile expansion or real event/T20 proof. No remote delivery or deployment implied.
 
-## Publication producer handoff — CHG-K-009, 21 October 2026
+## Proposal assistance integration — CHG-K-010, 22 October 2026
 
-Source5402461 plus isolated wp-003-publication working files; Keith authored the original Organiser-only implementation. [Plan](../docs/plans/wp-003-publication-plan.md) lists schema/API/locking/approval design and [verification](../changes/CHG-K-009-wp-003-publication/verification.md) supplies exact checks and limits. Event operations consume WP-002 authoritative identity/session revalidation. Keith must coordinate additive20261021000000_events application against an explicitly assigned non-production target before hosted use; no hosted event migration is claimed here.
+Base1f0aa87 plus31product/config/test working files in isolated wp-005-proposal-integration. Keith owns this Organiser-only slice. [Verification](../changes/CHG-K-010-wp-005-proposal-integration/verification.md) records exact checks, independent findings/fixes and limits. The integrated endpoint consumes authoritative WP-002 identity/session and WP-003 owner/state/version contracts, returning page-local validated findings; the approved Generate-to-prefill amendment batch-updates working event fields with inline evidence through existing explicit draft/publication operations. PDF/fulltext and findings are not persisted. No migration or Student contract expansion.
 
-WP-004 consumes stable Event UUID/owner/state/version/current-publication pointer and immutable EventPublication snapshot/digest with an empty versioned form. src/server/publication/reader.ts currentPublication is an internal Student-role reader exposing only current published projection; consumers must enforce operation-specific state/revision checks at commit/delivery. It is not a Student screen/public API. Registration/submission relationships, actual capacity floors, My Events flags, registrant notices and registration concurrency are WP-004 integration tasks. Form-only changes must publish a fresh immutable reviewed revision. WP-005 cannot bypass manual approval; WP-006 must recheck source/invalidate chat and resolve G07 history. Deferred policy/retention bounds are not settled by empty forms or fixtures.
+Only explicit local synthetic provider configuration can enable inference. Preview/Production remain disabled; local tests do not complete provider→AI intended-host handoff. Public drafting/FAQ suggestions (ORG07), persistent-preparation retention and full WP-005 remain separate. No registration/thread prerequisites were added. Darryl should not treat private findings or source/evidence as Student AI/publication input.
+
+
+## WP-005 clarification delivery — CHG-K-011, 23 October 2026
+
+Keith delivered the local synthetic clarification slice on top of `9d651e8`, consuming account/session locking and exact publication approval semantics. The [implementation handoff](../changes/CHG-K-011-wp-005-clarification/handoff.md) records the frozen schema/API contract, consumer expectations and migration state; [verification](../changes/CHG-K-011-wp-005-clarification/verification.md) records the 19-file reviewed fingerprint, actual331-test/lint/type/build checks, independent fixes and limitations. Existing event GET/extraction/save interfaces now carry authoritative preparation revisions; accepted Generate records issues, Save Draft commits validated answers/resolutions, and preview/publication enforce required issue resolution. Private state never enters public snapshots or Student AI.
+
+Additive migration `20261023000000_proposal_clarification` is applied and checksum-verified on the assigned development/non-production target. Other targets require their own migration check/application before this application revision runs, including for manual events. Restart the local server after client generation. No Production migration or hosted deployment is implied. The assisted flow remains development/non-production only; existing assisted records fail closed outside that mode, while null-preparation manual events retain their existing flow.
+
+No Student registration/thread prerequisite or public-reader expansion was introduced. ORG07 public-content/FAQ candidates, production retention/cleanup G06, hosted provider handling/activation G04 and comprehensive model evaluation remain unfinished. Native browser/live-model evidence and the timed-out independent SQL replay are explicitly limited; direct assigned-database checks are recorded separately. This is a completed-slice handoff, not full WP-005 or hosted acceptance.
+
+
+## WP-005 public-content candidates — CHG-K-012, 23 October 2026
+
+Keith implemented the local synthetic ORG07 continuation from cb6179d. The [handoff](../changes/CHG-K-012-wp-005-public-candidates/handoff.md) records the exact revision-only endpoint, saved-public source allowlist, exact-reference FAQ answer derivation, optional unanswered organiser prompts and browser-local editable candidates. Apply remains explicit and requires existing Save Draft/Preview/Publish. No schema migration, Student consumer expansion or Darryl registration/thread dependency is introduced; K-011 migration requirements remain applicable.
+
+Actual checks, independent findings/dispositions and browser/live-model limitations are recorded in [verification](../changes/CHG-K-012-wp-005-public-candidates/verification.md). Production retention/cleanup, hosted activation and comprehensive model evaluation remain separate unfinished work.
+
+
+## WP-005 private draft retention — CHG-K-013
+
+[Current handoff](../changes/CHG-K-013-wp-005-draft-retention/handoff.md) covers accepted30-day activity clock/day23owner warnings, additive migration, protected bounded cleanup and latest-publication restoration. Assigned development migration is checksum-verified; other targets need normal migrate/client restart. Actual SQL/worker fixtures and independent378-test evidence are in verification. No production cleanup/cron activation or provider backup erasure is claimed. Existing K-012 FAQ/Other explicit Apply and public/private boundaries are preserved.
+
+
+## Organiser daily generation policy — CHG-K-014
+
+The [K-014 handoff](../changes/CHG-K-014-wp-005-daily-generation/handoff.md) defines the separate per-Organiser/SGT-day/environment PDF+FAQ allowance and authenticated usage reporting, from1c3785d. Hosted generation remains disabled; no Student chat allowance or dependency is inferred. Local synthetic/probe allowances remain unchanged. Verification records migration/accounting/UI checks separately from future hosted activation and provider evidence.
+
+
+## Hosted Organiser generation — CHG-K-015
+
+The [hosted handoff](../changes/CHG-K-015-wp-005-hosted-generation/handoff.md) defines the dedicated Organiser provider profile, shared PDF/FAQ daily accounting, hosted preparation persistence independent of inference activation and protected usage-history cleanup. The [verification record](../changes/CHG-K-015-wp-005-hosted-generation/verification.md) is authoritative for reviewed revisions, migrations, Preview deployment/activation and bounded synthetic outcomes. Preview migrations for daily accounting and retention indexes are applied. Production configuration/migrations and Student consumers remain outside this delivery. No Darryl registration/thread prerequisite is introduced.
+
+Preview uses a daily operator invocation for settled usage-history maintenance; it does not activate private-draft cleanup or prove provider backup erasure. Real private-proposal provider handling and comprehensive labelled evaluation remain separate. The production-bundle PDF parsing regression discovered during rollout is corrected and tested with traced assets; exact review and hosted results remain in verification.
 
 ## D007 registration consumer preparation — 22 October 2026
 
@@ -107,3 +140,7 @@ Darryl authorised explicit per-assistant credentials. Student local/synthetic/re
 ## Production activation authorised — 22 October2026
 
 Darryl requests Production Student chat,push/merge and explicitly chooses a separate200attemptProductionpoolwithsamePreviewlimits. NewProductionapproval and matchingVercel/app/DBlabels preserve Preview counters and strict environment isolation. Additive20261022020000migration expands the budgetenvironmentCHECKonly;target-specificactivationneverresets/replacesexistingrows. ProductionusesitsownSTUDENT_SOCLAAS_API_KEY;Organiserkeyunchanged. Existingcandidate/root/sourceguard and protectedpromotionworkflowretained. See docs/plans/wp-006-production-activation.md and ownerlog08forcurrentchecks/outcomes;earlierProduction-disabledstatementsarehistoricalforthisapprovedextension. Noagentliveinferenceorfullpackagecompletion.
+
+## WP-005 / master integration — 23 October 2026, PR #35
+
+Merged master `ab186e6` into `preview/wp-005`. Save Draft accepts both optional registration form and private clarification fields; omitted form preserves the saved form. The service signature places clarification before the optional form argument. Form-only changes participate in private activity, owner warnings and expiry; cleanup validates the complete immutable publication and restores its fields and questions without modifying publication history or registrations. Shared SoCLaaS responses preserve both Organiser `finishReason` and Student `truncated` metadata. Existing per-consumer provider settings and quotas remain separate.

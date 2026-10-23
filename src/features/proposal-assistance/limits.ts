@@ -1,0 +1,4 @@
+export const MAX_PROPOSAL_PDF_BYTES = 4_000_000;
+export const MAX_PROPOSAL_PDF_PAGES = 20;
+export const MAX_PROPOSAL_TEXT_BYTES = 48_000;
+export const MAX_CONFLICT_ALTERNATIVES = 3;

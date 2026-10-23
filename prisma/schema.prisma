@@ -79,6 +79,24 @@ enum AccountRole {
   ORGANISER
 }
 
+enum GenerationEnvironment {
+  PREVIEW
+  PRODUCTION
+
+  @@map("generation_environment")
+}
+
+enum GenerationReservationStatus {
+  RESERVED
+  DISPATCHED
+  COMPLETED
+  REFUNDED
+  UNCERTAIN
+  RECOVERED
+
+  @@map("generation_reservation_status")
+}
+
 model User {
   id           String      @id @db.Uuid
   username     String      @unique @db.VarChar(32)
@@ -92,6 +110,7 @@ model User {
   aiHistory StudentAiHistory[]
   sessions     Session[]
   events       Event[]
+  generationUsage GenerationDailyUsage[]
   registrations Registration[]
   registrationOperations RegistrationOperation[]
 
@@ -137,6 +156,10 @@ model Event {
   draft Json
   draftForm Json @default("{\"questions\":[]}") @map("draft_form")
   draftVersion Int @default(0) @map("draft_version")
+  preparation Json?
+  preparationVersion Int @default(0) @map("preparation_version")
+  privateActivityAt DateTime? @map("private_activity_at") @db.Timestamptz(6)
+  retentionCheckedAt DateTime? @map("retention_checked_at") @db.Timestamptz(6)
   firstPublishedAt DateTime? @map("first_published_at") @db.Timestamptz(6)
   currentPublicationId String? @unique @map("current_publication_id") @db.Uuid
   currentPublication EventPublication? @relation("CurrentPublication", fields: [currentPublicationId], references: [id], onDelete: Restrict)
@@ -147,6 +170,7 @@ model Event {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   editedAt DateTime @default(now()) @map("edited_at") @db.Timestamptz(6)
   @@index([ownerId, editedAt])
+  @@index([privateActivityAt, retentionCheckedAt], map: "event_retention_scan_idx")
   @@map("event")
 }
 
@@ -180,6 +204,55 @@ model EventApproval {
   @@map("event_approval")
 }
 
+// Minimal per-owner hosted-generation counters. Local synthetic inference and
+// the foundation probe continue to use their existing, separate gates.
+model GenerationDailyUsage {
+  environment GenerationEnvironment
+  ownerId String @map("owner_id") @db.Uuid
+  sgtDay DateTime @map("sgt_day") @db.Date
+  attemptCount Int @default(0) @map("attempt_count")
+  reservedOutputTokens Int @default(0) @map("reserved_output_tokens")
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  reservations GenerationReservation[]
+
+  @@id([environment, ownerId, sgtDay])
+  @@index([environment, sgtDay], map: "generation_daily_usage_retention_idx")
+  @@map("generation_daily_usage")
+}
+
+// One singleton row per hosting environment serializes admissions, dispatch
+// spacing and the sole in-flight request across replicas.
+model GenerationEnvironmentGate {
+  environment GenerationEnvironment @id
+  activeReservationId String? @unique @map("active_reservation_id") @db.Uuid
+  lastDispatchAt DateTime? @map("last_dispatch_at") @db.Timestamptz(6)
+  activeReservation GenerationReservation? @relation("ActiveGenerationReservation", fields: [activeReservationId], references: [id], onDelete: Restrict, map: "generation_environment_gate_active_reservation_fkey")
+
+  @@map("generation_environment_gate")
+}
+
+// No prompts, source text, model output, or event IDs are retained here.
+// Terminal records preserve idempotent refund/completion semantics; operator
+// recovery releases a slot without changing the daily counters.
+model GenerationReservation {
+  id String @id @db.Uuid
+  environment GenerationEnvironment
+  ownerId String @map("owner_id") @db.Uuid
+  sgtDay DateTime @map("sgt_day") @db.Date
+  reservedOutputTokens Int @default(4096) @map("reserved_output_tokens")
+  status GenerationReservationStatus @default(RESERVED)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  dispatchedAt DateTime? @map("dispatched_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+  dailyUsage GenerationDailyUsage @relation(fields: [environment, ownerId, sgtDay], references: [environment, ownerId, sgtDay], onDelete: Restrict)
+  activeForGate GenerationEnvironmentGate? @relation("ActiveGenerationReservation")
+
+  @@index([environment, status, createdAt])
+  @@index([environment, status, sgtDay], map: "generation_reservation_retention_idx")
+  @@index([ownerId, environment, sgtDay])
+  @@map("generation_reservation")
+}
 
 enum RegistrationState {
   ACTIVE

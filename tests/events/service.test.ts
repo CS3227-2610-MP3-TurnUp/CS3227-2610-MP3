@@ -1,13 +1,40 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const auth = vi.hoisted(() => ({ self: vi.fn(), commit: vi.fn() }));
-vi.mock("../../src/server/accounts/service", () => ({ requireSelf: auth.self, authenticatedAccount: auth.commit }));
-import { createEvent, listEvents, mutateEvent, readEvent } from "../../src/server/events/service";
+const proposalRoute = vi.hoisted(() => ({ db: undefined as unknown, complete: vi.fn(), extract: vi.fn(), process: vi.fn() }));
+vi.mock("../../src/server/accounts/service", () => ({
+  privateHeaders: { "Cache-Control": "no-store, private", Vary: "Cookie" },
+  requireSelf: auth.self,
+  authenticatedAccount: auth.commit,
+}));
+vi.mock("../../src/server/auth/request-security", () => ({
+  authConfig: () => ({ origin: "https://turnup.example", secret: "a".repeat(64), secure: true, sourceMode: "vercel" }),
+  requireOrigin: () => undefined,
+}));
+vi.mock("../../src/server/auth/session", () => ({ presentedToken: () => "token" }));
+vi.mock("../../src/server/proposal-assistance/admission", () => ({ admitProposalExtraction: vi.fn() }));
+vi.mock("../../src/server/proposal-assistance/transport", () => ({
+  proposalCompletionAvailability: () => ({ available: true }),
+  requestProposalCompletion: proposalRoute.complete,
+}));
+vi.mock("../../src/server/proposal-assistance/pdf-text", () => ({
+  MAX_PROPOSAL_PDF_BYTES: 4_000_000,
+  extractPdfPageText: proposalRoute.extract,
+}));
+vi.mock("../../src/server/proposal-assistance/processor", () => ({ processProposalExtraction: proposalRoute.process }));
+vi.mock("../../src/server/db/client", () => ({ prisma: proposalRoute.db }));
+import { createEvent, listEvents, mutateEvent, readEvent, readSavedPublicCandidateSnapshot, recordProposalExtraction } from "../../src/server/events/service";
+import { POST as proposalExtractionPost } from "../../src/app/api/organiser/events/[id]/proposal-extraction/route";
 import { currentPublication } from "../../src/server/publication/reader";
 import { EMPTY_EVENT } from "../../src/lib/event-fields";
+import type { PrivateExtraction } from "../../src/features/proposal-assistance/types";
 import type { PrismaClient } from "../../src/server/db/generated/client";
-const actor = "owner", id = "event-1";
+const actor = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587", id = "8aa3c13d-d179-46bc-aec9-d24873953e32";
 const fields = { ...EMPTY_EVENT, title: "Workshop", description: "Description", location: "Hall", fee: "Free", openTo: "Anyone", preparation: "None", start: "2099-11-01T02:00:00.000Z", end: "2099-11-01T04:00:00.000Z", capacity: 10 };
+const titleExtraction: PrivateExtraction = {
+  facts: { title: { status: "known", value: "Workshop", evidence: [{ quote: "Workshop", page: 1 }] } },
+  privateFindings: [], completeness: "incomplete", incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["purpose"], technicalIssues: 0,
+};
 // Transactional test double exercises service decisions/rollback, not PostgreSQL locking.
 let dbNow: Date;
 let activeCount: number;
@@ -38,11 +65,22 @@ const fake = {
 };
 const db = fake as unknown as PrismaClient;
 beforeEach(() => {
+  vi.unstubAllEnvs();
   activeCount = 0;
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
-  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, privateActivityAt: new Date(dbNow), retentionCheckedAt: null, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  proposalRoute.db = fake;
+  proposalRoute.complete.mockResolvedValue({ ok: true, text: "synthetic completion" });
+  proposalRoute.extract.mockResolvedValue({ ok: true, pageTexts: ["Workshop"] });
+  proposalRoute.process.mockImplementation(async (_pages: readonly string[], complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>) => {
+    const completion = await complete({ system: "synthetic system", user: "synthetic user" });
+    return completion && typeof completion === "object" && "ok" in completion && completion.ok
+      ? { ok: true, value: titleExtraction }
+      : { ok: false, outcome: "unavailable" };
+  });
 });
+afterEach(() => vi.unstubAllEnvs());
 async function previewAndPublish() {
   const preview = await mutateEvent(db, "token", id, state.events[0].version as number, "preview") as { approvalId: string };
   await mutateEvent(db, "token", id, state.events[0].version as number, "publish", undefined, preview.approvalId);
@@ -58,9 +96,11 @@ it("denies Students and foreign owners without disclosing or mutating events", a
 it("creates a private incomplete draft with server identity and UUID", async () => {
   const created = await createEvent(db, "token");
   expect(created.ownerId).toBe(actor); expect(created.id).toMatch(/^[0-9a-f-]{36}$/); expect(created.draft).toEqual(EMPTY_EVENT);
+  expect(created.privateActivityAt).toEqual(dbNow);
 });
 it("publishes only the exact preview, with immutable history and an empty versioned form", async () => {
   await previewAndPublish();
+  expect(state.events[0].privateActivityAt).toBeNull();
   const oldPublication = structuredClone(state.publications[0]);
   expect(state.events[0]).toMatchObject({ state: "PUBLISHED", version: 1 });
   expect(state.publications[0]).toMatchObject({ snapshot: { fields, form: { questions: [] } }, approvedBy: actor });
@@ -160,14 +200,213 @@ it("publishing rechecks changed-start time after an earlier future reschedule wa
   expect((await readEvent(db, "token", id)).published?.fields.start).toBe(fields.start);
 });
 
+function localPreparationEnvironment() {
+  vi.stubEnv("TURNUP_ENVIRONMENT", "development");
+  vi.stubEnv("NODE_ENV", "development");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("VERCEL_ENV", "development");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC", "false");
+}
+
+function hostedPreviewEnvironment(enabled: boolean) {
+  vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("VERCEL_ENV", "preview");
+  vi.stubEnv("VERCEL", "1");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", String(enabled));
+}
+
+function missingTitleExtraction(): PrivateExtraction {
+  return { facts: { title: { status: "missing", evidence: [] } }, privateFindings: [], completeness: "incomplete",
+    incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["title"], technicalIssues: 0 };
+}
+
+it("exposes owner expiry metadata without touching the activity timestamp on reads or previews", async () => {
+  dbNow = new Date("2026-11-12T00:00:00.000Z");
+  const originalActivity = new Date("2026-10-21T00:00:00.000Z");
+  state.events[0].privateActivityAt = originalActivity;
+  expect((await readEvent(db, "token", id)).retention).toEqual({
+    expiresAt: "2026-11-20T00:00:00.000Z", warningAt: "2026-11-13T00:00:00.000Z",
+    warning: false, expired: false, disposition: "delete_draft",
+  });
+  await listEvents(db, "token");
+  await mutateEvent(db, "token", id, 0, "preview");
+  expect(state.events[0].privateActivityAt).toEqual(originalActivity);
+  dbNow = new Date("2026-11-20T00:00:00.000Z");
+  expect((await readEvent(db, "token", id)).retention).toMatchObject({ warning: true, expired: true });
+});
+
+it("resets expiry only on successful saves and accepted persisted extractions", async () => {
+  dbNow = new Date("2026-10-22T12:00:00.000Z");
+  await mutateEvent(db, "token", id, 0, "save", fields);
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect(state.events[0].retentionCheckedAt).toBeNull();
+  localPreparationEnvironment();
+  dbNow = new Date("2026-10-24T06:30:00.000Z");
+  const accepted = await recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction());
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect(accepted.retention).toMatchObject({ disposition: "delete_draft", warning: false, expired: false });
+});
+
+it("records issues atomically, increments both revisions, and invalidates an earlier preview", async () => {
+  localPreparationEnvironment();
+  await mutateEvent(db, "token", id, 0, "preview");
+  const result = await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  expect(result).toMatchObject({ eventVersion: 1, preparation: { revision: 1, issues: [{ field: "title", reason: "source_missing", resolution: null }] } });
+  expect(state.events[0]).toMatchObject({ version: 1, preparationVersion: 1, preparation: { issues: result.preparation.issues } });
+  expect(state.approvals).toHaveLength(0);
+  expect(await readEvent(db, "token", id)).toMatchObject({ preparation: result.preparation, version: 1 });
+  await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("persists a hosted Preview extraction and keeps its saved clarification, FAQ readiness, and publishing usable when inference is disabled", async () => {
+  hostedPreviewEnvironment(true);
+  const form = new FormData();
+  form.append("file", new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" }));
+  form.append("expectedVersion", "0");
+  form.append("expectedPreparationRevision", "0");
+  form.append("revisions", JSON.stringify({ source: 0, facts: 0, editor: 0 }));
+  const response = await proposalExtractionPost(new Request(`https://turnup.example/api/organiser/events/${id}/proposal-extraction`, {
+    method: "POST", headers: { origin: "https://turnup.example" }, body: form,
+  }), { params: Promise.resolve({ id }) });
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    ok: true,
+    extraction: titleExtraction,
+    eventVersion: 1,
+    preparation: { revision: 1, issues: [] },
+  });
+  expect(state.events[0]).toMatchObject({ version: 1, preparationVersion: 1, preparation: { issues: [] } });
+
+  // The hosted inference opt-in can later be disabled without making existing
+  // private clarification data inaccessible or blocking manual publication.
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "false");
+  await expect(readEvent(db, "token", id)).resolves.toMatchObject({
+    preparation: { revision: 1, issues: [] },
+    version: 1,
+  });
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, { expectedPreparationRevision: 1, resolutions: [] });
+  const snapshot = await readSavedPublicCandidateSnapshot(db, "token", id, 2, 2);
+  expect(snapshot.source.title).toBe("Workshop");
+  expect(snapshot).not.toHaveProperty("preparation");
+  const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  await mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId);
+  expect(state.events[0].state).toBe("PUBLISHED");
+  expect(proposalRoute.complete).toHaveBeenCalledOnce();
+});
+
+it("rejects stale extraction revisions without changing saved draft or clarifications", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  const before = structuredClone(state.events[0]);
+  await expect(recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction())).rejects.toMatchObject({ status: 409 });
+  expect(state.events[0]).toEqual(before);
+});
+
+it("saves an explicit manual confirmation, then reopens only that issue when its value changes", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  await mutateEvent(db, "token", id, 1, "save", { ...fields, title: "Owner chosen title" }, undefined, {
+    expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "Owner chosen title" }],
+  });
+  expect(state.events[0]).toMatchObject({ version: 2, preparationVersion: 2, preparation: { issues: [{
+    field: "title", confirmedValue: "Owner chosen title",
+    resolution: { method: "organiser", value: "Owner chosen title", evidence: [] },
+  }] } });
+  await mutateEvent(db, "token", id, 2, "preview");
+
+  await mutateEvent(db, "token", id, 2, "save", { ...fields, title: "Changed without confirmation" }, undefined, {
+    expectedPreparationRevision: 2, resolutions: [],
+  });
+  expect(state.events[0]).toMatchObject({ version: 3, preparationVersion: 3, preparation: { issues: [{
+    field: "title", reason: "answer_changed", confirmedValue: "Owner chosen title", resolution: null,
+  }] } });
+  await expect(mutateEvent(db, "token", id, 3, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+  await expect(mutateEvent(db, "token", id, 3, "publish", undefined, "forged-approval")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("keeps clarification issues through Discard and reopens an answer changed by restoring publication fields", async () => {
+  localPreparationEnvironment();
+  await previewAndPublish();
+  await recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction());
+  await mutateEvent(db, "token", id, 2, "save", { ...fields, title: "Private answer" }, undefined, {
+    expectedPreparationRevision: 1,
+    resolutions: [{ field: "title", method: "organiser", value: "Private answer" }],
+  });
+  await mutateEvent(db, "token", id, 3, "discard");
+  expect(state.events[0]).toMatchObject({ version: 4, draft: fields, preparationVersion: 3, preparation: { issues: [{
+    field: "title", reason: "answer_changed", confirmedValue: "Private answer", resolution: null,
+  }] } });
+});
+
+it("fails closed on assisted records outside local scope while preserving the null-preparation manual path", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  vi.stubEnv("TURNUP_ENVIRONMENT", "production");
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "production");
+  vi.stubEnv("VERCEL_ENV", "production");
+  await expect(readEvent(db, "token", id)).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "save", { ...fields, title: "Changed" })).rejects.toMatchObject({ status: 503 });
+  await expect(mutateEvent(db, "token", id, 1, "discard")).rejects.toMatchObject({ status: 503 });
+  expect(state.events[0]).toMatchObject({ preparationVersion: 1, preparation: { issues: [{ field: "title" }] } });
+
+  state.events[0].preparation = null;
+  state.events[0].preparationVersion = 0;
+  const preview = await mutateEvent(db, "token", id, 1, "preview") as { approvalId: string };
+  await mutateEvent(db, "token", id, 1, "publish", undefined, preview.approvalId);
+  expect(state.events[0].state).toBe("PUBLISHED");
+});
+
+it("reads a publishable saved public-candidate source with readable SGT times and no private preparation", async () => {
+  localPreparationEnvironment();
+  const snapshot = await readSavedPublicCandidateSnapshot(db, "token", id, 0, 0);
+  expect(snapshot).toMatchObject({ ownerId: actor, eventVersion: 0, preparationRevision: 0, state: "DRAFT" });
+  expect(snapshot.source).toEqual({
+    title: "Workshop",
+    description: "Description",
+    start: "01/11/2099, 10:00 AM SGT",
+    end: "01/11/2099, 12:00 PM SGT",
+    location: "Hall",
+    capacity: "10",
+    fee: "Free",
+    openTo: "Anyone",
+    preparation: "None",
+    other: "",
+  });
+  expect(snapshot).not.toHaveProperty("preparation");
+  expect(snapshot).not.toHaveProperty("fields");
+});
+
+it("blocks candidate readiness for incomplete public drafts and unresolved saved issues", async () => {
+  localPreparationEnvironment();
+  state.events[0].draft = { ...fields, description: "" };
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 0, 0)).rejects.toMatchObject({ status: 409, field: "description" });
+  state.events[0].draft = structuredClone(fields);
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 1, 1)).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("rejects stale source revisions and foreign access without returning a source snapshot", async () => {
+  localPreparationEnvironment();
+  await mutateEvent(db, "token", id, 0, "save", { ...fields, title: "Changed" });
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 0, 0)).rejects.toMatchObject({ status: 409 });
+  state.events[0].ownerId = "foreign-owner";
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 1, 0)).rejects.toMatchObject({ status: 404 });
+});
+
 it("binds saved nonempty forms to preview/publication and preserves IDs on label edits", async () => {
-  await mutateEvent(db, "token", id, 0, "save", fields, undefined, { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  await mutateEvent(db, "token", id, 0, "save", fields, undefined, undefined, { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
   const saved = (await readEvent(db, "token", id)).form;
   expect(saved.questions[0].id).toMatch(/^[0-9a-f-]{36}$/);
   await previewAndPublish();
   const original = structuredClone(state.publications[0]);
   expect(state.publications[0]).toMatchObject({ snapshot: { form: saved } });
-  await mutateEvent(db, "token", id, 2, "save", fields, undefined, { questions: [{ ...saved.questions[0], label: "Dietary preferences" }] });
+  await mutateEvent(db, "token", id, 2, "save", fields, undefined, undefined, { questions: [{ ...saved.questions[0], label: "Dietary preferences" }] });
   expect((await listEvents(db, "token"))[0].hasSavedChanges).toBe(true);
   await previewAndPublish();
   expect(state.publications[0]).toEqual(original);
@@ -181,4 +420,33 @@ it("rejects capacity below active places while preserving the current publicatio
   await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 409, field: "capacity" });
   expect(state.publications).toHaveLength(1);
   expect((await readEvent(db, "token", id)).published?.fields.capacity).toBe(10);
+});
+
+it("saves form changes and clarification resolutions together and retains both on later field saves", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  const clarification = { expectedPreparationRevision: 1, resolutions: [{ field: "title" as const, method: "organiser" as const, value: fields.title }] };
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, clarification,
+    { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  const saved = await readEvent(db, "token", id);
+  expect(saved.preparation?.issues[0].resolution?.value).toBe(fields.title);
+  expect(saved.form.questions[0].label).toBe("Dietary needs");
+  await mutateEvent(db, "token", id, 2, "save", fields, undefined, { expectedPreparationRevision: 2, resolutions: [] });
+  expect((await readEvent(db, "token", id)).form).toEqual(saved.form);
+  await previewAndPublish();
+  const published = await readEvent(db, "token", id);
+  expect(published.published?.form.questions).toEqual(saved.form.questions);
+});
+
+it("tracks activity and retention for form-only private changes", async () => {
+  await previewAndPublish();
+  dbNow = new Date("2026-10-24T06:30:00.000Z");
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, undefined,
+    { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect((await readEvent(db, "token", id)).retention).not.toBeNull();
+  expect((await listEvents(db, "token"))[0]).toMatchObject({ hasSavedChanges: true, retention: { disposition: "restore_publication" } });
+  await mutateEvent(db, "token", id, 2, "discard");
+  expect((await readEvent(db, "token", id)).form.questions).toEqual([]);
+  expect(state.events[0].privateActivityAt).toBeNull();
 });
