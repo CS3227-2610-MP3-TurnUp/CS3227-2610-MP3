@@ -63,6 +63,7 @@ const fake: any = {
   $queryRaw: async (parts: TemplateStringsArray, ...values: unknown[]) => {
     const query = parts.join("");
     rawQueries.push(query);
+    if (query.includes("epochMs")) return [{ epochMs: dbNow.getTime() }];
     if (query.includes("AS now")) return [{ now: new Date(dbNow) }];
     if (query.includes("WITH candidates")) {
       const rows = state.events.filter(due).sort(compareClaims).slice(0, 50);
@@ -188,4 +189,17 @@ it("dry run reports only bounded counts and leaves scheduler and event rows unto
   const result = await runDraftRetentionSweep(db, { dryRun: true });
   expect(result).toEqual({ scanned: 1, deletedDrafts: 0, restoredPublications: 0, unchanged: 1, unavailable: 0 });
   expect(state).toEqual(before);
+});
+
+it("restores form-only private edits from a nonempty published form", async () => {
+  const prior = publishedDraft(eventId(80), { draft: publicFields });
+  const question = { id: eventId(81), type: "short_text" as const, label: "Published question", required: false };
+  prior.publication.snapshot = publicationSnapshot(publicFields, formId, [question]);
+  prior.publication.digest = digest(prior.publication.snapshot);
+  state.events.push({ ...prior.event, preparation: null, preparationVersion: 0, draftForm: { questions: [{ ...question, label: "Private question" }] } });
+  state.publications.push(prior.publication);
+  const original = structuredClone(prior.publication);
+  expect(await runDraftRetentionSweep(db)).toMatchObject({ restoredPublications: 1, unavailable: 0 });
+  expect(state.events[0]).toMatchObject({ draftForm: { questions: [question] }, privateActivityAt: null, version: 10 });
+  expect(state.publications[0]).toEqual(original);
 });

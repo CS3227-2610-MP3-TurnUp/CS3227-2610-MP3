@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { LogoutButton } from "../auth/logout-button";
 
-export function AccountMenu({ username }: { username: string }) {
+export function AccountMenu({ username, studentNavigation = false }: { username: string; studentNavigation?: boolean }) {
   const pathname = usePathname();
   const menu = useRef<HTMLDetailsElement>(null);
   const trigger = useRef<HTMLElement>(null);
@@ -36,6 +36,8 @@ export function AccountMenu({ username }: { username: string }) {
       <div className="account-menu-items">
         <Link href="/account" aria-current={pathname === "/account" ? "page" : undefined}
           onClick={() => { if (menu.current) menu.current.open = false; }}>Profile</Link>
+        {studentNavigation && <Link href="/student/my-events" aria-current={pathname === "/student/my-events" ? "page" : undefined}
+          onClick={() => { if (menu.current) menu.current.open = false; }}>My Events</Link>}
         <span className="account-menu-divider" aria-hidden="true" />
         <LogoutButton className="account-menu-logout" />
       </div>

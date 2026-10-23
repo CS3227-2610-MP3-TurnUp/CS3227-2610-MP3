@@ -7,7 +7,7 @@ import { formatEventAlternative } from "../../features/proposal-assistance/event
 import type { PublicCandidateSource } from "../../features/proposal-assistance/public-candidates";
 import { authenticatedAccount, requireSelf } from "../accounts/service";
 import type { Transaction } from "../auth/session";
-import { digest, EventError, parseFields, publicationSnapshot, validatePublication } from "./policy";
+import { digest, EventError, parseFields, parseDraftForm, publicationSnapshot, validatePublication } from "./policy";
 import type { EventPreparation, ClarificationResolutionIntent } from "../../features/proposal-assistance/clarification";
 import { PROPOSAL_TO_EVENT_FIELD } from "../../features/proposal-assistance/clarification";
 import type { ProposalField } from "../../features/proposal-assistance/types";
@@ -21,6 +21,9 @@ import {
   unresolvedClarificationFields,
 } from "../proposal-assistance/clarification";
 
+import { sameFormContent, type FormQuestion } from "../../lib/registration-form";
+
+const draftForm = (event: Event) => (event.draftForm ?? { questions: [] }) as unknown as { questions: FormQuestion[] };
 type Snapshot = ReturnType<typeof publicationSnapshot>;
 type Db = PrismaClient;
 const unavailable = () => new EventError(404, "Event unavailable.");
@@ -52,8 +55,8 @@ function editable(event: Event) {
   if (event.state === "CANCELLED") throw new EventError(409, "Cancelled events cannot be edited or republished.");
 }
 async function stamp(tx: Transaction): Promise<Date> {
-  const [row] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
-  return row.now;
+  const [row] = await tx.$queryRaw<{ epochMs: number }[]>`SELECT (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::double precision AS "epochMs"`;
+  return new Date(row.epochMs);
 }
 function retentionDisposition(event: Pick<Event, "state" | "firstPublishedAt" | "currentPublicationId">) {
   return event.firstPublishedAt || event.currentPublicationId || event.state !== "DRAFT" ? "restore_publication" : "delete_draft";
@@ -64,10 +67,12 @@ function hasPrivateEventState(
   preparation: unknown,
   preparationVersion: number,
   publicationFields: unknown,
+  form?: { questions: FormQuestion[] },
+  publicationForm?: Snapshot["form"],
 ): boolean {
   if (retentionDisposition(event) === "delete_draft") return true;
   if (preparation !== null || preparationVersion !== 0 || publicationFields === null || publicationFields === undefined) return true;
-  try { return !sameEventFields(fields, parseFields(publicationFields)); }
+  try { return !sameEventFields(fields, parseFields(publicationFields)) || !!(form && publicationForm && !sameFormContent({ ...publicationForm, ...form }, publicationForm)); }
   catch { return true; }
 }
 async function previousSnapshot(tx: Transaction, event: Event): Promise<Snapshot | null> {
@@ -85,9 +90,9 @@ export async function listEvents(db: Db, token: string | undefined, search = "",
       const draft = event.draft as unknown as EventFields;
       const publication = event.currentPublication?.snapshot as unknown as Snapshot | undefined;
       const disposition = retentionDisposition(event);
-      const privateState = hasPrivateEventState(event, draft, event.preparation, event.preparationVersion, publication?.fields);
+      const privateState = hasPrivateEventState(event, draft, event.preparation, event.preparationVersion, publication?.fields, draftForm(event), publication?.form);
       return { id: event.id, state: event.state, version: event.version, fields: publication?.fields ?? draft,
-        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && !sameEventFields(draft, publication.fields),
+        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && (!sameEventFields(draft, publication.fields) || !sameFormContent({ ...publication.form, ...draftForm(event) }, publication.form)),
         retention: privateState ? draftRetentionStatus(event.privateActivityAt, now, disposition) : null };
     });
     const filtered = items.filter((event) => event.fields.title.toLocaleLowerCase("en").includes(search.toLocaleLowerCase("en")));
@@ -116,9 +121,9 @@ export async function readEvent(db: Db, token: string | undefined, id: string) {
     const published = await previousSnapshot(tx, event);
     const now = await stamp(tx);
     const privateState = hasPrivateEventState(event, event.draft as unknown as EventFields,
-      event.preparation, event.preparationVersion, published?.fields);
+      event.preparation, event.preparationVersion, published?.fields, draftForm(event), published?.form);
     return { id: event.id, state: event.state, version: event.version, draftVersion: event.draftVersion,
-      fields: event.draft as unknown as EventFields,
+      fields: event.draft as unknown as EventFields, form: draftForm(event),
       preparation: preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null,
       published,
       retention: privateState ? draftRetentionStatus(event.privateActivityAt, now, retentionDisposition(event)) : null };
@@ -208,7 +213,7 @@ export async function readSavedPublicCandidateSnapshot(
 export type EventAction = "save" | "preview" | "publish" | "withdraw" | "cancel" | "delete" | "discard";
 export type EventClarificationMutation = { expectedPreparationRevision: number; resolutions: ClarificationResolutionIntent[] };
 export async function mutateEvent(db: Db, token: string | undefined, id: string, expected: number,
-  action: EventAction, fields?: EventFields, approvalId?: string, clarification?: EventClarificationMutation) {
+  action: EventAction, fields?: EventFields, approvalId?: string, clarification?: EventClarificationMutation, form?: unknown) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     currentVersion(event, expected);
@@ -226,6 +231,8 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       if (action === "discard" && !snapshot) throw new EventError(409, "Use Delete Draft for a never-published event.");
       const oldFields = parseFields(event.draft);
       const next = action === "save" ? parseFields(fields) : snapshot!.fields;
+      const nextForm = action === "discard" ? { questions: snapshot!.form.questions } : form === undefined ? draftForm(event) : parseDraftForm(form, draftForm(event));
+      publicationSnapshot(next, randomUUID(), nextForm.questions);
       const priorPreparation = preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null;
       if (action === "save") {
         if (priorPreparation && !clarification) throw new EventError(409, "Reload the proposal clarification state before saving.");
@@ -237,9 +244,10 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       const preparation = applyPreparationResolutions(priorPreparation, oldFields, next,
         action === "save" ? clarification?.resolutions ?? [] : [], actor, now, event.preparationVersion + 1);
       const activityRequired = hasPrivateEventState(event, next, preparation,
-        preparation ? event.preparationVersion + 1 : event.preparationVersion, snapshot?.fields);
+        preparation ? event.preparationVersion + 1 : event.preparationVersion, snapshot?.fields, nextForm, snapshot?.form);
       const data: Prisma.EventUpdateInput = {
         draft: next as unknown as Prisma.InputJsonValue,
+        draftForm: nextForm as unknown as Prisma.InputJsonValue,
         version: { increment: 1 },
         draftVersion: { increment: 1 },
         editedAt: now,
@@ -261,7 +269,7 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       assertClarificationsResolved(preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null, fields);
       const previous = await previousSnapshot(tx, event);
       validatePublication(fields, event.state, previous?.fields.start, await stamp(tx));
-      const snapshot = publicationSnapshot(fields, randomUUID());
+      const snapshot = publicationSnapshot(fields, randomUUID(), draftForm(event).questions);
       // Retain one reviewable snapshot per event/version; an older tab must review anew.
       await tx.eventApproval.deleteMany({ where: { eventId: id } });
       const approval = await tx.eventApproval.create({ data: { id: randomUUID(), eventId: id, actorId: actor,
@@ -279,10 +287,13 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       if (!approval) throw new EventError(409, "Preview this exact saved draft again before publishing.");
       const snapshot = approval.snapshot as unknown as Snapshot;
       const fields = parseFields(event.draft);
-      if (digest(snapshot) !== approval.digest || digest(publicationSnapshot(fields, snapshot.form.formRevisionId)) !== approval.digest || snapshot.form.questions.length) throw new EventError(409, "The approved content changed. Preview again.");
+      if (digest(snapshot) !== approval.digest || digest(publicationSnapshot(fields, snapshot.form.formRevisionId, draftForm(event).questions)) !== approval.digest) throw new EventError(409, "The approved content changed. Preview again.");
       const previous = await previousSnapshot(tx, event);
       const now = await stamp(tx);
       validatePublication(fields, event.state, previous?.fields.start, now);
+      // Same event row lock as Student mutations: a publisher cannot undercut active places.
+      const active = await tx.registration.count({ where: { eventId: id, state: "ACTIVE" } });
+      if (fields.capacity! < active) throw new EventError(409, "Capacity cannot be lower than the active registration count.", "capacity");
       const publication = await tx.eventPublication.create({ data: { id: randomUUID(), eventId: id, revision: event.version + 1,
         snapshot: snapshot as unknown as Prisma.InputJsonValue, digest: approval.digest, approvedBy: actor } });
       await tx.event.update({ where: { id }, data: { currentPublicationId: publication.id, state: "PUBLISHED",

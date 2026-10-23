@@ -69,7 +69,7 @@ export async function eventResource(request: Request, id: string) {
     if (hasPreparationRevision !== hasResolutions || (action !== "save" && (hasPreparationRevision || hasResolutions))) {
       throw new EventError(400, "Send proposal resolutions only with Save Draft.");
     }
-    exactKeys(body, ["action", "expectedVersion", ...(action === "save" ? ["fields", ...(hasPreparationRevision ? ["expectedPreparationRevision", "resolutions"] : [])] : action === "publish" ? ["approvalId"] : [])]);
+    exactKeys(body, ["action", "expectedVersion", ...(action === "save" ? ["fields", "form", ...(hasPreparationRevision ? ["expectedPreparationRevision", "resolutions"] : [])] : action === "publish" ? ["approvalId"] : [])]);
     const expected = version(body.expectedVersion);
     const fields = action === "save" ? parseFields(body.fields) : undefined;
     const approvalId = action === "publish" ? uuid(body.approvalId) : undefined;
@@ -78,6 +78,6 @@ export async function eventResource(request: Request, id: string) {
       resolutions: parseResolutionIntents(body.resolutions),
     } : undefined;
     const { prisma } = await import("../db/client");
-    return NextResponse.json(await mutateEvent(prisma, token, id, expected, action, fields, approvalId, clarification), { headers: privateHeaders });
+    return NextResponse.json(await mutateEvent(prisma, token, id, expected, action, fields, approvalId, clarification, ...(Object.hasOwn(body, "form") ? [body.form] : [])), { headers: privateHeaders });
   } catch (error) { return eventFailure(error); }
 }

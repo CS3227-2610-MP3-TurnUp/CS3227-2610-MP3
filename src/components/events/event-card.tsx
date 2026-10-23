@@ -4,7 +4,7 @@ import { DraftRetentionNotice } from "./draft-retention-notice";
 
 export function EventCard({ event }: { event: EventSummary }) {
   return <Link className="card event-card" href={`/organiser/events/${event.id}`}>
-    <div className="event-badges"><span className="event-state">{event.state.toLowerCase()}</span>
+    <div className="event-badges"><span className="event-state" data-state={event.state}>{event.state.toLowerCase()}</span>
       {event.hasSavedChanges && <span className="event-changes">Saved changes</span>}</div>
     <h2>{event.fields.title || "Untitled draft"}</h2>
     <p>{displayTime(event.fields.start)}<br />{displayTime(event.fields.end)}</p>

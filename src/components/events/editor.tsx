@@ -7,14 +7,16 @@ import type { DraftRetentionStatus } from "../../lib/event-retention";
 import { formatEventAlternative, prepareEventAlternative, type ProposalFeedbackMap, type ProposalFieldFeedback } from "../../features/proposal-assistance/event-prefill";
 import { CLARIFICATION_COPY, PROPOSAL_TO_EVENT_FIELD, type ClarificationIssue, type ClarificationResolutionIntent, type EventPreparationResponse } from "../../features/proposal-assistance/clarification";
 import type { PageEvidence, ProposalField } from "../../features/proposal-assistance/types";
-import { EventContent } from "./event-content";
+import { EventContent, PublicFormContent } from "./event-content";
 import { ProposalAssistance } from "./proposal-assistance";
 import { PublicContentAssistance } from "./public-content-assistance";
 import { DraftRetentionNotice } from "./draft-retention-notice";
 import { useGenerationUsage } from "./generation-usage";
 
-type Snapshot = { fields: EventFields; form: { formRevisionId: string; questions: unknown[] } };
-type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; preparation: EventPreparationResponse; retention?: DraftRetentionStatus | null };
+type Snapshot = import("../../lib/registration-form").PublicationContent;
+type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; form?: { questions: FormQuestion[] }; preparation: EventPreparationResponse; retention?: DraftRetentionStatus | null };
+import { sameFormContent, type FormQuestion } from "../../lib/registration-form";
+
 type Preview = { approvalId: string; version: number; snapshot: Snapshot; digest: string };
 type Mode = "publication" | "editor" | "preview";
 type LocalResolutionIntent = { method: "suggestion"; alternative: { value: string; evidence: PageEvidence[] } } | { method: "organiser" };
@@ -78,8 +80,18 @@ export function EventEditor({ id }: { id: string }) {
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    // Cover shared client-side navigation as well as tab closure without changing routes.
+    const leave = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(anchor instanceof HTMLAnchorElement) || anchor.target && anchor.target !== "_self" || anchor.hasAttribute("download")) return;
+      const destination = new URL(anchor.href);
+      if (destination.href === window.location.href || destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (!window.confirm("Leave and discard unsaved edits?")) { event.preventDefault(); event.stopPropagation(); }
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", leave, true);
+    return () => { window.removeEventListener("beforeunload", warn); document.removeEventListener("click", leave, true); };
   }, [dirty]);
 
   function showEditor() {
@@ -235,7 +247,7 @@ export function EventEditor({ id }: { id: string }) {
   if (!view || !fields) return <section className="card"><h1>Event unavailable</h1><p role="alert">{error}</p><Link href="/organiser">Back to your events</Link></section>;
   const cancelled = view.state === "CANCELLED";
   const published = view.published;
-  const hasSavedChanges = !!published && !cancelled && !sameEventFields(view.fields, published.fields);
+  const hasSavedChanges = !!published && !cancelled && (!sameEventFields(view.fields, published.fields) || !!(view.form && !sameFormContent({ ...published.form, ...view.form }, published.form)));
   const displayedFields = mode === "publication" && published ? published.fields : mode === "preview" && preview ? preview.snapshot.fields : fields;
   const preparationRevision = view.preparation?.revision ?? 0;
   const unresolved = unresolvedClarifications(view.preparation, fields, resolutionIntents);
@@ -270,8 +282,19 @@ export function EventEditor({ id }: { id: string }) {
     proposalFeedback[key as keyof EventFields] || view.preparation?.issues.some((issue) => PROPOSAL_TO_EVENT_FIELD[issue.field] === key) ? `proposal-feedback-${key}` : "",
   ].filter(Boolean).join(" ") || undefined;
 
+  const renderTextField = (key: TextField) => <div className="field" key={key}>
+          <label htmlFor={`event-${key}`}>{FIELD_LABELS[key]}{key !== "other" && " (required to publish)"}</label>
+          {key === "title" ? <input id={`event-${key}`} value={fields[key]} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} /> :
+            <textarea id={`event-${key}`} value={fields[key]} rows={key === "description" || key === "other" ? 5 : 3} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} />}
+          <p id={`help-${key}`} className="field-help">{[...fields[key].normalize("NFC").trim()].length.toLocaleString()} / {EVENT_LIMITS[key].toLocaleString()} characters</p>
+          <ProposalFieldFeedback feedback={proposalFeedback[key]} issue={issueForEventField(view.preparation, key)} intent={issueIntent(view.preparation, key, resolutionIntents)}
+            currentValue={fields[key]} field={key} disabled={pending || assistancePendingCount > 0}
+            onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
+            onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
+        </div>;
+
   return <>
-    <Link href="/organiser" onClick={(event) => { if (dirty && !window.confirm("Leave and discard unsaved edits?")) event.preventDefault(); }}>Back to your events</Link>
+    <Link href="/organiser">Back to your events</Link>
     <div className="event-heading"><div><p className="eyebrow">{view.state.toLowerCase()}</p>
       <h1 ref={heading} tabIndex={-1}>{displayedFields.title || "Untitled draft"}</h1>
       <p className="muted">Times are entered and displayed in Singapore time (SGT).</p></div></div>
@@ -310,16 +333,8 @@ export function EventEditor({ id }: { id: string }) {
         generationUsage={generationUsage} refreshGenerationUsage={generationUsage.refresh} />
       <ClarificationSummary preparation={view.preparation} fields={fields} intents={resolutionIntents} />
       <fieldset disabled={pending} className="event-fields">
-        {(Object.keys(EVENT_LIMITS) as TextField[]).map((key) => <div className="field" key={key}>
-          <label htmlFor={`event-${key}`}>{FIELD_LABELS[key]}{key !== "other" && " (required to publish)"}</label>
-          {key === "title" ? <input id={`event-${key}`} value={fields[key]} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} /> :
-            <textarea id={`event-${key}`} value={fields[key]} rows={key === "description" || key === "other" ? 5 : 3} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => change(key, e.target.value)} />}
-          <p id={`help-${key}`} className="field-help">{[...fields[key].normalize("NFC").trim()].length.toLocaleString()} / {EVENT_LIMITS[key].toLocaleString()} characters</p>
-          <ProposalFieldFeedback feedback={proposalFeedback[key]} issue={issueForEventField(view.preparation, key)} intent={issueIntent(view.preparation, key, resolutionIntents)}
-            currentValue={fields[key]} field={key} disabled={pending || assistancePendingCount > 0}
-            onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
-            onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
-        </div>)}
+        <section className="editor-section" aria-labelledby="event-basics"><h3 id="event-basics">Event details</h3>
+          {(["title", "description", "location"] as TextField[]).map(renderTextField)}
         <div className="event-date-grid">{(["start", "end"] as const).map((key) => <div className="field" key={key}>
           <label htmlFor={`event-${key}`}>{key === "start" ? "Start" : "End"} (SGT; required to publish)</label>
           <input id={`event-${key}`} type="datetime-local" value={singaporeInput(fields[key])} aria-invalid={fieldError === key} aria-describedby={describedBy(key)} onChange={(e) => {
@@ -331,6 +346,9 @@ export function EventEditor({ id }: { id: string }) {
             onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
         </div>)}</div>
         <p className="field-help" role="note">When the source gives a complete date and time without a timezone, it is interpreted as Singapore Time (SGT). Review the converted value against the source evidence.</p>
+        </section>
+        <section className="editor-section" aria-labelledby="event-participation"><h3 id="event-participation">Participation</h3>
+          {(["fee", "openTo", "preparation"] as TextField[]).map(renderTextField)}
         <div className="field"><label htmlFor="event-capacity">Capacity (required to publish)</label>
           <input id="event-capacity" type="number" min="1" max="10000" step="1" value={fields.capacity ?? ""} aria-invalid={fieldError === "capacity"} aria-describedby={describedBy("capacity")} onChange={(e) => change("capacity", e.target.value === "" ? null : Number(e.target.value))} />
           <ProposalFieldFeedback feedback={proposalFeedback.capacity} issue={issueForEventField(view.preparation, "capacity")} intent={issueIntent(view.preparation, "capacity", resolutionIntents)}
@@ -338,6 +356,10 @@ export function EventEditor({ id }: { id: string }) {
             onChooseAlternative={(field, alternative) => chooseClarificationAlternative(field, alternative, preparationRevision, renderedEditorRevision)}
             onConfirm={(field) => confirmClarification(field, preparationRevision, renderedEditorRevision)} />
         </div>
+        </section>
+        <section className="editor-section" aria-labelledby="event-extra"><h3 id="event-extra">Additional information</h3>
+          {renderTextField("other")}
+        </section>
       </fieldset>
       {dirty && <p className="notice">You have unsaved edits. Save before previewing.</p>}
       {unresolved.length > 0 && <p className="notice">Resolve the proposal clarifications below before previewing or publishing. You can save this draft while questions remain.</p>}
@@ -345,13 +367,15 @@ export function EventEditor({ id }: { id: string }) {
         <button className="primary" disabled={pending || assistancePendingCount > 0} type="submit">{pending ? "Working…" : "Save Draft"}</button>
         <button className="secondary" type="button" disabled={pending || assistancePendingCount > 0 || (!dirty && !published)} onClick={cancelEditing}>Cancel Editing</button>
         <button className="secondary" type="button" disabled={pending || assistancePendingCount > 0 || dirty || unresolved.length > 0} onClick={() => void action("preview")}>Preview saved draft</button>
+      </div>
+      {(!published || hasSavedChanges) && <div className="event-actions event-danger-actions"><p>Draft management</p>
         {!published && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("delete")}>Delete draft</button>}
         {hasSavedChanges && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("discard")}>Discard saved changes</button>}
-      </div>
+      </div>}
     </form>}
 
     {mode === "preview" && preview && !cancelled && <section className="card event-preview" aria-label="Exact public preview">
-      <h2>Public Preview</h2><EventContent fields={preview.snapshot.fields} /><p>Registration form: no questions.</p>
+      <h2>Public Preview</h2><EventContent fields={preview.snapshot.fields} /><PublicFormContent form={preview.snapshot.form} />
       <div className="event-footer">
         <label className="event-approval"><input type="checkbox" checked={approved} disabled={pending} onChange={(e) => setApproved(e.target.checked)} />I reviewed and approve this exact public content.</label>
         <div className="event-actions">

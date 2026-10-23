@@ -49,7 +49,7 @@ export type SoCFailure =
 export type SoCFinishReason = "stop" | "length" | "other";
 
 export type SoCResult =
-  | { ok: true; text: string; usage?: SoCUsage; finishReason?: SoCFinishReason }
+  | { ok: true; text: string; truncated?: true; usage?: SoCUsage; finishReason?: SoCFinishReason }
   | SoCFailure;
 
 export interface SoCUsage {
@@ -338,6 +338,7 @@ function readCompletion(body: unknown): SoCResult {
     ok: true,
     text: first.message.content,
     ...(usage ? { usage } : {}),
+    ...(first.finish_reason === "length" ? { truncated: true as const } : {}),
     ...(finishReason ? { finishReason } : {}),
   };
 }

@@ -1,0 +1,37 @@
+title: TurnUp
+description: Discover campus events. Register with confidence. Ask about the details.
+url: "https://cs3227-2610-mp3-turnup.github.io"
+baseurl: "/CS3227-2610-MP3"
+theme: minima
+app_url: "https://turnup-nine.vercel.app"
+repository: "CS3227-2610-MP3-TurnUp/CS3227-2610-MP3"
+source_revision: "55d9cb7ee1155fbbb68a94bbcc06cce47b4297a8"
+header_pages:
+  - index.md
+  - UserGuide.md
+  - DeveloperGuide.md
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: document
+exclude:
+  - WEBSITE.md
+  - documentation-preparation.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - plans
+  - reference
+  - Reflections.md
+  - agent-usage.md
+  - development-process.md
+  - ui-guidelines.md
+  - ui-screen-patterns.md
+  - ui-ux-review.md
+  - wp-001-hosting-setup.md
+  - wp-001-foundation-handoff.md
+  - assets/images/README.md

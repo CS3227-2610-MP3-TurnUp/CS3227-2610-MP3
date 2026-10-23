@@ -341,3 +341,15 @@ Merge the completed hosted-generation branch into preview/wp-005 and push the in
 ## Results
 
 Fetched both remote refs and confirmed preview/wp-005 at1c3785d is an ancestor of preview/wp-005-hosted at1523725. Fast-forwarded the existing WP-005 worktree to1523725 without conflicts, preserving its pre-existing next-env.d.ts edit and private environment. This integrates K-014 daily allowances and K-015 hosted adapter, retention, parser/packaging fixes and verified delivery notes. Only this log entry is newly authored; application code is identical to the independently reviewed and hosted-tested source. Existing test/provider evidence is reused; no new model call, dependency operation or Production change. Prepared the integration and this evidence-only log update for push to origin/preview/wp-005. No subagent was used for this integration.
+
+# 25 - Integrate master into PR 35 - 23 October 2026
+
+## Request
+
+Fetch master and resolve conflicts on PR #35 (`preview/wp-005`). Continue directly without spawning subagents.
+
+## Results
+
+Fetched master `ab186e6` and confirmed PR branch identity. Integrated master into `8939950`, resolving 16 files across schema, event editor/services, provider response metadata and shared specifications. Retained both Student registration/chat and Organiser assistance/daily usage behavior. Added four regression tests for combined form/clarification saves and form-only inactivity/restoration; adjusted affected call sites and expectations. Preserved published nonempty forms during expiry and recognised form-only saved changes in the editor. Corrected empty optional-array shell expansion for macOS/Linux compatibility. Updated handoffs, retention contract and acceptance targets; exact evidence is appended to CHG-K-015 verification.
+
+879 tests passed (5 opt-in skipped), full lint and Prisma validation passed, sanitized production build including TypeScript passed, built PDF runtime regression passed, final retention suite 8 passed, whitespace check passed. No live inference/database/browser/deployment check; no subagent. Existing next-env.d.ts edit and private environment remain untouched. Prepared the merge commit for push to the existing PR branch; master itself is unchanged.

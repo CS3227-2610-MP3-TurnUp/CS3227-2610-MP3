@@ -1,5 +1,7 @@
 # WP-002 signup and login — approved plan v1
 
+23 October 2026 scope amendment: the earlier forgotten-credential disclosure and suggestions of future account-access work below are superseded by Darryl's explicit removal request. Follow current G02 and the accounts contract; the original plan remains historical evidence.
+
 Prepared 20 October 2026 for Darryl's `$turnup-iterate-feature WP-002: Implement signup and login` request. **Darryl explicitly approved this plan and its defaults in the next human message, “approved”. Implementation is authorised; verification is recorded separately.**
 
 ## Source, provenance and prerequisite

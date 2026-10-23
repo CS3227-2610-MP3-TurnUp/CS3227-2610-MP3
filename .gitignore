@@ -24,3 +24,14 @@ coverage/
 
 # Local SoCLaaS reference exports
 /docs/reference/cf_guides_soclaas_*.pdf
+
+# Local-only Student assistant allowance/admission state
+/.student-assistant-local/
+
+# Local Jekyll preview output and dependencies
+/docs/_site/
+/docs/.jekyll-cache/
+/docs/.jekyll-metadata
+/docs/.sass-cache/
+/docs/.bundle/
+/docs/vendor/

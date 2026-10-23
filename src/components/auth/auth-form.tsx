@@ -99,7 +99,6 @@ export function AuthForm({ mode }: { mode: "signup" | "login" }) {
           </div>
           {fieldErrors.password && <p id="password-error" className="field-error">{fieldErrors.password}</p>}
         </div>
-        <p className="auth-recovery">Keep your login details safe. Account recovery is not available yet.</p>
         <button className="primary" disabled={pending} type="submit">{pending ? "Please wait…" : signup ? "Create account" : "Log in"}</button>
         <span className="sr-only" role="status">{pending ? "Your account request is in progress." : ""}</span>
       </form>
