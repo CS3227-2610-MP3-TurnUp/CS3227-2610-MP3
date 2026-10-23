@@ -31,7 +31,7 @@ Save incomplete drafts privately, enter the event details, then preview and appr
 - [Developer Guide](DeveloperGuide.md): setup, architecture and UML, data integrity, AI security, tests and the SDD/multi-agent process.
 - [Source code and issue tracker](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3): implementation and ongoing work.
 
-TurnUp runs in a web browser; no application download is required. Choose one fixed role when creating your account. There is currently no password recovery, payment processing or role switching. Proposal PDF assistance, a form-builder/roster interface and private organiser replies are not available in the documented code snapshot. The guides describe these boundaries explicitly.
+TurnUp runs in a web browser; no application download is required. Choose one fixed role when creating your account. There is currently no payment processing or role switching. Proposal PDF assistance, a form-builder/roster interface and private organiser replies are not available in the documented code snapshot. The guides describe these boundaries explicitly.
 
 **Deployment access:** the current application address may first show Vercel sign-in or protection. That is separate from a TurnUp account; obtain deployment access from the project team if needed.
 

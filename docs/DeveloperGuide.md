@@ -720,7 +720,7 @@ server-side diagram image is fabricated as a substitute for rendered verificatio
   implementation before adding user instructions or architecture relationships.
 - There is no general scheduled retention/deletion implementation covering all drafts,
   submissions, logs, backups and derived stores. History-specific pruning is narrower.
-- Account recovery, contact-action producer shape and broader historical/retention
+- Contact-action producer shape and broader historical/retention
   policies must not be filled in by documentation guesses.
 - Screenshots are explicit placeholders pending manual capture because the built-in
   browser remains disabled in this task. Website visual rendering, full hosted flows
