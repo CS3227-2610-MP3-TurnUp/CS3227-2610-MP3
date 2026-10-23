@@ -13,6 +13,8 @@ description: TurnUp connects Students with campus events and Organisers with a c
   </div>
 </section>
 
+> **Using school Wi-Fi?** If TurnUp does not load, try mobile data or another permitted network. Some managed networks may restrict access to Vercel-hosted sites. If the problem continues, report the URL and error message to the project team or your network administrator. See the [User Guide](UserGuide.md#open-turnup) for access instructions.
+
 ## From discovery to a confirmed place
 
 <div class="feature-grid">
@@ -33,6 +35,6 @@ Save incomplete drafts privately, enter the event details, then preview and appr
 
 TurnUp runs in a web browser; no application download is required. Choose one fixed role when creating your account. There is currently no payment processing or role switching. Proposal PDF assistance, a form-builder/roster interface and private organiser replies are not available in the documented code snapshot. The guides describe these boundaries explicitly.
 
-**Deployment access:** the current application address may first show Vercel sign-in or protection. That is separate from a TurnUp account; obtain deployment access from the project team if needed.
+**Access:** open the public Production site, then create a TurnUp account or log in to use your role's features.
 
 Developed by Darryl and Keith for CS3227. This site follows the documentation structure of the team’s MP2 ClubStock project, adapted for TurnUp’s web application.
