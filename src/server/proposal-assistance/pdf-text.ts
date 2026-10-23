@@ -1,7 +1,7 @@
 import "server-only";
 
-import { createRequire } from "node:module";
 import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { MAX_PROPOSAL_PDF_BYTES, MAX_PROPOSAL_PDF_PAGES, MAX_PROPOSAL_TEXT_BYTES } from "../../features/proposal-assistance/limits";
 
@@ -50,9 +50,8 @@ export async function extractPdfPageText(file: File, signal?: AbortSignal): Prom
   }
 
   const loadingTaskPromise = import("pdfjs-dist/legacy/build/pdf.mjs").then(({ getDocument }) => {
-    const require = createRequire(`${process.cwd()}/package.json`);
-    const resolvedModule = realpathSync(require.resolve("pdfjs-dist/legacy/build/pdf.mjs"));
-    const standardFontDataUrl = new URL("../../../standard_fonts/", pathToFileURL(resolvedModule)).href;
+    const standardFontsPath = realpathSync(resolve(process.cwd(), "node_modules/pdfjs-dist/standard_fonts"));
+    const standardFontDataUrl = pathToFileURL(`${standardFontsPath}/`).href;
     return getDocument({
       data: bytes,
       standardFontDataUrl,

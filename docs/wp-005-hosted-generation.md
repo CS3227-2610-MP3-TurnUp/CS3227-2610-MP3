@@ -64,3 +64,15 @@ Each pass processes only the validated current environment, at most100 settled r
 The existing exact-reservation [recovery interface](wp-005-daily-generation.md#exact-recovery-interface) remains authoritative. Disabling inference leaves validated stored preparation readable/editable and manual completion available. Usage records contain no PDF, prompt, generated text or event content. Settled active-row cleanup does not prove deletion from provider backups. Provider data handling/course eligibility for real private proposals remains distinct from bounded synthetic testing.
 
 Actual test counts, independent findings, deployment revision and hosted outcomes are recorded in [CHG-K-015 verification](../changes/CHG-K-015-wp-005-hosted-generation/verification.md).
+
+## Built PDF parser regression
+
+Source parser tests do not reproduce Next's production bundling. After a sanitized production webpack build, run the opt-in artifact check with the pinned Node version and this worktree's dependencies:
+
+```sh
+PDF_TEXT_BUILD_DIR="$BUILD_ROOT/.next/server/app/api/organiser/events/[id]/proposal-extraction" \
+  node node_modules/vitest/vitest.mjs run \
+  tests/proposal-assistance/pdf-text-built-runtime.test.ts
+```
+
+`BUILD_ROOT` is the directory containing the completed sanitized build. This check asserts the extraction route's trace includes PDF.js, its worker and standard fonts, copies only those traced package assets into a fresh temporary runtime, and parses a synthetic PDF with the compiled parser. It makes no database/provider call. Ordinary source tests skip this build-dependent check unless `PDF_TEXT_BUILD_DIR` is supplied.

@@ -11,7 +11,7 @@ Independent implementation_verifier(gpt-6.1-sol/high): completed frozen code/con
 - [x] Canonical policy/scenarios and exact shared interface
 - [x] Hosted profile/adapter/activation and bounded cleanup/route/tests
 - [x] Full/static/isolated schema/build/SQL checks and independent review
-- [ ] Provider/host preflight, configuration, commit/push/Preview deployment with activationoff
+- [x] Provider/host preflight, configuration, commit/push/Preview deployment with activationoff
 - [ ] Protected cleanup verification, activate/redeploy, at most2synthetic modelcalls or documentedblocked/failure+off
 - [ ] Final evidence/handoff/docs/log/usage attribution and clean assigned fixtures
 

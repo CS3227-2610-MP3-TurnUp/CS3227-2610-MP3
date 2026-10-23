@@ -80,3 +80,10 @@ Actual checks, independent findings/dispositions and browser/live-model limitati
 ## Organiser daily generation policy — CHG-K-014
 
 The [K-014 handoff](../changes/CHG-K-014-wp-005-daily-generation/handoff.md) defines the separate per-Organiser/SGT-day/environment PDF+FAQ allowance and authenticated usage reporting, from1c3785d. Hosted generation remains disabled; no Student chat allowance or dependency is inferred. Local synthetic/probe allowances remain unchanged. Verification records migration/accounting/UI checks separately from future hosted activation and provider evidence.
+
+
+## Hosted Organiser generation — CHG-K-015
+
+The [hosted handoff](../changes/CHG-K-015-wp-005-hosted-generation/handoff.md) defines the dedicated Organiser provider profile, shared PDF/FAQ daily accounting, hosted preparation persistence independent of inference activation and protected usage-history cleanup. The [verification record](../changes/CHG-K-015-wp-005-hosted-generation/verification.md) is authoritative for reviewed revisions, migrations, Preview deployment/activation and bounded synthetic outcomes. Preview migrations for daily accounting and retention indexes are applied. Production configuration/migrations and Student consumers remain outside this delivery. No Darryl registration/thread prerequisite is introduced.
+
+Preview uses a daily operator invocation for settled usage-history maintenance; it does not activate private-draft cleanup or prove provider backup erasure. Real private-proposal provider handling and comprehensive labelled evaluation remain separate. The production-bundle PDF parsing regression discovered during rollout is corrected and tested with traced assets; exact review and hosted results remain in verification.

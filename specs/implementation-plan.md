@@ -98,3 +98,6 @@ The extraction integration is committed at `9d651e8`; CHG-K-011 adds locally imp
 
 
 CHG-K-013 implements the Organiser draft portion of G06: authoritative30-day activity,day23owner notice and protected cleanup preserving publications. See its [handoff](../changes/CHG-K-013-wp-005-draft-retention/handoff.md) for migration/current evidence. Global retention relationships/actual backup expiry, hosted activation and model-quality evidence remain separate. User delivery order is retention, commit/Preview push, then hosted AI verification; labelled evaluation deferred post-WP-005.
+
+
+CHG-K-015 adds the hosted Organiser adapter and controlled synthetic Preview rollout, consuming K-014 accounting. The [current hosted handoff](../changes/CHG-K-015-wp-005-hosted-generation/handoff.md) supersedes earlier local-only handoffs for validated preparation storage: stored preparation remains readable/editable with inference disabled. [Verification](../changes/CHG-K-015-wp-005-hosted-generation/verification.md) records exact activation status, applied Preview migrations and actual provider outcomes. Production activation, real private-data provider handling and comprehensive labelled evaluation are separate; no Student dependency is added.

@@ -33,3 +33,34 @@ Root finalsanitizedwebpackproductionbuild passed TypeScript/12staticpages/newmai
 Project rejected branch-specific env creation because it deliberately has no Git link (HTTP400,0variablescreated). Root preserved the CLI deployment approach and sharedsettings: created only9new Preview-scoped keys (sixORGANISER_SOCLAAS_*, activationfalse, usageretentiontrue, CRON_SECRET). Secrets stored as sensitive; generated operatorsecret is ignoredmode0600 .env.preview-operator.local, never staged/logged. No Production config or sharedSoC/authsetting changed. Unneededbranchpullworkflow amendment/test reverted; no networkflowchange.
 
 Automaticapprovalreview rejected an initial GitHubmetadata command that would print allPreviewvariablevalues. No valuesreturned. Root safelyretriednames-only and verified existingPreviewdeploymentsecret/variablenames and noexistingremoteactivationbranch. This didnotblockdelivery or requirebroaderdisclosure. Remote deployment/activation/twohostedcalls remain pending at this checkpoint;0inferencecalls.
+
+
+## Reviewed delivery and disabled Preview check
+
+Runtime/config/schema/test source committed and pushed as `0226e03c7e0c7804612a554e8bd0b0a811eea3dc` (`feat: connect hosted organiser generation`) on `preview/wp-005-hosted`, including prerequisite K-014 checkpoint. [Disabled deployment workflow](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39897129825) succeeded: checks/build, matching-target migrations, upload and Preview alias. Production verification/promotion jobs were skipped. Exact candidate `https://turnup-qpyyyjr48-mp3-dd27.vercel.app` metadata matched project, source SHA, Preview target and READY state.
+
+Unauthenticated maintenance returned404; authenticated dry-run and explicit deletion pass returned200 with0 eligible reservations/counters. Initial maintenance attempt failed before inference; a later dry-run succeeded. The test harness initially expected signup200, while the actual successful signup contract is201; corrected only the temporary harness and logged into the same synthetic account. Fresh authenticated usage reported disabled. No inference calls during this phase, no real user event created/read or published. Existing Vercel deployment protection remained enabled; root used its existing automation bypass privately.
+
+Root changed only the new Preview activation flag totrue, verified its exact key/id/Preview-only scope, and dispatched the existing workflow on the same reviewed SHA. Activated deployment and bounded synthetic inference outcomes follow below.
+
+
+## Hosted parser failure and safe rollback
+
+[Activated workflow39897836728](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39897836728) succeeded for the same reviewed SHA; candidate `https://turnup-4lhb6oemk-mp3-dd27.vercel.app` matched exact metadata. Fresh self-only usage was active at0/10. A synthetic PDF HTTP extraction request returned422/invalid_pdf before provider dispatch. No FAQ request followed. Fresh authoritative usage confirmed **0 attempts,0 reserved tokens, no in-flight lease**, so **0 actual inference calls**. The temporary harness conservatively marks a sent HTTP request before sending; that marker is not a provider-dispatch count.
+
+Root immediately set only Preview activationfalse and dispatched rollback workflow39898044928. The known never-published synthetic event was owner-deleted and GET404 verified; usage history and its synthetic owner were retained. Application specialist resumed for offline parser/build diagnosis only. Sanitized production output showed Next transformed the parser's `require.resolve` binding into `(void 0).resolve`, throwing before PDF.js document parsing; broad parser error handling reportsinvalid_pdf. This pre-existing bundled parser defect escaped source-level tests and blocks hosted acceptance. No failed model call or extra diagnostic inference was made; the two actual inference calls remain unused.
+
+
+Rollback workflow39898044928 succeeded at the same source; exact candidate `https://turnup-in54k38xe-mp3-dd27.vercel.app` matched Preview metadata and authenticated usage reporteddisabled. Safely filtered original deployment logs confirm migrations `20261023020000_daily_generation` and `20261023030000_generation_usage_retention` were applied successfully. Production jobs were skipped.
+
+
+## Production parser correction
+
+The application author removed the Next-transformed createRequire path. Standard fonts now resolve from the deployed package path, with targeted extraction-route trace includes for PDF.js, worker and fonts. An alias-only experiment was rejected because its bundle retained the same failure; it is not the delivered fix. Wildcard route matching avoids interpreting literal bracket IDs as a glob character class.
+
+The corrected sanitized webpack build passed TypeScript and12static pages without the old createRequire warning. Its36-entry extraction trace includes PDF.js module/worker and16standard-font assets. The retained opt-in `tests/proposal-assistance/pdf-text-built-runtime.test.ts` copies only traced PDF.js files into a fresh directory without a node_modules symlink, finds the actual compiled parser in route.js and parses a generated PDF. Author source+artifact checks passed5tests/2files; direct types/scoped ESLint/whitespace passed. Corrective3-path fingerprint `3366a22b0c0196f40579b349250ba2856967bdd7b11cf83fd9dd965466cf14ea`. Independent corrective review and root full checks are recorded next.
+
+
+Independent implementation_verifier completed the corrective3-path review with no actionable findings and matching fingerprint. Node24 source+opt-in artifact5tests/2files, scopedlint/directtypes/whitespace passed. A separate clean-environment directNode24 probe copied18regular PDF.js assets into a fresh runtime, verified the compiled external loader really imports PDF.js, parsed root's original synthetic PDF, treated an inert instruction marker as literal text with no unauthorized effects and rejected a missing-fonts negative control. No privateenv/DB/provider/network operations; temporary runtimes removed. This proves the compiled parser body and isolated package assets, not the full authenticated HTTP flow; that remains the hosted smoke check. Optional canvas/rendering warnings did not prevent text extraction.
+
+Root independently reproduced the opt-in artifact test1/1 and reran the full ordinary suite438passed/48files,5skipped (4SQL plus1build-dependent), fullESLint and whitespace. The earlier actualSQL4/4 remains valid; parser/config-only fixes do not change SQL. Combined final32-path runtime/config/schema/test fingerprint `8c67fc3f1d4a1bb862a82ec5a1213fdd5e164eea5d48bcacafe7d6e5625abfb8`. Root proceeds corrective commit and disabled Preview deployment before activation.
