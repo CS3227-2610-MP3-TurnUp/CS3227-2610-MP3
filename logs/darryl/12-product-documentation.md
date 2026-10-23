@@ -139,3 +139,61 @@ Root checks: documentation source checker passed; strict screenshot mode exited 
   "usage_updates": []
 }
 ```
+
+# 03 - Publish Documentation and Website PR - 23 October 2026
+
+## Request
+
+Commit and push the documentation/site changes, create a PR, and explain how to make the product website live.
+
+## Results
+
+Applied the commit skill and staged exactly 17 intended files: guides, site assets/configuration, screenshot checklist, workflow map/checker, README pointers, Jekyll ignores and this increment's evidence. Created `c76e4dc` (`docs: add product guides and GitHub Pages website`) and pushed `codex/product-documentation`. Opened [PR #34](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/34) against `master`, attached it to the chat and read back the changed filenames. Local agent/skill customizations, unrelated agent-usage notes, generated development types and `tmp-source-admin.png` are excluded and preserved.
+
+Reran the normal documentation checker, JavaScript syntax, whitespace and structured log validation successfully; 14 accepted manual screenshot placeholders remain visible. Reused the recorded independent review; no executable implementation changed after review. No application test/build rerun is claimed. Ruby/Bundler/browser limitations remain explicit.
+
+Publication instructions: merge the PR, then use repository Settings → Pages → Deploy from a branch → master → /docs → Save. Wait for the actual Pages build/deploy and verify the configured address `https://cs3227-2610-mp3-turnup.github.io/CS3227-2610-MP3/`. The site launch link remains `https://turnup-nine.vercel.app/`. No merge, Pages settings mutation, public-site success or hosted application change is claimed. This follow-up is delivery evidence only.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 3,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "c76e4dcb0e4daedac79a76a9bf44ea90f8c63c32",
+  "captured_at": "2026-10-23T00:05:20.056509+00:00",
+  "delegation": "Main agent performs scoped commit/push/PR delivery using completed independent review; no new implementation or delegate required.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Commit and push the documentation/site increment, create a PR and explain Pages publication.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Created and pushed c76e4dc on codex/product-documentation, opened PR 34 against master and verified its 17-file scope. Provided branch-based master/docs publication instructions; no merge or Pages configuration change.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Exact prompt-scoped usage unavailable; root response still active at snapshot."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

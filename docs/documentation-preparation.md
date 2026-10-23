@@ -39,3 +39,7 @@ Independent source/readiness/syntax checks passed with accepted placeholders; st
 - `git diff --check` — passed, with ordinary LF/CRLF conversion notices.
 - No application test/build rerun: application code is unchanged. Prior 688-test UI evidence remains linked from that increment and is not attributed to this one.
 - Not run: Jekyll build (Ruby/Bundler unavailable), browser screenshots/layout checks (tool disabled; user accepted placeholders), actual diagram rendering, live-provider/database/hosted workflow checks and Pages publication. No deployment/commit/push claim.
+
+## Authorised delivery — 23 October 2026
+
+The subsequent delivery instruction authorised commit/push/PR creation. Commit `c76e4dcb0e4daedac79a76a9bf44ea90f8c63c32` was pushed on `codex/product-documentation`; [PR #34](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/34) targets `master`. GitHub's 17 changed filenames match the intended documentation/site scope and exclude local customizations/unrelated files. Normal source/syntax/whitespace/log checks were revalidated. This section/log entry 03 record delivery only, with no post-review implementation change. Pages publication still requires the publishing source and successful Pages deployment; no merge or Pages setting was performed.
