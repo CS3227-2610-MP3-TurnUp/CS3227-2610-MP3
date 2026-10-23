@@ -155,6 +155,21 @@ describe("saved-public-draft candidate route", () => {
     expect(warning.mock.calls[0]?.join(" ")).not.toContain(source.description);
   });
 
+  it("delivers remaining candidates and logs only a count when some FAQs were withheld", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mocked.process.mockResolvedValueOnce({ ok: true, value: candidates, droppedInvalidReferenceFaqs: 2 });
+
+    const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ ok: true, eventVersion: 4, preparationRevision: 2, candidates });
+    expect(JSON.stringify(body)).not.toContain("droppedInvalidReferenceFaqs");
+    expect(warning).toHaveBeenCalledOnce();
+    expect(warning).toHaveBeenCalledWith(JSON.stringify({ event: "proposal_candidate_faqs_withheld", code: "FAQ_REFERENCE_INVALID", count: 2 }));
+    expect(warning.mock.calls[0]?.join(" ")).not.toContain(eventId);
+  });
+
   it("rejects not-ready drafts before inference", async () => {
     mocked.readSnapshot.mockRejectedValueOnce(new mocked.NotReady("title"));
     const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });

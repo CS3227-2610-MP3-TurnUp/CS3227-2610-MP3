@@ -266,6 +266,20 @@ describe("PublicContentAssistance", () => {
     expect(textOf(nodes(updated).find((node) => node.props.role === "alert")?.props.children)).toContain("Enter some faq / other text");
   });
 
+  it("explains when every suggestion only restated details the event page already shows", async () => {
+    fetchMock.mockImplementation(async () => json({
+      ...result,
+      candidates: { answeredFaqs: [], unansweredQuestions: [], renderedOther: "" },
+    }));
+    await generate();
+    const updated = render();
+    const statuses = nodes(updated).filter((node) => node.props.role === "status").map((node) => textOf(node.props.children));
+    expect(statuses.some((text) => text.includes("No new questions to suggest beyond the details the event page already shows"))).toBe(true);
+    expect(statuses.some((text) => text.includes("No supported answers were found"))).toBe(false);
+    expect(statuses.some((text) => text.includes("FAQ suggestions are ready to review"))).toBe(false);
+    expect(byText(updated, "button", "Apply FAQ / Other to working form").props.disabled).toBe(true);
+  });
+
   it("keeps unanswered questions separate until an organiser answers and explicitly adds one", async () => {
     fetchMock.mockImplementation(async () => json({
       ...result,

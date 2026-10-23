@@ -1,4 +1,4 @@
-export const PUBLIC_CANDIDATE_PROMPT_VERSION = "CHG-K-012-public-candidates-v3";
+export const PUBLIC_CANDIDATE_PROMPT_VERSION = "CHG-K-017-faq-gap-questions-v5";
 
 export const PUBLIC_CANDIDATE_SOURCE_FIELDS = [
   "title",

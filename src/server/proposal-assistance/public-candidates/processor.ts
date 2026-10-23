@@ -32,12 +32,17 @@ export const PUBLIC_CANDIDATE_REJECTION_CODES = [
 ] as const;
 export type PublicCandidateRejectionCode = (typeof PUBLIC_CANDIDATE_REJECTION_CODES)[number];
 export type PublicCandidateProcessingResult<T> =
-  | { ok: true; value: T }
+  | { ok: true; value: T; droppedInvalidReferenceFaqs?: number }
   | { ok: false; outcome: string; rejectionCode?: PublicCandidateRejectionCode };
 
 type CandidateValueResult<T> = { ok: true; value: T } | { ok: false; rejectionCode: PublicCandidateRejectionCode };
 
 const MAX_INPUT_BYTES = 65_536;
+// Fields the event page always shows. An answered FAQ that only restates them adds nothing for participants.
+const REQUIRED_DISPLAY_FIELDS: ReadonlySet<PublicCandidateReference["field"]> = new Set([
+  "title", "description", "start", "end", "location", "capacity", "fee", "openTo", "preparation",
+]);
+const RESTATED_FIELD_COVERAGE = 0.8;
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u;
 
 export async function processPublicCandidates(
@@ -75,8 +80,14 @@ export function parsePublicCandidateResponse(
 
   const answeredFaqs: AnsweredPublicFaq[] = [];
   const unansweredQuestions: string[] = [];
+  let droppedInvalidReferenceFaqs = 0;
   for (const item of root.faqs) {
     const parsed = parseFaq(item, source);
+    // A FAQ whose quotes fail exact-source checks is withheld; the others remain usable, as in PDF extraction.
+    if (!parsed.ok && parsed.rejectionCode === "FAQ_REFERENCE_INVALID") {
+      droppedInvalidReferenceFaqs += 1;
+      continue;
+    }
     if (!parsed.ok) return invalid(parsed.rejectionCode);
     if (parsed.value.references.length === 0) unansweredQuestions.push(parsed.value.question);
     else answeredFaqs.push({
@@ -86,23 +97,53 @@ export function parsePublicCandidateResponse(
     });
   }
 
-  const renderedOther = renderAnsweredFaqs(answeredFaqs);
-  if ([...renderedOther].length > MAX_PUBLIC_CANDIDATE_OTHER_LENGTH || [...renderedOther].length > EVENT_LIMITS.other || CONTROL_CHARACTERS.test(renderedOther)) return invalid("OTHER_BOUND");
+  if (droppedInvalidReferenceFaqs === root.faqs.length) return invalid("FAQ_REFERENCE_INVALID");
+
+  // Bounds apply to everything that passed validation, before restated answers are removed.
+  const fullOther = renderAnsweredFaqs(answeredFaqs);
+  if ([...fullOther].length > MAX_PUBLIC_CANDIDATE_OTHER_LENGTH || [...fullOther].length > EVENT_LIMITS.other || CONTROL_CHARACTERS.test(fullOther)) return invalid("OTHER_BOUND");
 
   const combined = [
-    renderedOther,
+    fullOther,
     ...PUBLIC_CANDIDATE_SOURCE_FIELDS.filter((field) => field !== "other").map((field) => source[field]),
   ].join("");
   if ([...combined].length > 20_000 || encoderByteLength(combined) > 48_000) return invalid("TOTAL_PUBLIC_BOUND");
 
+  const newFaqs = answeredFaqs.filter((faq) => !restatesRequiredFields(faq.references, source));
   return {
     ok: true,
     value: {
-      answeredFaqs,
+      answeredFaqs: newFaqs,
       unansweredQuestions,
-      renderedOther,
+      renderedOther: renderAnsweredFaqs(newFaqs),
     },
+    ...(droppedInvalidReferenceFaqs ? { droppedInvalidReferenceFaqs } : {}),
   };
+}
+
+/**
+ * True when every cited field is always shown and the quotes cover most of that field's non-whitespace text.
+ * Coverage is the union of quoted positions, so overlapping or repeated quotes are not double-counted.
+ */
+function restatesRequiredFields(references: readonly PublicCandidateReference[], source: PublicCandidateSource): boolean {
+  const covered = new Map<PublicCandidateReference["field"], boolean[]>();
+  for (const { field, quote } of references) {
+    if (!REQUIRED_DISPLAY_FIELDS.has(field)) return false;
+    const positions = covered.get(field) ?? new Array<boolean>(source[field].length).fill(false);
+    const start = source[field].indexOf(quote);
+    for (let index = start; index < start + quote.length; index += 1) positions[index] = true;
+    covered.set(field, positions);
+  }
+  return [...covered].every(([field, positions]) => {
+    let total = 0;
+    let quoted = 0;
+    for (let index = 0; index < source[field].length; index += 1) {
+      if (/\s/u.test(source[field][index]!)) continue;
+      total += 1;
+      if (positions[index]) quoted += 1;
+    }
+    return quoted >= RESTATED_FIELD_COVERAGE * total;
+  });
 }
 
 function parseFaq(value: unknown, source: PublicCandidateSource): CandidateValueResult<{ question: string; references: PublicCandidateReference[] }> {

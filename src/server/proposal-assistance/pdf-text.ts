@@ -4,9 +4,13 @@ import { createRequire } from "node:module";
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { MAX_PROPOSAL_PDF_BYTES, MAX_PROPOSAL_PDF_PAGES, MAX_PROPOSAL_TEXT_BYTES } from "../../features/proposal-assistance/limits";
+import { INVISIBLE_CHARACTERS } from "../../features/proposal-assistance/validation";
 
 export { MAX_PROPOSAL_PDF_BYTES, MAX_PROPOSAL_PDF_PAGES, MAX_PROPOSAL_TEXT_BYTES };
 const PDF_PARSE_TIMEOUT_MS = 8_000;
+// Text a reader cannot see is a common carrier for indirect prompt injection.
+const MIN_VISIBLE_FONT_SIZE = 1;
+const PAGE_BOUNDS_MARGIN = 2;
 
 export type PdfTextFailure =
   | "unsupported_file"
@@ -89,11 +93,18 @@ export async function extractPdfPageText(file: File, signal?: AbortSignal): Prom
         const page = await document.getPage(pageNumber);
         try {
           const content = await page.getTextContent();
-          const text = content.items
-            .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
+          const [minX, minY, maxX, maxY] = page.view as [number, number, number, number];
+          const text = sanitizePageText(content.items
+            .map((item) => {
+              if (!("str" in item) || typeof item.str !== "string") return "";
+              const [, , c = 0, d = 0, x = 0, y = 0] = item.transform as number[];
+              const visible = Math.hypot(c, d) >= MIN_VISIBLE_FONT_SIZE &&
+                x >= minX - PAGE_BOUNDS_MARGIN && x <= maxX + PAGE_BOUNDS_MARGIN &&
+                y >= minY - PAGE_BOUNDS_MARGIN && y <= maxY + PAGE_BOUNDS_MARGIN;
+              return visible ? item.str : "";
+            })
             .filter(Boolean)
-            .join(" ")
-            .trim();
+            .join(" "));
           totalBytes += new TextEncoder().encode(text).byteLength;
           if (totalBytes > MAX_PROPOSAL_TEXT_BYTES) return { ok: false, outcome: "text_too_large" };
           pageTexts.push(text);
@@ -154,6 +165,11 @@ export async function extractPdfPageText(file: File, signal?: AbortSignal): Prom
     if (timeout) clearTimeout(timeout);
     removeAbortListener();
   }
+}
+
+/** Normalise look-alike characters and remove invisible/control characters from extracted page text. */
+export function sanitizePageText(text: string): string {
+  return text.normalize("NFKC").replace(INVISIBLE_CHARACTERS, "").replace(/\s+/gu, " ").trim();
 }
 
 function isPdfFile(file: File): boolean {

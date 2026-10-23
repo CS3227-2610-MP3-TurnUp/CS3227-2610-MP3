@@ -1,6 +1,10 @@
 import {
   MAX_PRIVATE_FINDING_CHARS,
   MAX_PRIVATE_FINDINGS,
+  contactSupport,
+  hasOnlySupportedContacts,
+  injectionFinding,
+  looksLikeInstruction,
   parseProposalFinding,
   type ValidationResult,
 } from "./validation";
@@ -111,10 +115,21 @@ export function parseExtractionJsonResponse(
       ) {
         technicalIssues += 1;
       } else {
-        privateFindings.push(...privateValues as string[]);
+        // A review note may not introduce a link or contact detail absent from the proposal pages.
+        const support = contactSupport(pageTexts.join("\n"));
+        for (const finding of privateValues as string[]) {
+          if (hasOnlySupportedContacts(finding, support, { phones: false })) privateFindings.push(finding);
+          else technicalIssues += 1;
+        }
       }
     }
   }
+
+  // Report assistant-directed page text deterministically, whether or not the model flagged it.
+  pageTexts.forEach((text, index) => {
+    const finding = injectionFinding(index + 1);
+    if (looksLikeInstruction(text) && !privateFindings.includes(finding)) privateFindings.push(finding);
+  });
 
   const unprocessedFields = PROPOSAL_FIELDS.filter((field) => !Object.hasOwn(facts, field));
   const incompleteReasons: PrivateExtraction["incompleteReasons"] = [];

@@ -116,7 +116,10 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
 
       setCandidate({ eventVersion: payload.eventVersion, preparationRevision: payload.preparationRevision, editorRevision: current.editorRevision, baselineFields: source, candidates: payload.candidates });
       setOtherText(payload.candidates.renderedOther);
-      setNotice("FAQ suggestions are ready to review. They are separate from the event field until you choose to apply them.");
+      const hasSuggestions = payload.candidates.answeredFaqs.length > 0 || payload.candidates.unansweredQuestions.length > 0;
+      setNotice(hasSuggestions
+        ? "FAQ suggestions are ready to review. They are separate from the event field until you choose to apply them."
+        : "FAQ generation finished. Your event fields were not changed.");
     } catch {
       if (requestRevision.current === requestId && !controller.signal.aborted) setError("Public suggestions are unavailable. Your event fields were not changed.");
     } finally {
@@ -216,7 +219,8 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
 
     {candidate && <section className="public-candidate-card" aria-labelledby="public-other-title">
         <h4 id="public-other-title">FAQ / Other suggestion</h4>
-        {candidate.candidates.answeredFaqs.length === 0 && <p className="notice" role="status">No supported answers were found in the saved event details. You can answer one of the questions below and add it here, or dismiss these suggestions.</p>}
+        {candidate.candidates.answeredFaqs.length === 0 && candidate.candidates.unansweredQuestions.length > 0 && <p className="notice" role="status">No supported answers were found in the saved event details. You can answer one of the questions below and add it here, or dismiss these suggestions.</p>}
+        {candidate.candidates.answeredFaqs.length === 0 && candidate.candidates.unansweredQuestions.length === 0 && <p className="notice" role="status">No new questions to suggest beyond the details the event page already shows. You can write your own FAQ or dismiss these suggestions.</p>}
         {candidate.candidates.answeredFaqs.length > 0 && <div className="public-candidate-faq-evidence">
           <p className="field-help">Supported answers are derived from saved event details. These references support the original generated answers; review them again if you change the wording.</p>
           <ul>{candidate.candidates.answeredFaqs.map((faq, index) => <li key={faq.question + "-" + index}>

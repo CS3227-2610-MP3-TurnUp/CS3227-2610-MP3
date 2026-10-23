@@ -54,6 +54,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return outcomeResponse(processed.outcome);
     }
 
+    if (processed.droppedInvalidReferenceFaqs) {
+      // Finite count only, like the rejection diagnostic above.
+      console.warn(JSON.stringify({ event: "proposal_candidate_faqs_withheld", code: "FAQ_REFERENCE_INVALID", count: processed.droppedInvalidReferenceFaqs }));
+    }
+
     // Re-read under the same ownership/session/event locks; deliver only if the
     // authoritative public source and all revisions stayed identical.
     const after = await readSavedPublicCandidateSnapshot(prisma, token, id, expectedVersion, expectedPreparationRevision);
