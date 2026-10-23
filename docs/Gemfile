@@ -1,0 +1,9 @@
+source "https://rubygems.org"
+
+# MP2's resolved Pages release uses Jekyll 3.10 and Minima 2.5.1.
+# Generate and review a local lockfile with Ruby 3.3 before reproducible local builds.
+gem "github-pages", "232", group: :jekyll_plugins
+gem "csv"
+gem "base64"
+gem "bigdecimal"
+gem "webrick"
