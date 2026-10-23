@@ -75,4 +75,4 @@ PDF_TEXT_BUILD_DIR="$BUILD_ROOT/.next/server/app/api/organiser/events/[id]/propo
   tests/proposal-assistance/pdf-text-built-runtime.test.ts
 ```
 
-`BUILD_ROOT` is the directory containing the completed sanitized build. This check asserts the extraction route's trace includes PDF.js, its worker and standard fonts, copies only those traced package assets into a fresh temporary runtime, and parses a synthetic PDF with the compiled parser. It makes no database/provider call. Ordinary source tests skip this build-dependent check unless `PDF_TEXT_BUILD_DIR` is supplied.
+`BUILD_ROOT` is the directory containing the completed sanitized build. This check asserts the extraction route's trace includes PDF.js, its worker and standard fonts, recreates the canonical pnpm package files and their logical symlink in a fresh temporary runtime, rejects flattened logical files, and parses a synthetic PDF with the compiled parser. It makes no database/provider call. Ordinary source tests skip this build-dependent check unless `PDF_TEXT_BUILD_DIR` is supplied.

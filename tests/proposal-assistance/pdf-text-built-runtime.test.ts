@@ -1,4 +1,16 @@
-import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readlinkSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -18,31 +30,51 @@ describe.skipIf(!buildRouteDirectory)("PDF.js production route artifact", () => 
     expect(Array.isArray(trace.files)).toBe(true);
 
     const pdfjsTraceFiles = (trace.files as string[]).filter((file) =>
-      file.replaceAll("\\", "/").includes("node_modules/pdfjs-dist/"),
+      /pdfjs-dist(?:\/|$)/.test(file.replaceAll("\\", "/")),
     );
-    expect(pdfjsTraceFiles.some((file) => file.endsWith("/legacy/build/pdf.mjs"))).toBe(true);
-    expect(pdfjsTraceFiles.some((file) => file.endsWith("/legacy/build/pdf.worker.mjs"))).toBe(true);
-    const standardFontFiles = pdfjsTraceFiles.filter((file) => file.includes("/standard_fonts/"));
+    const projectPaths = pdfjsTraceFiles.map(projectRelativeTracePath);
+    const packageLinkPath = "node_modules/pdfjs-dist";
+    expect(projectPaths.filter((file) => file === packageLinkPath)).toHaveLength(1);
+    expect(projectPaths.filter((file) => file.startsWith(`${packageLinkPath}/`))).toEqual([]);
+    const packageRootMatches = projectPaths.map((file) =>
+      file.match(/^(node_modules\/\.pnpm\/pdfjs-dist@[^/]+\/node_modules\/pdfjs-dist)\//)?.[1],
+    );
+    const packageRoots = [...new Set(packageRootMatches.filter((root): root is string => Boolean(root)))];
+    expect(packageRoots).toHaveLength(1);
+    expect(projectPaths.every((file) =>
+      file === packageLinkPath || file.startsWith(`${packageRoots[0]!}/`),
+    )).toBe(true);
+    expect(projectPaths.some((file) => file.endsWith("/legacy/build/pdf.mjs"))).toBe(true);
+    expect(projectPaths.some((file) => file.endsWith("/legacy/build/pdf.worker.mjs"))).toBe(true);
+    const standardFontFiles = projectPaths.filter((file) => file.includes("/standard_fonts/"));
     expect(standardFontFiles.length).toBeGreaterThan(0);
 
     const runtimeRoot = mkdtempSync(path.join(tmpdir(), "turnup-pdf-traced-runtime-"));
     try {
-      for (const traceFile of pdfjsTraceFiles) {
-        const normalized = traceFile.replaceAll("\\", "/");
-        const packageMarker = "node_modules/pdfjs-dist/";
-        const markerIndex = normalized.lastIndexOf(packageMarker);
-        const packageRelativePath = normalized.slice(markerIndex + packageMarker.length);
+      for (const [index, traceFile] of pdfjsTraceFiles.entries()) {
+        if (projectPaths[index] === packageLinkPath) continue;
         const sourcePath = path.resolve(traceDirectory, traceFile);
-        const targetPath = path.join(runtimeRoot, "node_modules", "pdfjs-dist", packageRelativePath);
+        const targetPath = path.join(runtimeRoot, projectPaths[index]!);
         expect(statSync(sourcePath).isFile()).toBe(true);
         mkdirSync(path.dirname(targetPath), { recursive: true });
         copyFileSync(sourcePath, targetPath);
       }
 
       const runtimeNodeModules = path.join(runtimeRoot, "node_modules");
-      expect(statSync(runtimeNodeModules).isDirectory()).toBe(true);
-      expect(lstatSync(runtimeNodeModules).isSymbolicLink()).toBe(false);
-      const pdfModulePath = path.join(runtimeNodeModules, "pdfjs-dist/legacy/build/pdf.mjs");
+      const packageRoot = path.join(runtimeRoot, packageRoots[0]!);
+      const packageLinkSource = path.resolve(
+        traceDirectory,
+        pdfjsTraceFiles[projectPaths.indexOf(packageLinkPath)]!,
+      );
+      expect(lstatSync(packageLinkSource).isSymbolicLink()).toBe(true);
+      const packageLinkTarget = readlinkSync(packageLinkSource);
+      expect(path.posix.join("node_modules", packageLinkTarget)).toBe(packageRoots[0]);
+      const packageLink = path.join(runtimeRoot, packageLinkPath);
+      expect(existsSync(packageLink)).toBe(false);
+      symlinkSync(packageLinkTarget, packageLink, "dir");
+      expect(lstatSync(packageLink).isSymbolicLink()).toBe(true);
+      expect(realpathSync(packageLink)).toBe(realpathSync(packageRoot));
+      const pdfModulePath = path.join(packageLink, "legacy/build/pdf.mjs");
       const pdfModule = await import(pathToFileURL(pdfModulePath).href);
       const compiledParser = findCompiledParser(routeBundle, routePath);
       const loader = compiledParser.match(/\b([A-Za-z_$][\w$]*)\.bind\(\1,(\d+)\)/);
@@ -102,6 +134,14 @@ function findCompiledParser(bundle: string, fileName: string): string {
   visit(source);
   expect(candidates).toHaveLength(1);
   return candidates[0]!.getText(source);
+}
+
+function projectRelativeTracePath(traceFile: string): string {
+  const normalized = traceFile.replaceAll("\\", "/");
+  const marker = "node_modules/";
+  const markerIndex = normalized.indexOf(marker);
+  expect(markerIndex).toBeGreaterThanOrEqual(0);
+  return normalized.slice(markerIndex);
 }
 
 function asPdfFile(bytes: Uint8Array): File {
