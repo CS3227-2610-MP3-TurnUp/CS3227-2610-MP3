@@ -1,6 +1,6 @@
 # Verification — CHG-K-013
 
-Implementation in progress. Prerequisite sourcecb6179d + K-012 frozen snapshot0445c8662aca04289dd3e6927835b0d0bc7ee593daf3b6c534b990e5b694d4fc. No new tests/runtime/migration/deployment claimed yet. Record actual checks, source fingerprint, findings/disposition and unrun limits here. Existing private env and pre-existing next-env.d.ts hash0f70629890b72a0a82e91972cc032c04b658b26c265373cb711cf576bfbf8fcc preserved.
+Completed implementation and independent verification are recorded below. Prerequisite source cb6179d + K-012 frozen snapshot 0445c8662aca04289dd3e6927835b0d0bc7ee593daf3b6c534b990e5b694d4fc. Existing private env and pre-existing next-env.d.ts hash0f70629890b72a0a82e91972cc032c04b658b26c265373cb711cf576bfbf8fcc preserved.
 
 
 ## Early schema checks and attribution
@@ -27,3 +27,12 @@ Initial harness setup and teardown separately hit the existing event_publication
 ## Limits and next delivery
 
 No production cleanup, actual hosted scheduler invocation, backup-window/erasure proof, new native-browser run or live model evaluation. Existing user browser confirmation precedes this retention UI; retention UI has component tests. Labelled evaluation deferred by user. Private env/user servers/root-checkout unrelated work preserved. Runtime account backup expiry remains an explicit verification limitation; quarantined restore procedure prevents re-serving expired private data and does not claim erasure from recoverable copies. User-authorised commit/Preview push follows this verified increment; hosted AI verification is subsequent, not established by these checks.
+
+
+## Preview delivery and hosted readiness
+
+Committed FAQ/retention delivery as `295a58dc33e0da5c8f35834ad3c4f9433100f28f` (`feat: add FAQ drafting and private draft retention`) and pushed `preview/wp-005`. [Preview workflow 39887132422](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39887132422) succeeded, including checks, build, migration, deployment and alias. Production jobs were skipped. Candidate https://turnup-llfqjyz89-mp3-dd27.vercel.app is READY; stable alias https://turnup-team-preview.vercel.app. No production cleanup or private environment activation.
+
+Configured hosting_soc_engineer (gpt-6-luna/xhigh) assessed readiness; no model/provider call occurred. Intended Preview has SoCLaaS configuration names but lacks `FOUNDATION_PROBE_TOKEN` and all four `FOUNDATION_PROBE_SOC_*` admission limits. Enabled-flag value was not established. Normal PDF/FAQ completion still requires its local-only synthetic profile. Hosted connectivity and end-user AI remain unverified; a protected synthetic probe needs bounded Preview configuration and current provider/key limits, while hosted end-user activation needs an explicit guard/profile decision. Course/provider data handling G04 remains unresolved; labelled evaluation stays deferred.
+
+During readiness inspection, an unsupported `vercel env run` invocation unexpectedly fell through to project creation/upload, then failed with an invalid env-key error. This was an agent error outside the read-only assignment. Root stopped that path and used documented REST metadata to verify the newly created project had no deployments, no environment variables, no Git connection and only its generated default domain. Root deleted exactly that empty project (HTTP204; subsequent GET404), leaving intended turnup project/READY candidate untouched. Restored only the appended `.gitignore` line and removed the two newly created local CLI metadata files. Pre-existing next-env hash unchanged; private env untouched. No manifest establishes upload contents; no successful deployment existed, and upload-cache erasure is not claimed. No raw credentials, response bodies or private event content were recorded.
