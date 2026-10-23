@@ -19,3 +19,7 @@ Preview maintenance is a daily operator invocation, as selected by Keith. [The o
 ## Delivery limits
 
 Production activation/configuration/data were not changed. Comprehensive labelled evaluation, real private-proposal provider handling and full cross-role hosted acceptance remain separate. Current source/runtime/SQL checks, independent review findings, exact deployment identity and bounded synthetic outcomes are authoritative in verification.
+
+## Delivered Preview state
+
+Reviewed runtime source `19edbf4f1e1cf1056ca21539988ec1a7ffc90ed9` is deployed to Preview. Exactly one synthetic extraction and one FAQ call passed, with persisted preparation/Save Draft and exact2attempts/8192reservedtokens confirmed. The synthetic event was deleted; usage history remains. The stable Preview alias serves the same source. Preview generation stays enabled for synthetic testing; no Production activation/configuration/data operation was performed. [Verification](verification.md) records the parser and pnpm packaging corrections, independent reviews, exact workflow/candidate identities and evidence limits.

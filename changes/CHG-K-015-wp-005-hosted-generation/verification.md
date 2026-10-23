@@ -1,5 +1,9 @@
 # Verification — CHG-K-015
 
+Current result: implemented, independently reviewed and deployed for synthetic Preview testing at runtime source `19edbf4f1e1cf1056ca21539988ec1a7ffc90ed9`. Both authorised inference calls passed; Preview remains enabled. Production operations were outside this run. See final hosted results below.
+
+## Initial checkpoint
+
 In progress from reviewed prerequisite `be3dfae`. No tests, migrations, remote configuration, model calls or deployments claimed for this change yet. Existing K-014 prerequisite checks are separate. Root linked dependencies/copied ignored generated client only; no private env in new worktree. Root checkout/other worktree changes and user servers preserved. Current plan is Preview-only; all Production settings/data remain outside remote scope.
 
 
@@ -83,3 +87,24 @@ Root ordinarysuite438passed/48files,5opt-ins skipped; fullESLint/clean-types/whi
 
 
 Independent implementation_verifier matched the two-path fingerprint and mirror bytes, passed source+artifact5tests/2files, targetedlint/directtypes/whitespace and found no actionable defects. The final42-entry NFT contains19PDF entries:18canonical physical assets and1relative logical symlink,0flattened logical files. Recreated symlink graph and compiled parser pass locally; actual Vercel packaging/upload is the next remote check. No reviewer authoring/privateenv/network/DB/provider operation.
+
+
+## Successful canonical upload and corrected disabled deployment
+
+Canonical fix committed/pushed as `19edbf4f1e1cf1056ca21539988ec1a7ffc90ed9` (`fix: trace canonical PDF assets for pnpm`). No automatic workflow existed for that SHA when checked, so root used the existing authorised manual Preview workflow. [Run39900982605](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39900982605) succeeded through checks/build/migrate/prebuilt packaging/upload/alias. Exact candidate `https://turnup-2ad2olc0l-mp3-dd27.vercel.app` matched project, Preview target, reviewed SHA and READY. This closes the actual upload defect; local tests alone were not used to claim packaging success.
+
+Maintenance auth rejection/dry-run/explicit sweep passed with0eligible rows on this source. The synthetic login expired during the extended build work (usage401); root refreshed only that existing synthetic account's session and then verified authenticated usage200/disabled. No user credentials/cookies were exposed and no real-user session changed. Root enabled only the Preview flag, verified exact scope/value and manually dispatched the same source again. Actual inference remains0 before this activated deployment; both authorised calls remain unused.
+
+
+## Final hosted results — 23 October 2026
+
+[Activated deployment39901355236](https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/actions/runs/39901355236) succeeded for reviewed source `19edbf4f1e1cf1056ca21539988ec1a7ffc90ed9`; exact candidate `https://turnup-2pv9hv4ri-mp3-dd27.vercel.app` matched project/Preview/source/READY metadata. **Exactly two actual inference calls** were made: one PDF extraction200 and one FAQ generation200. Extraction preparation persisted; successful Save Draft was confirmed by a fresh owner read (eventversion2, preparationrevision2,0unresolved issues, canonical stored start/end). The temporary harness initially expected a full event from Save Draft instead of its actual `{saved:true}` response; only the harness was corrected, and no extraction/model call was repeated.
+
+FAQ generation returned6supported answered FAQs and0unanswered questions. Fresh self-only usage showed2/10attempts,8192/40960reserved output tokens,8remaining attempts, no in-flight lease and reset `2026-10-23T16:00:00.000Z` (next midnightSGT). No refill, purchase, counter reset, inference retry or additional diagnostic generation.
+
+The known synthetic never-published event was owner-deleted and GET404verified. Its synthetic owner and required usage history remain. Preview activation remains true after both checks passed. A later successful same-source Preview workflow39901786996 assigned the shared stable alias; its project/Preview/source/READY metadata also matched19edbf4. Tested candidate and current alias deployment IDs differ, but runtime source is identical. Stable active-usage verification is recorded with the final delivery notes.
+
+Local acceptance evidence remains438ordinarytests,4actualSQLtests and the separate built-runtime parser/packaging regression, plus lint/types/schema/build and independent reviews. Hosted checks are authenticated API checks, not a new browser walkthrough or comprehensive labelled model evaluation. Real private-data provider handling, Production rollout and global retention/backup evidence remain separate. Daily Preview usage maintenance remains a protected operator invocation; scheduling automation is intentionally deferred. No Darryl implementation prerequisite was added.
+
+
+Final direct check of `https://turnup-team-preview.vercel.app/api/organiser/ai-usage` using the synthetic session returned active,2attempts/8192reserved tokens/noinflight. Stable Preview is enabled and serves the same reviewed runtime source. Final delivery changes after19edbf4 are evidence/handoff/log only; they do not change the32-path runtime fingerprint or require another inference call/review.

@@ -12,8 +12,8 @@ Independent implementation_verifier(gpt-6.1-sol/high): completed frozen code/con
 - [x] Hosted profile/adapter/activation and bounded cleanup/route/tests
 - [x] Full/static/isolated schema/build/SQL checks and independent review
 - [x] Provider/host preflight, configuration, commit/push/Preview deployment with activationoff
-- [ ] Protected cleanup verification, activate/redeploy, at most2synthetic modelcalls or documentedblocked/failure+off
-- [ ] Final evidence/handoff/docs/log/usage attribution and clean assigned fixtures
+- [x] Protected cleanup verification, activate/redeploy, at most2synthetic modelcalls or documentedblocked/failure+off
+- [x] Final evidence/handoff/docs/log/usage attribution and clean assigned fixtures
 
 Root additionally assigned the application writer the Preview workflow pull command and its regression test: use the exact validated GITHUB_REF_NAME for branch-specific settings, leaving Production pull unchanged. This preserves shared Preview model/auth settings. Actual operator endpoint name is /api/internal/generation-usage-retention (clearer than the plan shorthand), approved by root before consumer documentation.
 
