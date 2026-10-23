@@ -675,6 +675,14 @@ Vercel protection may precede app access. A read-only URL check during preparati
 redirected to Vercel sign-in, so unauthenticated HTTP 200 at the final redirect does
 not establish a working TurnUp session or public peer access.
 
+For school/managed-network loading failures, compare the same URL on another permitted
+network and record the browser error and time. DNS, local-network and upstream filtering
+are possible causes; do not attribute a failure to a particular school policy or Vercel
+firewall rule without diagnostics. See [Vercel connectivity troubleshooting](https://vercel.com/kb/guide/troubleshooting-connectivity-issues).
+A Vercel sign-in redirect indicates deployment authentication and should be handled
+separately from a connection failure. The website and User Guide give conditional
+network advice rather than claiming that every school network is blocked.
+
 The existing deployment workflow runs PR checks separately from privileged releases.
 Protected `master` is the Production source; protected `preview/<one-segment>` branches
 can target Preview. It installs locked dependencies, runs gates, pulls target-matched

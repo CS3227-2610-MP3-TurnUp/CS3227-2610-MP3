@@ -105,3 +105,59 @@ Prepared a scoped screenshot documentation commit: User Guide, Developer Guide, 
   "usage_updates": []
 }
 ```
+
+# 03 - Explain school-network access issues - 23 October 2026
+
+## Request
+
+Check the wording of a school-network access warning, add it to the website/docs, commit and push to the same PR.
+
+## Results
+
+Added conditional school/managed-network loading guidance near the website launch button, in User Guide access/troubleshooting and in Developer Guide release diagnostics. Official Vercel connectivity/IP-blocking guidance supports possible managed-network restrictions, not a universal school-network ban or a confirmed Vercel cause. Local history only records a separate PostgreSQL port-5432 connectivity issue and does not prove a browser HTTPS block. Distinguished loading failures from Vercel deployment-authentication redirects; advised mobile data/another permitted network and reporting the exact error. Documentation validator and whitespace checks passed; four Organiser placeholders remain. User authorizes commit/push to existing PR #37. No app, network/security setting or provider operation changed. Preserved unrelated evaluation evidence and local customizations.
+
+Sources checked: https://vercel.com/kb/guide/troubleshooting-connectivity-issues and https://vercel.com/kb/guide/how-to-resolve-ip-blocking-issues.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 3,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "86084a71de7fcba239eb7ac41646953dd3c6da28",
+  "captured_at": "2026-10-23T13:16:39.548335+08:00",
+  "delegation": "Single-agent documentation correction and scoped delivery.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Verify network warning wording, update website/guides and deliver to PR 37.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "Added conditional school/managed-network loading guidance near the website launch button, in User Guide access/troubleshooting and in Developer Guide release diagnostics. Official Vercel connectivity/IP-blocking guidance supports possible managed-network restrictions, not a universal school-network ban or a confirmed Vercel cause. Local history only records a separate PostgreSQL port-5432 connectivity issue and does not prove a browser HTTPS block. Distinguished loading failures from Vercel deployment-authentication redirects; advised mobile data/another permitted network and reporting the exact error. Documentation validator and whitespace checks passed; four Organiser placeholders remain. User authorizes commit/push to existing PR #37. No app, network/security setting or provider operation changed. Preserved unrelated evaluation evidence and local customizations.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Exact prompt-scoped agent usage unavailable."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

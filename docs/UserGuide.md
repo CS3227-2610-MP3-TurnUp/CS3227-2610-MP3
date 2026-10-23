@@ -38,6 +38,12 @@ download is required. This is the project team's selected Production address; us
 team-provided test deployment if instructed to do so. Different deployments may have
 different accounts and event data.
 
+> **Using school Wi-Fi?** If TurnUp does not load, try mobile data or another permitted
+> network. Some managed networks may restrict access to Vercel-hosted sites. If the
+> problem continues, report the URL and error message to the project team or your
+> network administrator. Availability depends on the network; this is not a blanket
+> restriction on school networks.
+
 If a **Vercel sign-in or deployment-protection** screen appears, obtain deployment access
 from the project team first. Vercel access and a TurnUp account are separate. Creating a
 TurnUp account does not grant Vercel project access. The documentation website is also
@@ -355,6 +361,7 @@ Students additionally see **Student profile**.
 
 | What you see | What to do |
 | --- | --- |
+| Page will not load on school Wi-Fi / connection timeout | Try mobile data or another permitted network. If it works there, report the affected network, URL and exact error to the project team or network administrator. A network-specific failure does not identify its cause by itself. |
 | Vercel sign-in instead of TurnUp | Request deployment access or the correct testing address from the project team. |
 | Account access is unavailable | Retry later and report the page/time to the team. It is a service/configuration failure, not proof of invalid credentials or database quota exhaustion. |
 | Invalid login / duplicate username | Recheck credentials or choose a different username. |

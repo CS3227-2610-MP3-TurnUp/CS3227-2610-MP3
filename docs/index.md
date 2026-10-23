@@ -13,6 +13,8 @@ description: TurnUp connects Students with campus events and Organisers with a c
   </div>
 </section>
 
+> **Using school Wi-Fi?** If TurnUp does not load, try mobile data or another permitted network. Some managed networks may restrict access to Vercel-hosted sites. If the problem continues, report the URL and error message to the project team or your network administrator. A Vercel sign-in screen is a separate deployment-access issue; see the [User Guide](UserGuide.md#open-turnup).
+
 ## From discovery to a confirmed place
 
 <div class="feature-grid">
