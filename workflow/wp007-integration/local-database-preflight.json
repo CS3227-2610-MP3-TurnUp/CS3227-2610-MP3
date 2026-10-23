@@ -1,0 +1,16 @@
+{
+  "environment": "development",
+  "databaseEnvironment": "non-production",
+  "expectedCount": 13,
+  "appliedExpectedCount": 6,
+  "missingMigrations": [
+    "20261022010000_student_ai_admission",
+    "20261022020000_student_ai_production_policy",
+    "20261022030000_student_ai_history",
+    "20261023000000_proposal_clarification",
+    "20261023010000_draft_retention",
+    "20261023020000_daily_generation",
+    "20261023030000_generation_usage_retention"
+  ],
+  "unfinishedCount": 0
+}

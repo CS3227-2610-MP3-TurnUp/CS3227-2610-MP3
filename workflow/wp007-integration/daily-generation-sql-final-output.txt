@@ -1,0 +1,37 @@
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+ ❯ tests/proposal-assistance/daily-generation.database.test.ts (4 tests | 1 failed) 14058ms
+   ❯ daily generation isolated SQL integration (4)
+     × serializes owner quotas and preserves refunds, dispatch charges, recovery, and day-boundary leases 5027ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  13:47:24
+   Duration  14.68s (tests 99%, transform 1%)
+
+
+(node:45800) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/proposal-assistance/daily-generation.database.test.ts > daily generation isolated SQL integration > serializes owner quotas and preserves refunds, dispatch charges, recovery, and day-boundary leases
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/proposal-assistance/daily-generation.database.test.ts:89:3
+     87|   });
+     88|
+     89|   it("serializes owner quotas and preserves refunds, dispatch charges,…
+       |   ^
+     90|     const initial = await gate.readDailyGenerationUsage(db, owners.fir…
+     91|     expect(initial.attempts.remaining).toBe(10);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

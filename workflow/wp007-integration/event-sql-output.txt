@@ -1,0 +1,37 @@
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+ ❯ tests/events/local-sql.integration.test.ts (7 tests | 1 failed) 3011ms
+   × real role/owner/session checks deny access and mutations without event changes 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/events/local-sql.integration.test.ts > real role/owner/session checks deny access and mutations without event changes
+PrismaClientKnownRequestError:
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `N/A`. Message: `Server has closed the connection.`
+ ❯ vn.handleRequestError node_modules/.pnpm/@prisma+client@7.10.1_prism_4c493939ad8e03a6c76042e144f5f6af/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13
+ ❯ vn.handleAndLogRequestError node_modules/.pnpm/@prisma+client@7.10.1_prism_4c493939ad8e03a6c76042e144f5f6af/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12
+ ❯ vn.request node_modules/.pnpm/@prisma+client@7.10.1_prism_4c493939ad8e03a6c76042e144f5f6af/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12
+ ❯ a node_modules/.pnpm/@prisma+client@7.10.1_prism_4c493939ad8e03a6c76042e144f5f6af/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24
+ ❯ resolveSession src/server/auth/session.ts:81:16
+     79|   if (!digest) return null;
+     80|   // testNow is for controlled-clock SQL tests only; request callers n…
+     81|   const rows = await db.$queryRaw<Identity[]>`
+       |                ^
+     82|     WITH touched AS (
+     83|       UPDATE auth_session
+ ❯ requireSelf src/server/accounts/service.ts:25:20
+ ❯ asOrganiser src/server/events/service.ts:33:20
+ ❯ prepared tests/events/local-sql.integration.test.ts:49:17
+ ❯ tests/events/local-sql.integration.test.ts:74:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  13:30:29
+   Duration  10.05s (import 59%, tests 31%, transform 10%)

@@ -1,0 +1,25 @@
+{
+  "operation": "migrate deploy",
+  "environment": "development",
+  "databaseEnvironment": "non-production",
+  "exitCode": 0,
+  "connectionValuesLogged": false,
+  "expectedCount": 13,
+  "matched": [
+    "20261021000000_events",
+    "20261022000000_registration",
+    "20261022010000_student_ai_admission",
+    "20261022020000_student_ai_production_policy",
+    "20261022030000_student_ai_history",
+    "20261023000000_proposal_clarification",
+    "20261023010000_draft_retention",
+    "20261023020000_daily_generation",
+    "20261023030000_generation_usage_retention"
+  ],
+  "missingOrMismatched": [
+    "20261018000000_foundation_probe",
+    "20261019000000_soc_probe_gate",
+    "20261020000000_accounts",
+    "20261020010000_account_settings"
+  ]
+}

@@ -1,0 +1,12 @@
+$ vitest run --maxWorkers=2
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+
+ Test Files  78 passed | 2 skipped (80)
+      Tests  897 passed | 5 skipped (902)
+   Start at  13:28:49
+   Duration  59.10s (tests 64%, import 20%, transform 14%, worker 2%)
+
+    Isolate  80 workers spawned · ~419ms startup each (spawn + environment, per file)
+             at least ~16.33s faster with isolate: false — reuses workers across files instead of one per file

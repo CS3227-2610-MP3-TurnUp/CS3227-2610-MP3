@@ -1,0 +1,28 @@
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+ ❯ tests/proposal-assistance/daily-generation.database.test.ts (4 tests | 4 skipped) 1107ms
+
+ Test Files  1 failed (1)
+      Tests  4 skipped (4)
+   Start at  13:46:59
+   Duration  1.52s (tests 93%, import 4%, transform 2%, worker 1%)
+
+
+(node:44536) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/proposal-assistance/daily-generation.database.test.ts > daily generation isolated SQL integration
+Error: This module cannot be imported from a Client Component module. It should only be used from a Server Component.
+ ❯ Object.<anonymous> node_modules/.pnpm/server-only@0.0.1/node_modules/server-only/index.js:1:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

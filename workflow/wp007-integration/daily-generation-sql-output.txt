@@ -1,0 +1,25 @@
+
+ RUN  v5.0.4 C:/Users/darry/CS3227-2610-MP3/.worktrees/wp007-integration
+
+ ❯ tests/proposal-assistance/daily-generation.database.test.ts (4 tests | 4 skipped) 15ms
+
+ Test Files  1 failed (1)
+      Tests  4 skipped (4)
+   Start at  13:45:09
+   Duration  456ms (import 52%, transform 22%, tests 16%, worker 10%)
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/proposal-assistance/daily-generation.database.test.ts > daily generation isolated SQL integration
+Error: Daily generation DB integration requires explicit development/non-production target acknowledgement.
+ ❯ tests/proposal-assistance/daily-generation.database.test.ts:30:13
+     28|   beforeAll(async () => {
+     29|     if (process.env.DAILY_GENERATION_DB_TARGET_ACK !== "development-no…
+     30|       throw new Error("Daily generation DB integration requires explic…
+       |             ^
+     31|     }
+     32|     // This opt-in test reads only the worktree's explicitly selected …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

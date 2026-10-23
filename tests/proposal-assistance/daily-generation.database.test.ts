@@ -1,10 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Client, Pool, PoolClient } from "pg";
 import type { PrismaClient } from "../../src/server/db/generated/client";
+
+// This opt-in Node suite exercises server services without Next's build-time marker.
+vi.mock("server-only", () => ({}));
 
 const enabled = process.env.RUN_DAILY_GENERATION_DB_INTEGRATION === "1";
 const databaseTests = describe.skipIf(!enabled);

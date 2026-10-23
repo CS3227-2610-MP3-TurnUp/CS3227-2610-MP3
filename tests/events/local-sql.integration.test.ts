@@ -68,7 +68,10 @@ it("real Prisma/JSONB preview publishes, projects safely and preserves old revis
   await publish(id, 3);
   expect(await client().eventPublication.count({ where: { eventId: id } })).toBe(2);
   expect(await client().eventPublication.findUnique({ where: { id: first.id } })).toEqual(first);
-  await expect(client().eventPublication.update({ where: { id: first.id }, data: { digest: "b".repeat(64) } })).rejects.toThrow();
+  // Exercise the database trigger directly: the disposable socket can close after
+  // a deliberate SQL error and leave pg's pooled connection stale for the next test.
+  await expect(engine.query("UPDATE event_publication SET digest = $1 WHERE id = $2", ["b".repeat(64), first.id]))
+    .rejects.toThrow("Published revisions are immutable");
 });
 it("real role/owner/session checks deny access and mutations without event changes", async () => {
   const id = await prepared();

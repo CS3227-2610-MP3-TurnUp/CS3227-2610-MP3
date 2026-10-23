@@ -31,6 +31,11 @@ beforeAll(async () => {
   await pool.query(`INSERT INTO app_user(id,username,password_hash,role) VALUES($1,'upgrade_sentinel','synthetic','STUDENT')`, [preserved]);
   await pool.query(await readFile("prisma/migrations/20261022000000_registration/migration.sql", "utf8"));
   expect((await pool.query("SELECT username FROM app_user WHERE id=$1", [preserved])).rows[0].username).toBe("upgrade_sentinel");
+  // Keep the registration upgrade assertion, then bring the disposable fixture
+  // to the integrated schema consumed by the current event service.
+  for (const name of names.filter((name) => name > "20261022000000_registration")) {
+    await pool.query(await readFile(resolve("prisma/migrations", name, "migration.sql"), "utf8"));
+  }
   }
   const run = randomUUID().slice(0,8);
   const owner = await db.user.create({ data: { id: randomUUID(), username: `concurrency_owner_${run}`, passwordHash: "synthetic", role: "ORGANISER" } });
