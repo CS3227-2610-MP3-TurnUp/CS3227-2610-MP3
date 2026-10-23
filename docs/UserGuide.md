@@ -55,12 +55,12 @@ separate from the application: it does not store registrations or sign users in.
 5. Select **Create account**. Success signs you in and opens your role's workspace.
 
 Signup requires only username, password and role. A Student's optional global profile
-can be filled in later. **Keep your credentials safe: password recovery is unavailable.**
+can be filled in later.
 The eye control shows or hides the password while you enter it.
 
 > **Screenshot UG-01 — Account creation**
 >
-> Capture `/signup` with both role choices, Username, Password, the recovery notice and
+> Capture `/signup` with both role choices, Username, Password and
 > Create account visible. Use a blank password field. Suggested desktop width: 1280 px.
 
 ### Log in and out
@@ -367,7 +367,7 @@ Students additionally see **Student profile**.
 | --- | --- |
 | Vercel sign-in instead of TurnUp | Request deployment access or the correct testing address from the project team. |
 | Account access is unavailable | Retry later and report the page/time to the team. It is a service/configuration failure, not proof of invalid credentials or database quota exhaustion. |
-| Invalid login / duplicate username | Recheck credentials or choose a different username. Recovery is unavailable. |
+| Invalid login / duplicate username | Recheck credentials or choose a different username. |
 | Too many attempts | Wait for the relevant limit window; repeatedly clicking does not reset it. |
 | Event changed / stale form | Refresh current information and review before a new operation. Check My Events if an earlier submission may have succeeded. |
 | No events / no matching events | Clear search, change Upcoming/Started / past, or ask the Organiser to publish an event. |
@@ -404,8 +404,8 @@ walkthrough is a testing procedure, not a claim that the complete flow has passe
 
 The documented code does **not** provide PDF proposal upload/generation screens, an
 Organiser form-builder or roster screen, a private question inbox/reply workflow,
-automatic forwarding, an Organiser-contact button, email notifications, password
-recovery, role switching, payments, a waitlist or seat holds. The registration engine
+automatic forwarding, an Organiser-contact button, email notifications,
+role switching, payments, a waitlist or seat holds. The registration engine
 supports versioned custom forms, but that does not create a form-builder interface.
 
 The assistant currently refuses started/past-event sources and publications exceeding

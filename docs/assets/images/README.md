@@ -12,7 +12,7 @@ include passwords, cookies, API keys, real contact details or private participan
 
 | Placeholder | Suggested filename under this folder | Required visible content |
 | --- | --- | --- |
-| UG-01 | `ug-01-signup.png` | Signup roles, empty password, recovery notice, Create account. |
+| UG-01 | `ug-01-signup.png` | Signup roles, empty password, Create account. |
 | UG-02 | `ug-02-login.png`, `ug-02-account-menu.png` | Empty-password login and expanded authenticated account menu. |
 | UG-03 | `ug-03-discovery.png`, `ug-03-discovery-mobile.png` | Genuine published cards, search/filter/navigation; desktop and ~375 px-wide view. |
 | UG-04 | `ug-04-event-details.png`, `ug-04-registered-event.png` | Public facts/availability; join and already-registered management states. |

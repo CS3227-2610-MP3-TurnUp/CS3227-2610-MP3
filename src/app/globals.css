@@ -45,7 +45,6 @@ p { margin: 0 0 1rem; }
 .auth-password-toggle { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 2.75rem; height: 100%; min-height: 2.75rem; padding: 0; border: 0; border-radius: 0.5rem; color: var(--tu-muted); background: transparent; cursor: pointer; }
 .auth-password-toggle:hover { color: var(--tu-action); }
 .auth-password-toggle:focus-visible { outline-offset: -4px; }
-.auth-recovery { margin: 0; font-size: 0.875rem; color: var(--tu-muted); }
 .account-shell { max-width: 38rem; display: grid; gap: 1.5rem; margin-inline: auto; }
 .account-shell h1, .account-section h2, .account-section h3 { margin: 0; }
 .account-section { display: grid; gap: 1rem; }
