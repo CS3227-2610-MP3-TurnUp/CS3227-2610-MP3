@@ -9,12 +9,13 @@ TurnUp is a web application for campus events. **Students** discover published e
 register and manage their own submissions. **Organisers** prepare private drafts,
 review public content and publish or remove events from discovery.
 
-This guide describes the code at **55d9cb7, 23 October 2026**. Availability on a hosted
+This guide describes the code at **5393189, 23 October 2026**. Availability on a hosted
 deployment also depends on its deployed revision and configuration. Planned features
 are listed separately at the end; they are not instructions for working controls.
 
 > **Screenshots:** account and Student captures were supplied by the project team on
-> 23 October 2026. The four Organiser figures (UG-10 to UG-13) remain marked placeholders.
+> 23 October 2026. The Organiser figures (UG-10 to UG-13 and UG-15 to UG-19) remain marked
+> placeholders.
 > Screenshots illustrate the displayed interface; they do not establish the deployed
 > source revision or replace acceptance-test evidence.
 
@@ -249,10 +250,16 @@ and sort by **Title**, **Last edited** or **Start time**, in either direction. S
 an event card to open it. **Create event** creates a new private, initially incomplete
 draft. Drafts may be saved before every publication field is complete.
 
-> **Screenshot UG-10 — Organiser dashboard**
->
-> Capture `/organiser` with synthetic draft and published cards, Create event and the
-> search/sort controls. Ensure the screenshot is from an Organiser account.
+Each card shows the event's state (**draft**, **published**, **withdrawn** or
+**cancelled**), its schedule, location and a short description excerpt. A **Saved
+changes** badge means a previously published event has private saved edits that are not
+yet public. A card may also show a [private draft deadline](#private-draft-retention)
+warning. If the list fails to load, use **Refresh list**. If **Create event** reports an
+error, refresh the list before retrying: the draft may already have been created.
+
+![Organiser Dashboard](assets/images/ug-10-organiser-dashboard.png)
+
+*Figure UG-10. Organiser Dashboard view*
 
 ### Prepare a private draft
 
@@ -284,15 +291,136 @@ Select **Save Draft** to persist privately. **Cancel Editing** discards unsaved 
 confirmation. These are different from cancelling an event. Leaving an edited draft
 through a navigation link asks whether to discard unsaved edits.
 
-> **Screenshot UG-11 — Private working draft**
->
-> Capture a synthetic completed draft with its grouped sections, character counts and
-> Save Draft / Preview saved draft controls. Use a full-page capture or two ordered
-> images if the form is taller than the viewport. Include SGT labels.
+![Private Organiser Event Draft](assets/images/ug-11-private-draft.png)
+
+*Figure UG-11. Event Draft page*
+
+### Prefill a draft from a proposal PDF
+
+**Proposal assistance** sits at the top of the private working draft. It can read an
+event proposal PDF and suggest values for the title, purpose/description, start, end,
+location, capacity, fee status, audience and preparation fields. FAQ/Other is not
+prefilled from the proposal. Availability depends on the deployment: the
+[daily allowance](#daily-generation-allowance) line under the controls says whether
+hosted generation is enabled.
+
+1. Open a draft (or **Edit Live Publication**) so the **Private Working Draft** is shown.
+2. Select **Choose PDF** and pick the proposal. Choosing a file sends nothing; the
+   status line shows its name and size.
+3. Select **Generate Findings**. The PDF is uploaded for temporary text extraction and
+   the embedded text is sent to the configured AI service. Editing controls wait while
+   generation runs.
+4. Review each field. Its feedback beneath the input tells you what happened:
+   - **Prefilled from the proposal** with quoted source evidence and page numbers.
+     Editing that field removes its evidence display.
+   - **No supported value was found** or **No safe value was returned**: the existing
+     field was kept. Complete it manually.
+   - **Not prefilled**: a value was found but failed a field rule (an incomplete date
+     and time, a capacity outside 1–10,000 or text over the field limit). The existing
+     field was kept.
+   - **Conflicting values**: choose one of the **Use …** buttons, each with its evidence,
+     or edit the field yourself.
+5. Read **Private findings** and any **Private review notes**. They are for you only and
+   are never published.
+6. Select **Save Draft** to keep accepted values. Generated values are not saved until
+   you do.
+
+Requirements: a PDF of up to **4 MB** and **20 pages** with selectable embedded text.
+Scanned/image-only and password-protected PDFs are rejected. Dates and times without a
+stated timezone are interpreted as Singapore time; check the converted value against the
+quoted evidence.
+
+What is kept: the PDF and its full extracted text are **not** saved. Structured
+clarification questions and their short evidence quotes are saved privately with the
+draft. Other generated evidence disappears when you leave or refresh the page.
+**Remove proposal** clears the selected file and on-screen findings; values already placed
+in the working draft stay there. Fields you have already confirmed in a clarification are
+not overwritten by a later generation.
+
+If the event changes in another tab while findings are being generated, TurnUp refuses to
+apply the result and asks you to generate again. A failed request leaves your fields
+unchanged.
+
+### Resolve proposal clarifications
+
+When a proposal is missing a value, gives conflicting values or offers a value that needs
+your confirmation, the editor shows **Clarification needed (*n*)** with a linked list of
+questions such as “When does the event start?”. Each question also appears beneath its
+field.
+
+- Select **Use …** to adopt a supported suggestion, shown with its source quote and page.
+- Or type your own answer in the field and select **Confirm this value**.
+- If you later change a confirmed value, the question reopens and asks for confirmation
+  again. A later proposal that disagrees with your confirmed value also reopens it.
+
+You can **Save Draft** while questions remain; your confirmations are saved with it.
+**Preview saved draft** stays disabled until every clarification is resolved and saved.
+
+### Generate FAQ suggestions
+
+**FAQ suggestions** proposes likely attendee questions using only the **saved** event
+details. Proposal PDFs, private findings and clarification notes are not included.
+
+1. Complete every required field, a valid future schedule and capacity. Resolve all
+   clarifications and select **Save Draft**. The button stays disabled while you have
+   unsaved edits, and a hint explains what is missing.
+2. Select **Generate FAQ suggestions**.
+3. Review the result:
+   - Supported answers are shown with references to the saved fields they came from.
+   - **Questions needing your answer** have no supported answer in your details. Type an
+     answer and select **Add answered question to FAQ / Other suggestion** to include it.
+     Unanswered questions are never added automatically.
+   - You can edit the **Editable FAQ / Other** text directly (up to 4,000 characters).
+4. Select **Apply FAQ / Other to working form**. If the field already has different text,
+   you will be asked to confirm the replacement. Other fields are untouched.
+5. Select **Save Draft**. Applying does not save or publish anything. Preview and approve
+   as usual.
+
+**Dismiss suggestions** discards the candidate without changing the event. If the saved
+event or its fields change while suggestions are prepared, they are not applied; save or
+reload, then generate again. Only one suggestion can be applied per saved version.
+
+### Daily generation allowance
+
+Proposal extraction and FAQ suggestions share one daily allowance per Organiser account
+in each environment, across all your events and sessions.
+The line under each tool shows what remains, for example *“Your Preview daily allowance
+has 9 of 10 generation attempts and 36,864 of 40,960 reserved output tokens remaining… resets
+at … SGT.”*
+
+- Each request sent to the AI service uses one attempt and reserves 4,096 output tokens,
+  whatever the response length or outcome. The current limit is 10 attempts per
+  Singapore day. Requests rejected before sending (for example an unreadable PDF or an
+  out-of-date event) do not use an attempt.
+- The allowance resets at midnight Singapore time. There is no automatic retry or manual
+  reset.
+- Requests are briefly spaced, and only one generation may run at a time in each
+  environment. Messages such as “A generation request is already in progress” or
+  “Generations are briefly spaced” ask you to wait, not to change your draft.
+- “Hosted AI generation is currently disabled in this environment” means the deployment
+  has not enabled these tools. You can still create and publish events manually.
+
+### Private draft retention
+
+Private draft material is kept for **30 days** after its last activity. **Save Draft** or a
+successful proposal extraction restarts the 30-day period. In the final 7 days, the
+event card and editor show **Private draft expires soon** with the deadline in SGT; after
+the deadline they show **Private draft deadline passed** until cleanup runs.
+
+| Event | What happens after the deadline |
+| --- | --- |
+| Never published draft | The draft and its proposal preparation are deleted. |
+| Published or withdrawn event with saved private changes | Private changes and preparation are cleared; the working draft is restored from the latest publication. The publication, state, history and registrations remain. |
+| Cancelled event | Its private changes and proposal preparation are cleared. The cancelled state, publication history and registrations remain. |
+
+To keep a draft, open it and select **Save Draft** before the deadline. Cleanup runs on a
+schedule, so expiry makes material eligible for removal rather than removing it at an
+exact instant.
 
 ### Preview and publish
 
-1. Save your draft. Unsaved edits must be saved before previewing.
+1. Save your draft. Unsaved edits must be saved and any
+   [proposal clarifications](#resolve-proposal-clarifications) resolved before previewing.
 2. Select **Preview saved draft**. Required-field or timing errors must be corrected.
 3. Read **Public Preview**, including any published registration form.
 4. Tick **I reviewed and approve this exact public content.**
@@ -303,18 +431,14 @@ its approval, reload and preview again. Publication can also reject a capacity l
 than the number of active registrations. A preview or checked checkbox alone does not
 mean the event is published.
 
-> **Screenshot UG-12 — Exact public preview**
->
-> Capture Public Preview with the actual event/form content, approval checkbox and
-> Publish approved event action. Include a second crop if needed; do not publish a real
-> event just to obtain this screenshot.
-
 ### Edit, withdraw, cancel or delete
 
 Previously published events open on **Current Live Publication** or **Last Publication**.
-Select **Edit Live Publication** to change the private working draft, then save,
-preview and approve again. Until successful publication, Students see the previous
-public revision.
+Select **Edit Live Publication** (or **Edit for republication** on a withdrawn event) to
+change the private working draft, then save, preview and approve again. Until successful
+publication, Students see the previous public revision. A **You have saved private
+changes** notice means the working draft differs from what is shown. If an action fails
+because the event changed elsewhere, use **Reload saved values** and review again.
 
 | Control | Effect |
 | --- | --- |
@@ -326,13 +450,6 @@ public revision.
 Read the native confirmation carefully: it names the event and the consequence.
 Cancelling an event is distinct from a Student cancelling one registration. Organisers
 cannot register through their Organiser account.
-
-> **Screenshot UG-13 — Live publication actions**
->
-> Capture Current Live Publication with Edit Live Publication, Withdraw and Cancel Event.
-> If illustrating withdrawal, use a disposable synthetic event and capture Last
-> Publication with its unavailable notice and Edit for republication. Do not click a
-> permanent destructive action solely for a screenshot.
 
 ## Account settings
 
@@ -369,6 +486,11 @@ Students additionally see **Student profile**.
 | Event unavailable | It may have been withdrawn/cancelled or access may be unavailable. Return to discovery/My Events. |
 | No registration action | Check full/started/already-registered status. Only eligible actions appear. |
 | Assistant unavailable / busy / took too long | Read the published details; wait or use an explicit retry when offered. Do not treat the failure as an answer about the event. |
+| Organiser: “No readable embedded text was found” / PDF rejected | Use a text-based PDF (not a scan), under 4 MB, up to 20 pages and without a password, or fill the fields manually. |
+| Organiser: Preview saved draft or Generate FAQ suggestions is disabled | Save unsaved edits, complete required fields with a future start, and resolve every item under Clarification needed. |
+| Organiser: generation limited / already in progress | Wait for the stated time or the next SGT day. Generation failures leave event fields unchanged. |
+| Organiser: “Hosted AI generation is currently disabled” | The deployment has not enabled proposal/FAQ tools. Complete the draft manually. |
+| Organiser: “Private draft expires soon” | Open the event and select Save Draft to restart the 30-day period. |
 | Saved conversation could not be loaded | Existing history is not currently available for display. A fresh question may still be possible; do not assume it erases saved records. |
 
 ## A short tester walkthrough
@@ -385,6 +507,9 @@ to test error cases.
 3. Check My Events. Correct a submission before start and verify the success summary.
    Change your optional profile and confirm that the earlier submission is independent.
 4. As Organiser, change the published event's location through save/preview/publish.
+   If proposal assistance is enabled and budget is authorised, try one synthetic proposal
+   PDF on a new draft: check field evidence, resolve one clarification and confirm that
+   preview is blocked until it is saved. Do not publish that fixture.
    As Student, refresh and check the change notice and preserved place.
 5. On a disposable test registration, cancel and, if room remains, register again.
 6. If AI testing and budget are authorised, ask one source-supported question and one
@@ -397,13 +522,18 @@ walkthrough is a testing procedure, not a claim that the complete flow has passe
 
 ## Current limitations
 
-The documented code does **not** provide PDF proposal upload/generation screens, an
-Organiser form-builder or roster screen, a private question inbox/reply workflow,
+The documented code does **not** provide an Organiser form-builder or roster screen, a private question inbox/reply workflow,
 automatic forwarding, an Organiser-contact button, email notifications,
 role switching, payments, a waitlist or seat holds. The registration engine
 supports versioned custom forms, but that does not create a form-builder interface.
 
-The assistant currently refuses started/past-event sources and publications exceeding
+Organiser proposal assistance reads embedded PDF text only (no OCR for scans) and does
+not fill FAQ/Other from the proposal. Proposal and FAQ tools may be disabled on a given
+deployment; at this revision hosted generation was rolled out for Preview testing, and
+Production remained disabled. Generated values and suggestions are prompts for your
+review, not verified facts.
+
+The Student assistant currently refuses started/past-event sources and publications exceeding
 its source-size limit. Budget/key/configuration problems may hide or disable it.
 Quoted evidence is checked internally; it is not shown as a source panel and does not
 guarantee that every generated sentence is semantically correct. Use published details
