@@ -1,6 +1,7 @@
 import "server-only";
 
-import { isLocalDevelopmentEnvironment } from "../ai/soclaas-config";
+import { readDailyGenerationEnvironment } from "../ai/daily-generation-config";
+import type { EnvironmentSource } from "../config/environment";
 import { EventError } from "../events/policy";
 import type { EventFields } from "../../lib/event-fields";
 import {
@@ -19,8 +20,15 @@ import { PROPOSAL_FIELDS, type PageEvidence, type PrivateExtraction, type Propos
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_ALTERNATIVES = 3;
 
-export function clarificationPersistenceEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return isLocalDevelopmentEnvironment(env) && isLocalDevelopmentEnvironment(process.env);
+export function clarificationPersistenceEnabled(env: EnvironmentSource = process.env): boolean {
+  const requested = preparationEnvironment(env);
+  return requested !== null && requested === preparationEnvironment(process.env);
+}
+
+function preparationEnvironment(env: EnvironmentSource): "local" | "preview" | "production" | null {
+  const result = readDailyGenerationEnvironment(env);
+  if (result.status === "unsupported_local") return "local";
+  return result.status === "supported" ? result.environment : null;
 }
 
 /** Read private JSONB defensively; corrupt preparation fails closed for preview/publication. */

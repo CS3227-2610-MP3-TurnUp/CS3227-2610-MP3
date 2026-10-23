@@ -1,0 +1,14 @@
+---
+layout: default
+---
+<a class="skip-link" href="#document-content">Skip to content</a>
+<article id="document-content" class="turnup-document" tabindex="-1">
+  {{ content }}
+</article>
+<nav class="document-footer" aria-label="Documentation links">
+  <a href="{{ '/' | relative_url }}">Product home</a>
+  <a href="{{ '/UserGuide.html' | relative_url }}">User Guide</a>
+  <a href="{{ '/DeveloperGuide.html' | relative_url }}">Developer Guide</a>
+  <a href="{{ site.app_url | escape }}">Open TurnUp</a>
+</nav>
+<script type="module" src="{{ '/assets/js/mermaid.js' | relative_url }}"></script>

@@ -277,3 +277,79 @@ The additive migration is checksum-verified on the assigned development target. 
 Delivered commit295a58d to preview/wp-005; workflow39887132422 passed checks/build/migration/upload/alias, noProduction jobs. Hosted-readiness specialist (hosting_soc_engineer, gpt-6-luna/xhigh) found missing Preview probe token/four admission caps; normal PDF/FAQ adapter remains local-only. No model/provider call or quota operation. Hosted AI remains pending configuration/profile/provider-policy decisions.
 
 An unsupported CLI env-run invocation unexpectedly created an empty Vercel project and attempted upload before failing. Root stopped CLI use, verified exact new-project identity/no deployments/no env/no Git/custom domains via REST, deleted only that project (204 then404), restored the appended gitignore line and removed only new local CLI metadata. Intended Preview remains READY; private env and pre-existing next-env preserved. Upload contents cannot be established from a manifest; no successful accidental deployment or cache-erasure claim. Detailed incident/disposition in K-013 verification.
+
+
+# 21 - Implement Per-Organiser Daily Generation Policy - 23 October 2026
+
+## Request
+
+Keith requests implementation of the approved per-Organiser/day/environment allowance plan:10shared PDF/FAQ attempts,4096outputtokens/request,40960dailyreservedtokens, midnightSGT, counteddispatchedfailures, oneenvironment-widein-flightcall, operatorrecovery, policy-firstwithhosteddisabled.
+
+## Results
+
+In progress under CHG-K-014 in new wp-005-daily-generation worktree/branch from1c3785d. Checked allocation across refs/history/worktrees(maxK013). Root configured sdd_coordinator(gpt-6.1-sol/high) owns policy/docs/evidence; resumed backend application_foundation_engineer(gpt-6-luna/xhigh) and spawned disjoint UI application_foundation_engineer(same model/reasoning); independent implementation_verifier(gpt-6.1-sol/high) will review completed implementation. Updated canonicalSEC05policy/decision/scenarios and change contract before dependent implementation. Linked existing dependencies/copied ignored client only; no privateenv copied, model/provider/DB/configactivation/commit/push/deployment operation. Existing user root/previousworktreechanges preserved.
+
+
+Completed CHG-K-014 with per-Organiser/environment/SGT-admission-day counters, exact dispatch/refund/uncertain/recovery lifecycle, hard-disabled hosted coordinator, authenticated usage endpoint and shared UI feedback. Existing local/probe allowances unchanged. Author and independent reviewer passed407tests/44files plus lint/types/whitespace; root separately passed actual checked-inSQL3/3 in temporary non-production schemas and isolated production build. UI reviewer P2 hangingrefresh fixed/rechecked; root closed missingcoordinator/ambiguity/no-marker boundaries; SQL fixture and mirror setup errors corrected, final checks pass. Final27-path fingerprint d4a17f6f3225f32e674ebbdd988767d01668fca0c4c77a65807c0ba0e755171b. No residual schema, model call, application migration, remote activation or commit/push/deployment. Guide/handoff/evidence updated; hosted policy/provider/metadata-cleanup prerequisites remain explicit.
+
+# 22 - Continue Daily Allowance Verification - 23 October 2026
+
+## Request
+
+Keith requests continuation of the approved CHG-K-014 implementation while final fixes and review are ongoing.
+
+## Results
+
+Continued the same configured backend/UI/verifier team and preserved scope/model/reasoning. Rechecked UI pending-state correction, conservative provider uncertainty and no-marker rejection; completed independent407-test/static review, separate final3-test realSQL run via repository-owned config, sanitized build and final fingerprint/byte checks. Updated existing change evidence, canonical admission-day clarification and reproducible operator/test guide. No provider allowance change, active hosted generation, Production access, application migration, commit or deployment. Detailed checks and limitations are in CHG-K-014 verification.
+
+
+# 23 - Implement Hosted Adapter and Preview Activation - 23 October 2026
+
+## Request
+
+Keith approves the hosted-generation plan: checkpoint reviewed K-014, implement the9B JSON/no-thinking/60s adapter and controlled Preview activation, usage-history cleanup90days after SGT day with unresolved reservations protected, daily operator-invoked Preview maintenance, then deploy and perform at most two synthetic inference calls. Leave Preview enabled only after success; Production generation stays disabled. Provider permissions/host limits must be verified before activation.
+
+## Results
+
+Checkpointing the previously independently reviewed27-path K-014 snapshot before a separate activation worktree/change. Root uses coordination/commit/hosting skills. Existing user work and private configuration are preserved. The activation implementation, remote changes and two bounded hosted calls have not started at this checkpoint; its later results will be appended in the new worktree under this same entry.
+
+
+K-014 checkpoint committedbe3dfae. K-015 implemented in newpreview/wp-005-hosted worktree with configured application/provider authors and independentverifier;438/48ordinarytests, lint/types/whitespace, rootactualSQL4/4 and sanitizedbuild pass. ReviewerP1local-onlypersistence defect fixed and rechecked includinginference-offmanualread/save/publish. DedicatedORGnamespace keepssharedPreview27B/30s unchanged; actualprojecthasnoGitlink and rejectedbranchoverrideswithoutcreatingvars, so noGitconnection/workflowchange. Rootcreated9newPreviewonlysettings withactivationoff, sensitivekeys/operatorsecretprivate. Modelcatalogue/budgetread-onlypreflightpasses9Bpermission/RPM30;0inferencecalls. Documentation/guide/evidence updated. Rootnowproceedsapprovedcommit/push anddisabledPreviewdeployment, thenprotectedcleanup/activation/twoboundedcalls. Alllimitations/findings inK015verification; Productionuntouched.
+
+
+Pushed0226e03 and disabled Preview workflow39897129825 passed, applying K-014 daily and K-015 retention-index migrations. Protected maintenance auth/dry-run/explicit sweep verified with0 eligible rows; usage initiallydisabled. Activated same source via39897836728; synthetic PDF request failed422 beforeprovider. Fresh authoritative usage0attempts/0reserved/noinflight confirmed0actual inference calls; noFAQcall. Rootdisabled flag and rollback39898044928passed, usageoffverified, exactowned never-publishedfixturedeleted/404. Application specialist resumed for productionbundle parserdefect and retained trace-runtime regression; independent implementation_verifier resumed for correctivepaths. Full source tests alone missed Next createRequire transformation; novalidationrelaxation, quotareset or diagnosticmodelcall. Detailed outcomes inK015verification.
+
+
+Correctiveparser/config/build-regression3paths independentlyreviewed, noactionablefindings; hash3366a22b0c0196f40579b349250ba2856967bdd7b11cf83fd9dd965466cf14ea. Sanitizedbuild, author/verifier5focusedtests, rootartifact1test, root438ordinarytests/fullESLint, directtypes/whitespacepass. Combined32pathhash8c67fc3f1d4a1bb862a82ec5a1213fdd5e164eea5d48bcacafe7d6e5625abfb8. Rootpreparescorrectivecommit/disableddeployment; twoactualinferencecallsstillunused.
+
+
+Pushedcorrective0cd04bd; disabledworkflow39899674814passedchecks/build/migratebutuploadfailedpnpmPDF.jssymlinkEEXIST. ExistingPreviewaliasremainsdisabledrollback; noactualinference. Resumedsameapplication_foundation_engineer(gpt-6-luna/xhigh) forcanonicaltracepaths/symlinkpreservingpackagingregressionbeforeindependentrecheck; noautomaticretryorProductionchanges.
+
+
+Canonicalpnpmtracecorrection2paths independentlyreviewed, nofindings; hash9f2339eff90d782420d38aef66de639972ddf24e3bb84cc6d875419d9ccfe5ab. FinalNFT42entries has18physicalPDFassets+1logicalsymlink/0flattenedfiles; preservedgraphparserregressionpasses. Rootcleansanitizedbuildpassedafterremovingonlyobsoletehelperlinkfrommirror, noHTTP/typesrelaxation; root438ordinarytests/fullESLint/cleantypes/separateartifactpass. Combined32pathhash6f2b4f8170591591d9bfaa67e7a5e59790fece6b0edf35b4a238efa0ee825564. Nextactualuploadwithflagoff;0actualinference.
+
+
+Finalreviewedruntime19edbf4 deployedvia39900982605(off), then39901355236(on); bothpassedactualprebuiltpackaging/upload/alias. Exactly2actualinferencecalls passed: extraction200/persisted+saved, FAQ200/6supportedFAQs. Saveharnesswrongresponseshapecorrectedwithoutrepeatingextraction. Freshusage2/10attempts,8192/40960tokens,noinflight,nextmidnightSGTreset. Syntheticnever-publishedeventdeleted/404verified, owner/historypreserved. Previewremainstrue; later39901786996same-sourcealiasdeploymentmetadataalsoverified. NoProductionoperation, additionalmodelcall, quotarefillorreset. Handoff/guide/tasks/evidenceupdated;comprehensivelabeledevaluation/privateproviderhandling/Productionremainseparate. AgentusagecollectedunderexistingK015bindingwithhistoricalcoverage/legacydiagnosticsretained.
+
+
+# 24 - Integrate Hosted Generation into WP-005 - 23 October 2026
+
+## Request
+
+Merge the completed hosted-generation branch into preview/wp-005 and push the integration, performed by the root agent alone without spawning a subagent.
+
+## Results
+
+Fetched both remote refs and confirmed preview/wp-005 at1c3785d is an ancestor of preview/wp-005-hosted at1523725. Fast-forwarded the existing WP-005 worktree to1523725 without conflicts, preserving its pre-existing next-env.d.ts edit and private environment. This integrates K-014 daily allowances and K-015 hosted adapter, retention, parser/packaging fixes and verified delivery notes. Only this log entry is newly authored; application code is identical to the independently reviewed and hosted-tested source. Existing test/provider evidence is reused; no new model call, dependency operation or Production change. Prepared the integration and this evidence-only log update for push to origin/preview/wp-005. No subagent was used for this integration.
+
+# 25 - Integrate master into PR 35 - 23 October 2026
+
+## Request
+
+Fetch master and resolve conflicts on PR #35 (`preview/wp-005`). Continue directly without spawning subagents.
+
+## Results
+
+Fetched master `ab186e6` and confirmed PR branch identity. Integrated master into `8939950`, resolving 16 files across schema, event editor/services, provider response metadata and shared specifications. Retained both Student registration/chat and Organiser assistance/daily usage behavior. Added four regression tests for combined form/clarification saves and form-only inactivity/restoration; adjusted affected call sites and expectations. Preserved published nonempty forms during expiry and recognised form-only saved changes in the editor. Corrected empty optional-array shell expansion for macOS/Linux compatibility. Updated handoffs, retention contract and acceptance targets; exact evidence is appended to CHG-K-015 verification.
+
+879 tests passed (5 opt-in skipped), full lint and Prisma validation passed, sanitized production build including TypeScript passed, built PDF runtime regression passed, final retention suite 8 passed, whitespace check passed. No live inference/database/browser/deployment check; no subagent. Existing next-env.d.ts edit and private environment remain untouched. Prepared the merge commit for push to the existing PR branch; master itself is unchanged.

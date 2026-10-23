@@ -107,3 +107,27 @@ Keith reported a 502 from the FAQ suggestions endpoint, `POST /api/organiser/eve
 - `corepack pnpm build`: **failed with `ENOSPC` (disk full, about 400 MB free)** after the final wording fix. The previous build, before per-FAQ withholding and the wording changes, passed. A build of the final source has not passed yet.
 
 Keith's live retry is not yet recorded. Nothing was committed or pushed.
+
+
+# 04 - Merge Remote Preview and Push - 23 October 2026
+
+## Request
+
+Keith asked to fetch the remote `preview/wp-005`, resolve any merge conflicts and push the result back to `preview/wp-005`.
+
+## Results
+
+**Commit:** the local CHG-K-016 and CHG-K-017 work was committed as `8f4f7d9`.
+
+**Merge:** merged `origin/preview/wp-005` at `2bec1eb`. That branch includes the master merge, CHG-K-014/015 hosted generation, WP-006 and the UI and documentation updates.
+- **Conflict:** one, in `src/features/proposal-assistance/public-candidates.ts`. Resolved by keeping the remote's `GenerationLimitDetails` import together with the `CHG-K-017-faq-gap-questions-v5` prompt version.
+- **Auto-merged:** the route, the component, `pdf-text.ts` and the tests. Remote added Prisma migrations; no dependency changes.
+
+**Checks on the merged tree:**
+- `corepack pnpm typecheck` (with Prisma generate): pass
+- `corepack pnpm lint`: pass
+- `corepack pnpm test`: 897 passed and 5 skipped, across 80 files
+
+**Not run:** a local production build. Only about 200 MB is free, and the previous build failed with `ENOSPC`. The Preview workflow builds on push.
+
+**Database:** the local database needs the remote's new migrations before the app is used against it.

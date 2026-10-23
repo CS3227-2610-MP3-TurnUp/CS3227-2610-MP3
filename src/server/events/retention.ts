@@ -6,6 +6,8 @@ import { EMPTY_EVENT, sameEventFields, type EventFields } from "../../lib/event-
 import { PRIVATE_DRAFT_RETENTION_MS } from "../../lib/event-retention";
 import { digest, exactKeys, object, parseFields, validatePublication } from "./policy";
 
+import { parseRegistrationForm, sameFormContent, assertPublicFormBudget, type PublicationContent } from "../../lib/registration-form";
+
 const BATCH_SIZE = 50;
 type ResultKind = "deleted" | "restored" | "unchanged" | "unavailable" | "skipped";
 export type DraftRetentionSweepResult = {
@@ -75,14 +77,15 @@ async function processOne(tx: Transaction, id: string): Promise<ResultKind> {
     where: { eventId: id }, orderBy: { revision: "desc" }, take: 1,
   });
   const latest = publications[0];
-  const latestFields = latest && event.firstPublishedAt && event.currentPublicationId === latest.id
-    ? readValidPublicationFields(latest.snapshot, latest.digest)
+  const latestContent = latest && event.firstPublishedAt && event.currentPublicationId === latest.id
+    ? readValidPublication(latest.snapshot, latest.digest)
     : null;
-  if (!latest || !latestFields) {
+  if (!latest || !latestContent) {
     await markChecked(tx, event.id, now);
     return "unavailable";
   }
 
+  const latestFields = latestContent.fields;
   let draftFields: EventFields;
   try { draftFields = parseFields(event.draft); }
   catch {
@@ -90,7 +93,12 @@ async function processOne(tx: Transaction, id: string): Promise<ResultKind> {
     // is sufficient to restore it without interpreting the malformed value.
     draftFields = EMPTY_EVENT;
   }
-  const hasPrivateState = event.preparation !== null || event.preparationVersion !== 0 || !sameEventFields(draftFields, latestFields);
+  let formChanged = true;
+  try {
+    const draftForm = object(event.draftForm ?? { questions: [] });
+    formChanged = !sameFormContent(parseRegistrationForm({ ...draftForm, formRevisionId: latestContent.form.formRevisionId }), latestContent.form);
+  } catch { /* Invalid private forms are restored from the validated publication. */ }
+  const hasPrivateState = formChanged || event.preparation !== null || event.preparationVersion !== 0 || !sameEventFields(draftFields, latestFields);
   if (!hasPrivateState) {
     await tx.eventApproval.deleteMany({ where: { eventId: id } });
     await tx.event.update({ where: { id }, data: { privateActivityAt: null, retentionCheckedAt: now } });
@@ -99,6 +107,7 @@ async function processOne(tx: Transaction, id: string): Promise<ResultKind> {
 
   await tx.event.update({ where: { id }, data: {
     draft: latestFields as unknown as Prisma.InputJsonValue,
+    draftForm: { questions: latestContent.form.questions } as unknown as Prisma.InputJsonValue,
     preparation: Prisma.DbNull,
     preparationVersion: 0,
     version: { increment: 1 },
@@ -120,19 +129,17 @@ async function markChecked(tx: Transaction, id: string, now: Date) {
   await tx.event.update({ where: { id }, data: { retentionCheckedAt: now } });
 }
 
-function readValidPublicationFields(snapshotValue: unknown, expectedDigest: string): EventFields | null {
+function readValidPublication(snapshotValue: unknown, expectedDigest: string): PublicationContent | null {
   try {
     const snapshot = object(snapshotValue);
     exactKeys(snapshot, ["fields", "form"]);
-    const form = object(snapshot.form);
-    exactKeys(form, ["formRevisionId", "questions"]);
-    if (typeof form.formRevisionId !== "string" ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(form.formRevisionId) ||
-        !Array.isArray(form.questions) || form.questions.length !== 0 || digest(snapshotValue) !== expectedDigest) return null;
-    const parsed = parseFields(snapshot.fields);
-    if (!sameEventFields(snapshot.fields as EventFields, parsed)) return null;
-    validatePublication(parsed, "PUBLISHED", parsed.start, new Date(0));
-    return parsed;
+    if (digest(snapshotValue) !== expectedDigest) return null;
+    const form = parseRegistrationForm(snapshot.form);
+    const fields = parseFields(snapshot.fields);
+    if (!sameEventFields(snapshot.fields as EventFields, fields)) return null;
+    validatePublication(fields, "PUBLISHED", fields.start, new Date(0));
+    assertPublicFormBudget(fields, form);
+    return { fields, form };
   } catch { return null; }
 }
 

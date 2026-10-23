@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EVENT_LIMITS, FIELD_LABELS, type EventFields, type TextField } from "../../lib/event-fields";
+import type { GenerationUsageResponse } from "../../lib/generation-usage";
 import {
   MAX_PUBLIC_CANDIDATE_OTHER_LENGTH,
   renderFAQ,
@@ -9,6 +10,7 @@ import {
   type PublicCandidateReference,
 } from "../../features/proposal-assistance/public-candidates";
 import type { PublicCandidatesResponse } from "../../features/proposal-assistance/public-candidates";
+import { GenerationUsageIndicator, generationLimitMessage, isGenerationRateLimitResponse, type GenerationUsageState } from "./generation-usage";
 
 type CandidateSnapshot = {
   eventVersion: number;
@@ -41,9 +43,11 @@ type Props = {
   getCurrentSnapshot: () => CandidateSnapshot;
   onGenerationPending: (delta: 1 | -1) => void;
   onApply: (field: "other", value: string, eventVersion: number, preparationRevision: number, expectedEditorRevision: number, expectedFieldValue: string) => boolean;
+  generationUsage: GenerationUsageState;
+  refreshGenerationUsage: () => Promise<GenerationUsageResponse | null>;
 };
 
-export function PublicContentAssistance({ eventId, eventVersion, preparationRevision, editorActionPending, assistancePending, getCurrentSnapshot, onGenerationPending, onApply }: Props) {
+export function PublicContentAssistance({ eventId, eventVersion, preparationRevision, editorActionPending, assistancePending, getCurrentSnapshot, onGenerationPending, onApply, generationUsage, refreshGenerationUsage }: Props) {
   const [candidate, setCandidate] = useState<CandidateState | null>(null);
   const [otherText, setOtherText] = useState("");
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -91,6 +95,8 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
     setCandidate(null);
     setAnswers({});
     onGenerationPending(1);
+    let usageRefresh: Promise<GenerationUsageResponse | null> | null = null;
+    const refreshUsage = () => usageRefresh ??= Promise.resolve().then(refreshGenerationUsage).catch(() => null);
 
     try {
       const response = await fetch("/api/organiser/events/" + eventId + "/public-candidates", {
@@ -99,9 +105,16 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
         body: JSON.stringify({ expectedVersion: current.eventVersion, expectedPreparationRevision: current.preparationRevision }),
         signal: controller.signal,
       });
+      void refreshUsage();
       const payload = await response.json() as PublicCandidatesResponse;
       if (!response.ok || !payload.ok) {
-        if (requestRevision.current === requestId && !controller.signal.aborted) setError(messageForOutcome(payload && !payload.ok ? payload.outcome : "unavailable"));
+        if (requestRevision.current === requestId && !controller.signal.aborted) {
+          if (response.status === 429 && isGenerationRateLimitResponse(payload)) {
+            setError(generationLimitMessage(payload.limitReason, payload.retryAt, payload.resetAt, generationUsage.response));
+          } else {
+            setError(messageForOutcome(payload && !payload.ok ? payload.outcome : "unavailable"));
+          }
+        }
         return;
       }
 
@@ -121,8 +134,10 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
         ? "FAQ suggestions are ready to review. They are separate from the event field until you choose to apply them."
         : "FAQ generation finished. Your event fields were not changed.");
     } catch {
+      void refreshUsage();
       if (requestRevision.current === requestId && !controller.signal.aborted) setError("Public suggestions are unavailable. Your event fields were not changed.");
     } finally {
+      void refreshUsage();
       activeRequest.current = false;
       onGenerationPending(-1);
       if (requestRevision.current === requestId) {
@@ -211,6 +226,7 @@ export function PublicContentAssistance({ eventId, eventVersion, preparationRevi
       <button type="button" className="primary" disabled={!canGenerate} onClick={() => void generate()}>{pending ? "Generating FAQ suggestions…" : "Generate FAQ suggestions"}</button>
       {candidate && <button type="button" className="secondary" disabled={pending} onClick={dismiss}>Dismiss suggestions</button>}
     </div>
+    <GenerationUsageIndicator state={generationUsage} />
     {!draftComplete && <p className="field-help" role="status">Complete the required event fields and date, time, and capacity before generating suggestions.</p>}
     {snapshot.dirty && <p className="field-help" role="status">Save your event changes before generating suggestions.</p>}
     {snapshot.unresolvedCount > 0 && <p className="field-help" role="status">Resolve and save the outstanding proposal questions before generating suggestions.</p>}

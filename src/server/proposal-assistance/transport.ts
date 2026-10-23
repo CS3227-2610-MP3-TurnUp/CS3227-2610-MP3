@@ -12,6 +12,9 @@ import {
   type SoCEnvironment,
 } from "../ai/soclaas-config";
 import { readSoCProbeLimits, type SoCProbeLimits } from "../ai/soclaas-probe-config";
+import { readDailyGenerationEnvironment } from "../ai/daily-generation-config";
+import { hostedGenerationAvailability, requestHostedDailyCompletion } from "../ai/daily-generation-coordinator";
+import type { GenerationLimitDetails } from "../../lib/generation-usage";
 
 export type ProposalCompletionOutcome =
   | "disabled"
@@ -28,7 +31,7 @@ export type ProposalCompletionOutcome =
 
 export type ProposalCompletionResult =
   | { ok: true; text: string; finishReason?: "stop" | "length" | "other" }
-  | { ok: false; outcome: ProposalCompletionOutcome };
+  | { ok: false; outcome: ProposalCompletionOutcome; limitDetails?: GenerationLimitDetails };
 
 export type ProposalCompletionAvailability =
   | { available: true }
@@ -37,6 +40,8 @@ export type ProposalCompletionAvailability =
 export interface ProposalCompletionInput {
   system: string;
   user: string;
+  /** Stable owner identity supplied only by an authenticated server route. */
+  ownerId: string;
   signal?: AbortSignal;
 }
 
@@ -67,6 +72,16 @@ const minimumRateGuardIntervalMs = 2_100;
  * without retaining proposal bytes.
  */
 export function proposalCompletionAvailability(): ProposalCompletionAvailability {
+  const dailyEnvironment = readDailyGenerationEnvironment(process.env);
+  if (dailyEnvironment.status === "supported") {
+    const hosted = hostedGenerationAvailability();
+    return hosted.available
+      ? { available: true }
+      : { available: false, outcome: hosted.outcome };
+  }
+  if (dailyEnvironment.status === "invalid" && process.env.TURNUP_ENVIRONMENT !== "development") {
+    return { available: false, outcome: "invalid_configuration" };
+  }
   const result = readReadySettings(process.env);
   return result.ok ? { available: true } : { available: false, outcome: result.outcome };
 }
@@ -79,6 +94,16 @@ export function proposalCompletionAvailability(): ProposalCompletionAvailability
  */
 export async function requestProposalCompletion(input: ProposalCompletionInput): Promise<ProposalCompletionResult> {
   if (!isCompletionInput(input)) return { ok: false, outcome: "invalid_configuration" };
+
+  const dailyEnvironment = readDailyGenerationEnvironment(process.env);
+  if (dailyEnvironment.status === "supported") {
+    // Hosted inference uses the explicit activation guard and selected server
+    // profile before entering durable daily accounting.
+    return requestHostedDailyCompletion(input);
+  }
+  if (dailyEnvironment.status === "invalid" && process.env.TURNUP_ENVIRONMENT !== "development") {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
 
   const settingsResult = readReadySettings(process.env);
   if (!settingsResult.ok) return { ok: false, outcome: settingsResult.outcome };
@@ -189,8 +214,15 @@ function isCompletionInput(value: unknown): value is ProposalCompletionInput {
     typeof value.system === "string" &&
     "user" in value &&
     typeof value.user === "string" &&
+    "ownerId" in value &&
+    typeof value.ownerId === "string" &&
+    isUuid(value.ownerId) &&
     (! ("signal" in value) || value.signal === undefined || value.signal instanceof AbortSignal)
   );
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function isUncertainProviderFailure(result: SoCResult): boolean {
@@ -213,5 +245,8 @@ function safeResult(result: SoCResult): ProposalCompletionResult {
   return {
     ok: false,
     outcome: result.outcome === "bad_request" ? "invalid_configuration" : result.outcome,
+    ...(result.outcome === "rate_or_budget_limited"
+      ? { limitDetails: { limitReason: "provider", retryAt: null, resetAt: null } }
+      : {}),
   };
 }

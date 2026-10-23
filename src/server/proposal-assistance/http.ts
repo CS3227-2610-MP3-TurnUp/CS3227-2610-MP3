@@ -13,6 +13,7 @@ import { extractPdfPageText, MAX_PROPOSAL_PDF_BYTES } from "./pdf-text";
 import { processProposalExtraction } from "./processor";
 import { proposalCompletionAvailability, requestProposalCompletion } from "./transport";
 import type { ProposalRevisions } from "../../features/proposal-assistance/types";
+import type { GenerationLimitDetails } from "../../lib/generation-usage";
 
 const maxMultipartBytes = MAX_PROPOSAL_PDF_BYTES + 128_000;
 const multipartReadTimeoutMs = 15_000;
@@ -23,7 +24,7 @@ export function proposalAssistanceFailure(error: unknown): NextResponse {
     { status, headers: privateHeaders });
 }
 
-function outcomeResponse(outcome: string): NextResponse {
+function outcomeResponse(outcome: string, limitDetails?: GenerationLimitDetails): NextResponse {
   const status = outcome === "unauthenticated" ? 401
     : outcome === "forbidden" ? 403
       : outcome === "rate_or_budget_limited" ? 429
@@ -35,7 +36,8 @@ function outcomeResponse(outcome: string): NextResponse {
                 : outcome === "invalid_request" ? 400
                   : outcome === "invalid_response" || outcome === "unsupported_evidence" || outcome === "input_too_large" ? 502
                     : 503;
-  return NextResponse.json({ ok: false, outcome }, { status, headers: privateHeaders });
+  return NextResponse.json({ ok: false, outcome,
+    ...(status === 429 && limitDetails ? limitDetails : {}) }, { status, headers: privateHeaders });
 }
 
 async function readBoundedMultipart(request: Request): Promise<FormData> {
@@ -157,12 +159,17 @@ export async function proposalExtraction(request: Request, rawId: string): Promi
     if (currentOwner.ownerId !== initial.ownerId) {
       throw new EventError(409, "The event or proposal clarifications changed. Reload and try again.");
     }
+    let limitDetails: GenerationLimitDetails | undefined;
     const result = await processProposalExtraction(
       textResult.pageTexts,
-      (input) => requestProposalCompletion(input),
+      async (input) => {
+        const completion = await requestProposalCompletion({ ...input, ownerId: currentOwner.ownerId });
+        if (!completion.ok && completion.limitDetails) limitDetails = completion.limitDetails;
+        return completion;
+      },
       request.signal,
     );
-    if (!result.ok) return outcomeResponse(result.outcome);
+    if (!result.ok) return outcomeResponse(result.outcome, limitDetails);
 
     // Recheck owner/session and both revisions inside the event write transaction
     // before recording any structured result; no PDF or page text is persisted.

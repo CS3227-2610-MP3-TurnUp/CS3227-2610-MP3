@@ -1,9 +1,12 @@
 import "server-only";
 
+import { hostedDailyGenerationEnabled } from "./daily-generation-config";
 import {
+  HOSTED_ORGANISER_PROPOSAL_MODEL,
   isLocalSyntheticProposalAssistanceEnabled,
   LOCAL_SYNTHETIC_PROPOSAL_MODEL,
   readSoCConfig,
+  type SoCConfig,
   type SoCConfigTimeoutScope,
   type SoCEnvironment,
 } from "./soclaas-config";
@@ -19,7 +22,11 @@ export interface SoCInput {
 }
 
 /** Fixed provider profile; callers cannot select model, format, or reasoning mode. */
-export type SoCCompletionProfile = "local_synthetic_proposal_json_v1";
+export type SoCCompletionProfile =
+  | "local_synthetic_proposal_json_v1"
+  | "hosted_organiser_proposal_json_v1";
+
+export type SoCDispatch = <T>(send: () => Promise<T>) => Promise<T>;
 
 export type SoCOutcome =
   | "not_configured"
@@ -42,7 +49,7 @@ export type SoCFailure =
 export type SoCFinishReason = "stop" | "length" | "other";
 
 export type SoCResult =
-  | { ok: true; text: string; usage?: SoCUsage; finishReason?: SoCFinishReason }
+  | { ok: true; text: string; truncated?: true; usage?: SoCUsage; finishReason?: SoCFinishReason }
   | SoCFailure;
 
 export interface SoCUsage {
@@ -59,27 +66,24 @@ export async function requestSoCCompletion(
   options: {
     env?: SoCEnvironment;
     fetchImpl?: FetchLike;
-    /** Explicit local-only JSON extraction profile; never selected from request data. */
+    /** Internal fixed JSON profile; never selected from request data. */
     profile?: SoCCompletionProfile;
+    /** Required by the hosted profile so durable accounting wraps the actual fetch. */
+    dispatch?: SoCDispatch;
   } = {},
 ): Promise<SoCResult> {
   const env = options.env ?? process.env;
   if (
     options.profile !== undefined &&
-    (
-      options.profile !== "local_synthetic_proposal_json_v1" ||
-      !isLocalSyntheticProposalAssistanceEnabled(env) ||
-      !isLocalSyntheticProposalAssistanceEnabled(process.env) ||
-      env.SOCLAAS_MODEL !== LOCAL_SYNTHETIC_PROPOSAL_MODEL ||
-      process.env.SOCLAAS_MODEL !== LOCAL_SYNTHETIC_PROPOSAL_MODEL
-    )
+    !isProfileEnabled(options.profile, env)
   ) {
     return { ok: false, outcome: "invalid_configuration" };
   }
+  if (options.profile === "hosted_organiser_proposal_json_v1" && !options.dispatch) {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
 
-  const timeoutScope: SoCConfigTimeoutScope | undefined = options.profile
-    ? "local-synthetic-proposal"
-    : undefined;
+  const timeoutScope = getTimeoutScope(options.profile);
   const configResult = readSoCConfig(env, {
     ...(timeoutScope ? { timeoutScope } : {}),
   });
@@ -87,21 +91,47 @@ export async function requestSoCCompletion(
   const config = configResult.config;
 
   if (
-    options.profile &&
-    (
-      config.model !== LOCAL_SYNTHETIC_PROPOSAL_MODEL ||
-      config.maxInputBytes !== 65_536 ||
-      config.maxOutputTokens !== 4_096 ||
-      config.timeoutMs !== 60_000
-    )
+    options.profile && !matchesFixedProfile(options.profile, config)
   ) {
     return { ok: false, outcome: "invalid_configuration" };
   }
+  if (options.profile === "hosted_organiser_proposal_json_v1") {
+    const runtimeConfigResult = readSoCConfig(process.env, { timeoutScope: "hosted-daily-proposal" });
+    if (!runtimeConfigResult.ok) return runtimeConfigResult;
+    if (!matchesFixedProfile(options.profile, runtimeConfigResult.config)) {
+      return { ok: false, outcome: "invalid_configuration" };
+    }
+  }
 
+  if (typeof input.system !== "string" || typeof input.user !== "string") {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
   const inputBytes =
     new TextEncoder().encode(input.system).byteLength + new TextEncoder().encode(input.user).byteLength;
   if (inputBytes > config.maxInputBytes) return { ok: false, outcome: "input_too_large" };
   if (input.signal?.aborted) return { ok: false, outcome: "cancelled" };
+
+  let requestBody: string;
+  try {
+    requestBody = JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: input.system },
+        { role: "user", content: input.user },
+      ],
+      max_tokens: config.maxOutputTokens,
+      stream: false,
+      ...(options.profile
+        ? {
+            temperature: 0,
+            response_format: { type: "json_object" },
+            reasoning_effort: "none",
+          }
+        : {}),
+    });
+  } catch {
+    return { ok: false, outcome: "invalid_configuration" };
+  }
 
   const controller = new AbortController();
   let didTimeout = false;
@@ -111,36 +141,48 @@ export async function requestSoCCompletion(
     controller.abort();
   };
   input.signal?.addEventListener("abort", onCallerAbort, { once: true });
-  const timer = setTimeout(() => {
-    didTimeout = true;
-    controller.abort();
-  }, config.timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
   try {
-    const response = await (options.fetchImpl ?? fetch)(chatCompletionsUrl, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${config.apiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: "system", content: input.system },
-          { role: "user", content: input.user },
-        ],
-        max_tokens: config.maxOutputTokens,
-        stream: false,
-        ...(options.profile === "local_synthetic_proposal_json_v1"
-          ? {
-              temperature: 0,
-              response_format: { type: "json_object" },
-              reasoning_effort: "none",
-            }
-          : {}),
-      }),
-      signal: controller.signal,
-    });
+    let fetchStarted = false;
+    const send = async (): Promise<Response> => {
+      if (fetchStarted) throw new DispatchBoundaryFailure();
+      if (input.signal?.aborted) {
+        didCancel = true;
+        throw new DispatchBoundaryFailure();
+      }
+      fetchStarted = true;
+      timer = setTimeout(() => {
+        didTimeout = true;
+        controller.abort();
+      }, config.timeoutMs);
+      return (options.fetchImpl ?? fetch)(chatCompletionsUrl, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${config.apiKey}`,
+          "content-type": "application/json",
+        },
+        body: requestBody,
+        signal: controller.signal,
+      });
+    };
+
+    let response: Response;
+    try {
+      response = options.profile === "hosted_organiser_proposal_json_v1"
+        ? await options.dispatch!(send)
+        : await send();
+      if (options.profile === "hosted_organiser_proposal_json_v1" && !fetchStarted) {
+        throw new DispatchBoundaryFailure();
+      }
+    } catch {
+      if (options.profile === "hosted_organiser_proposal_json_v1" && !fetchStarted) {
+        throw new DispatchBoundaryFailure();
+      }
+      if (didCancel) return { ok: false, outcome: "cancelled" };
+      if (didTimeout) return { ok: false, outcome: "timeout" };
+      return { ok: false, outcome: "unavailable", failureSource: "transport" };
+    }
 
     if (!response.ok) {
       // The status is sufficient for classification; discard the untrusted body without reading it.
@@ -158,21 +200,64 @@ export async function requestSoCCompletion(
     const responseText = await readBoundedResponse(response);
     if (responseText === undefined) return { ok: false, outcome: "invalid_response" };
 
-    let body: unknown;
+    let responseBody: unknown;
     try {
-      body = JSON.parse(responseText);
+      responseBody = JSON.parse(responseText);
     } catch {
       return { ok: false, outcome: "invalid_response" };
     }
-    return readCompletion(body);
-  } catch {
+    return readCompletion(responseBody);
+  } catch (error) {
+    if (error instanceof DispatchBoundaryFailure) throw error;
     if (didCancel) return { ok: false, outcome: "cancelled" };
     if (didTimeout) return { ok: false, outcome: "timeout" };
     return { ok: false, outcome: "unavailable", failureSource: "transport" };
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
     input.signal?.removeEventListener("abort", onCallerAbort);
   }
+}
+
+class DispatchBoundaryFailure extends Error {
+  constructor() {
+    super("Provider dispatch did not begin.");
+    this.name = "DispatchBoundaryFailure";
+  }
+}
+
+function isProfileEnabled(profile: SoCCompletionProfile, env: SoCEnvironment): boolean {
+  if (profile === "local_synthetic_proposal_json_v1") {
+    return isLocalSyntheticProposalAssistanceEnabled(env) &&
+      isLocalSyntheticProposalAssistanceEnabled(process.env) &&
+      env.SOCLAAS_MODEL === LOCAL_SYNTHETIC_PROPOSAL_MODEL &&
+      process.env.SOCLAAS_MODEL === LOCAL_SYNTHETIC_PROPOSAL_MODEL;
+  }
+  if (profile === "hosted_organiser_proposal_json_v1") {
+    return hostedDailyGenerationEnabled(env) &&
+      hostedDailyGenerationEnabled(process.env) &&
+      env.ORGANISER_SOCLAAS_MODEL === HOSTED_ORGANISER_PROPOSAL_MODEL &&
+      process.env.ORGANISER_SOCLAAS_MODEL === HOSTED_ORGANISER_PROPOSAL_MODEL;
+  }
+  return false;
+}
+
+function getTimeoutScope(profile: SoCCompletionProfile | undefined): SoCConfigTimeoutScope | undefined {
+  if (profile === "local_synthetic_proposal_json_v1") return "local-synthetic-proposal";
+  if (profile === "hosted_organiser_proposal_json_v1") return "hosted-daily-proposal";
+  return undefined;
+}
+
+function matchesFixedProfile(profile: SoCCompletionProfile, config: SoCConfig): boolean {
+  if (profile === "local_synthetic_proposal_json_v1") {
+    return config.model === LOCAL_SYNTHETIC_PROPOSAL_MODEL &&
+      config.maxInputBytes === 65_536 &&
+      config.maxOutputTokens === 4_096 &&
+      config.timeoutMs === 60_000;
+  }
+  return config.model === HOSTED_ORGANISER_PROPOSAL_MODEL &&
+    config.maxInputBytes === 65_536 &&
+    config.maxOutputTokens === 4_096 &&
+    config.timeoutMs === 60_000;
 }
 
 async function cancelResponseBodyBounded(response: Response): Promise<void> {
@@ -253,6 +338,7 @@ function readCompletion(body: unknown): SoCResult {
     ok: true,
     text: first.message.content,
     ...(usage ? { usage } : {}),
+    ...(first.finish_reason === "length" ? { truncated: true as const } : {}),
     ...(finishReason ? { finishReason } : {}),
   };
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { EventDashboard } from "../../components/events/dashboard";
-import { AccountMenu } from "../../components/account/account-menu";
+import { WorkspaceHeader } from "../../components/workspace-header";
 import { requireRole } from "../../server/auth/guards";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,6 @@ export default async function OrganiserPage() {
     <h1>{access.status === "denied" ? "Access unavailable" : "Account access is unavailable"}</h1>
     <p>{access.status === "denied" ? "This page is for Organiser accounts." : "Please try again later."}</p><Link href="/login">Go to login</Link>
   </section></main>;
-  return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/">TurnUp</Link><AccountMenu username={access.user.username} /></header>
+  return <main className="workspace"><WorkspaceHeader username={access.user.username} role={"ORGANISER"} />
     <EventDashboard /></main>;
 }

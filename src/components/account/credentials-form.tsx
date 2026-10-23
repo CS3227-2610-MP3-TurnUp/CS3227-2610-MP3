@@ -105,7 +105,7 @@ export function CredentialsForm({ username: initialUsername, credentialVersion }
       </div>}
       {feedback?.action === action && <div>
         {feedback.error && <p id={`${action}-error`} className="error-panel" role="alert" tabIndex={-1} ref={errorRef}>{feedback.error}</p>}
-        {feedback.status && <p role="status">{feedback.status}</p>}
+        {feedback.status && <p role="status" className="success-panel">{feedback.status}</p>}
         {feedback.conflict && <button type="button" className="account-text-button" onClick={() => { router.refresh(); setFeedback({ action, status: "Settings reloaded. Review your values before saving again." }); }}>Reload settings</button>}
       </div>}
       {editing === action && <form id={`${action}-editor`} className="account-credential-form" aria-labelledby={`${action}-title`} onSubmit={(event) => submit(event, action)} aria-busy={pending === action}>

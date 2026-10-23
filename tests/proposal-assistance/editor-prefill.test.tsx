@@ -12,6 +12,7 @@ vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
+    useCallback: <T,>(callback: T) => callback,
     useState: <T,>(initial: T | (() => T)) => {
       const index = hooks.stateIndex++;
       if (!(index in hooks.states)) hooks.states[index] = typeof initial === "function" ? (initial as () => T)() : initial;
@@ -95,7 +96,7 @@ const extraction: PrivateExtraction = {
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  hooks.states = [view, { ...savedFields }, "editor", null, false, false, false, "", "", "", {}, {}, 0, 0];
+  hooks.states = [view, { ...savedFields }, "editor", null, false, false, null, true, false, "", "", "", {}, {}, 0, 0];
   hooks.refs = [];
   hooks.stateIndex = 0;
   hooks.refIndex = 0;
@@ -125,11 +126,11 @@ function nodes(root: unknown): ElementLike[] {
     const refIndex = hooks.refIndex;
     const componentName = (element.type as { name?: string }).name;
     if (componentName === "ProposalAssistance") {
-      hooks.stateIndex = 14;
-      hooks.refIndex = 8;
+      hooks.stateIndex = 16;
+      hooks.refIndex = 9;
     } else if (componentName === "PublicContentAssistance") {
-      hooks.stateIndex = 20;
-      hooks.refIndex = 14;
+      hooks.stateIndex = 22;
+      hooks.refIndex = 15;
     }
     const result = nodes((element.type as (props: Record<string, unknown>) => unknown)(element.props));
     hooks.stateIndex = stateIndex;
@@ -298,14 +299,14 @@ describe("EventEditor proposal prefill integration", () => {
     (byText(initial, "button", "Use Innovation Hall").props.onClick as () => void)();
     let updated = render();
     expect((hooks.states[1] as EventFields).location).toBe("Innovation Hall");
-    expect(hooks.states[11]).toMatchObject({ location: { method: "suggestion", alternative: { value: "Innovation Hall", evidence: [{ quote: "Innovation Hall", page: 1 }] } } });
+    expect(hooks.states[13]).toMatchObject({ location: { method: "suggestion", alternative: { value: "Innovation Hall", evidence: [{ quote: "Innovation Hall", page: 1 }] } } });
     expect(textOf(byId(updated, "proposal-feedback-location").props.children)).toContain("ready to save");
     expect(nodes(updated).some((element) => element.type === "button" && textOf(element.props.children) === "Use Innovation Hall")).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
 
     (byText(updated, "button", "Confirm this value").props.onClick as () => void)();
     updated = render();
-    expect(hooks.states[11]).toMatchObject({ purpose: { method: "organiser" }, location: { method: "suggestion" } });
+    expect(hooks.states[13]).toMatchObject({ purpose: { method: "organiser" }, location: { method: "suggestion" } });
     expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Your confirmation is ready to save");
     expect(byText(updated, "button", "Preview saved draft").props.disabled).toBe(true);
     expect(byText(updated, "button", "Save Draft").props.disabled).toBe(false);
@@ -325,7 +326,7 @@ describe("EventEditor proposal prefill integration", () => {
     expect((hooks.states[0] as typeof view).preparation).toEqual(savedPreparation);
     expect((hooks.states[0] as typeof view).retention).toEqual(renewedRetention);
     expect(renderToStaticMarkup(updated)).not.toContain("Private draft expires soon");
-    expect(hooks.states[11]).toEqual({});
+    expect(hooks.states[13]).toEqual({});
     expect(byText(updated, "button", "Preview saved draft").props.disabled).toBe(false);
     expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Confirmed by you");
   });
@@ -352,7 +353,7 @@ describe("EventEditor proposal prefill integration", () => {
 
     let current = render();
     (byText(current, "button", "Confirm this value").props.onClick as () => void)();
-    expect(hooks.states[11]).toMatchObject({ purpose: { method: "organiser" } });
+    expect(hooks.states[13]).toMatchObject({ purpose: { method: "organiser" } });
     current = render();
     const fileInput = nodes(current).find((element) => element.type === "input" && element.props.type === "file");
     if (!fileInput) throw new Error("PDF picker missing from EventEditor");
@@ -363,7 +364,7 @@ describe("EventEditor proposal prefill integration", () => {
 
     current = render();
     expect((hooks.states[1] as EventFields).description).toBe("Current description");
-    expect(hooks.states[11]).toEqual({});
+    expect(hooks.states[13]).toEqual({});
     expect((hooks.states[0] as typeof view).preparation).toEqual(newerPreparation);
     expect(textOf(byId(current, "proposal-feedback-description").props.children)).toContain("needs your confirmation");
     expect(textOf(byId(current, "proposal-feedback-description").props.children)).toContain("A newly proposed description");
@@ -387,7 +388,7 @@ describe("EventEditor proposal prefill integration", () => {
     const staleConfirm = byText(current, "button", "Confirm this value").props.onClick as () => void;
     (byText(render(), "button", "Generate Findings").props.onClick as () => void)();
 
-    expect(hooks.states[12]).toBe(1);
+    expect(hooks.states[14]).toBe(1);
     current = render();
     const choice = byText(current, "button", "Use Innovation Hall");
     const confirm = byText(current, "button", "Confirm this value");
@@ -398,14 +399,14 @@ describe("EventEditor proposal prefill integration", () => {
     staleConfirm();
     (choice.props.onClick as () => void)();
     (confirm.props.onClick as () => void)();
-    expect(hooks.states[11]).toEqual({});
+    expect(hooks.states[13]).toEqual({});
     expect((hooks.states[1] as EventFields).location).toBe("Current venue");
 
     const form = fetchMock.mock.calls[0]?.[1]?.body as FormData;
     const revisions = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
     resolveResponse(json({ ok: true, revisions, eventVersion: 3, preparation, extraction }));
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(hooks.states[12]).toBe(0);
+    expect(hooks.states[14]).toBe(0);
   });
 
   it("rejects a deferred Generate result after Cancel Editing restores the saved values", async () => {
@@ -427,7 +428,7 @@ describe("EventEditor proposal prefill integration", () => {
     expect(byId(render(), "event-title").props.value).toBe("Unsaved working title");
     (byText(render(), "button", "Cancel Editing").props.onClick as () => void)();
     expect(hooks.states[1]).toMatchObject({ title: "Current title" });
-    expect(hooks.setterCalls[13]).toBe(1);
+    expect(hooks.setterCalls[15]).toBe(1);
 
     const form = fetchMock.mock.calls[0]?.[1]?.body as FormData;
     const revisions = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
@@ -532,7 +533,7 @@ describe("EventEditor proposal prefill integration", () => {
 
     (byText(generated, "button", "Use You will explore robotics").props.onClick as () => void)();
     expect(hooks.states[1]).toEqual({ ...original, description: "You will explore robotics" });
-    expect(hooks.states[11]).toMatchObject({
+    expect(hooks.states[13]).toMatchObject({
       purpose: { method: "suggestion", alternative: { value: "You will explore robotics", evidence: [{ quote: "You will explore robotics.", page: 1 }] } },
     });
     expect(renderToStaticMarkup(render())).toContain("<q>You will explore robotics.</q>");
@@ -541,7 +542,7 @@ describe("EventEditor proposal prefill integration", () => {
     let current = render();
     (byText(current, "button", "Use 14/11/2026, 09:00 PM SGT").props.onClick as () => void)();
     expect((hooks.states[1] as EventFields).start).toBe("2026-11-14T13:00:00.000Z");
-    expect(hooks.states[11]).toMatchObject({ start: { method: "suggestion", alternative: { value: "2026-11-14T13:00:00.000Z", evidence: [{ quote: "14 November 2026, 09:00 PM SGT", page: 1 }] } } });
+    expect(hooks.states[13]).toMatchObject({ start: { method: "suggestion", alternative: { value: "2026-11-14T13:00:00.000Z", evidence: [{ quote: "14 November 2026, 09:00 PM SGT", page: 1 }] } } });
     expect(byId(render(), "event-start").props.value).toBe("2026-11-14T21:00");
 
     current = render();
@@ -552,7 +553,7 @@ describe("EventEditor proposal prefill integration", () => {
     current = render();
     (byText(current, "button", "Use 80").props.onClick as () => void)();
     expect((hooks.states[1] as EventFields).capacity).toBe(80);
-    expect(hooks.states[11]).toMatchObject({ capacity: { method: "suggestion", alternative: { value: "80", evidence: [{ quote: "Capacity: 80", page: 1 }] } } });
+    expect(hooks.states[13]).toMatchObject({ capacity: { method: "suggestion", alternative: { value: "80", evidence: [{ quote: "Capacity: 80", page: 1 }] } } });
 
     const selected = render();
     (byId(selected, "event-description").props.onChange as (event: unknown) => void)({ target: { value: "My manual description" } });
@@ -576,12 +577,12 @@ describe("EventEditor proposal prefill integration", () => {
     staleChoice();
     expect((hooks.states[1] as EventFields).title).toBe("New manual title");
     expect((hooks.states[1] as EventFields).location).toBe("Current venue");
-    expect(hooks.states[11]).toEqual({});
+    expect(hooks.states[13]).toEqual({});
 
-    hooks.refs[2]!.current = true;
+    hooks.refs[3]!.current = true;
     const freshChoice = byText(render(), "button", "Use Innovation Hall").props.onClick as () => void;
     freshChoice();
     expect((hooks.states[1] as EventFields).location).toBe("Current venue");
-    hooks.refs[2]!.current = false;
+    hooks.refs[3]!.current = false;
   });
 });

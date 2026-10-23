@@ -46,9 +46,55 @@ model SoCProbeReservation {
   @@map("soc_probe_reservation")
 }
 
+// Separate per-database hosted product budget; activation never resets counters.
+model StudentAiBudget {
+  id Int @id
+  approvalId String @unique @map("approval_id")
+  environment String
+  model String
+  enabled Boolean @default(false)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  attempts Int @default(0)
+  reservedOutputTokens Int @default(0) @map("reserved_output_tokens")
+  lastAdmissionAt DateTime? @map("last_admission_at") @db.Timestamptz(6)
+  reservations StudentAiReservation[]
+  @@map("student_ai_budget")
+}
+
+model StudentAiReservation {
+  id String @id @db.Uuid
+  budgetId Int @map("budget_id")
+  requestKey String @unique @map("request_key") @db.Char(64)
+  actorKey String @map("actor_key") @db.Char(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  leaseUntil DateTime @map("lease_until") @db.Timestamptz(6)
+  released Boolean @default(false)
+  budget StudentAiBudget @relation(fields: [budgetId], references: [id], onDelete: Restrict)
+  @@index([actorKey, createdAt])
+  @@map("student_ai_reservation")
+}
+
 enum AccountRole {
   STUDENT
   ORGANISER
+}
+
+enum GenerationEnvironment {
+  PREVIEW
+  PRODUCTION
+
+  @@map("generation_environment")
+}
+
+enum GenerationReservationStatus {
+  RESERVED
+  DISPATCHED
+  COMPLETED
+  REFUNDED
+  UNCERTAIN
+  RECOVERED
+
+  @@map("generation_reservation_status")
 }
 
 model User {
@@ -61,8 +107,12 @@ model User {
   profileVersion Int       @default(0) @map("profile_version")
   role         AccountRole
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  aiHistory StudentAiHistory[]
   sessions     Session[]
   events       Event[]
+  generationUsage GenerationDailyUsage[]
+  registrations Registration[]
+  registrationOperations RegistrationOperation[]
 
   @@map("app_user")
 }
@@ -97,12 +147,14 @@ enum EventState {
 }
 
 model Event {
+  aiHistory StudentAiHistory[]
   id String @id @db.Uuid
   ownerId String @map("owner_id") @db.Uuid
   owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   state EventState @default(DRAFT)
   version Int @default(0)
   draft Json
+  draftForm Json @default("{\"questions\":[]}") @map("draft_form")
   draftVersion Int @default(0) @map("draft_version")
   preparation Json?
   preparationVersion Int @default(0) @map("preparation_version")
@@ -113,6 +165,8 @@ model Event {
   currentPublication EventPublication? @relation("CurrentPublication", fields: [currentPublicationId], references: [id], onDelete: Restrict)
   publications EventPublication[] @relation("PublicationHistory")
   approvals EventApproval[]
+  registrations Registration[]
+  registrationOperations RegistrationOperation[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   editedAt DateTime @default(now()) @map("edited_at") @db.Timestamptz(6)
   @@index([ownerId, editedAt])
@@ -125,6 +179,8 @@ model EventPublication {
   eventId String @map("event_id") @db.Uuid
   event Event @relation("PublicationHistory", fields: [eventId], references: [id], onDelete: Restrict)
   currentFor Event? @relation("CurrentPublication")
+  joinedRegistrations Registration[]
+  submissions RegistrationSubmission[]
   revision Int
   snapshot Json
   digest String @db.Char(64)
@@ -146,4 +202,134 @@ model EventApproval {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   @@index([eventId])
   @@map("event_approval")
+}
+
+// Minimal per-owner hosted-generation counters. Local synthetic inference and
+// the foundation probe continue to use their existing, separate gates.
+model GenerationDailyUsage {
+  environment GenerationEnvironment
+  ownerId String @map("owner_id") @db.Uuid
+  sgtDay DateTime @map("sgt_day") @db.Date
+  attemptCount Int @default(0) @map("attempt_count")
+  reservedOutputTokens Int @default(0) @map("reserved_output_tokens")
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  reservations GenerationReservation[]
+
+  @@id([environment, ownerId, sgtDay])
+  @@index([environment, sgtDay], map: "generation_daily_usage_retention_idx")
+  @@map("generation_daily_usage")
+}
+
+// One singleton row per hosting environment serializes admissions, dispatch
+// spacing and the sole in-flight request across replicas.
+model GenerationEnvironmentGate {
+  environment GenerationEnvironment @id
+  activeReservationId String? @unique @map("active_reservation_id") @db.Uuid
+  lastDispatchAt DateTime? @map("last_dispatch_at") @db.Timestamptz(6)
+  activeReservation GenerationReservation? @relation("ActiveGenerationReservation", fields: [activeReservationId], references: [id], onDelete: Restrict, map: "generation_environment_gate_active_reservation_fkey")
+
+  @@map("generation_environment_gate")
+}
+
+// No prompts, source text, model output, or event IDs are retained here.
+// Terminal records preserve idempotent refund/completion semantics; operator
+// recovery releases a slot without changing the daily counters.
+model GenerationReservation {
+  id String @id @db.Uuid
+  environment GenerationEnvironment
+  ownerId String @map("owner_id") @db.Uuid
+  sgtDay DateTime @map("sgt_day") @db.Date
+  reservedOutputTokens Int @default(4096) @map("reserved_output_tokens")
+  status GenerationReservationStatus @default(RESERVED)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  dispatchedAt DateTime? @map("dispatched_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+  dailyUsage GenerationDailyUsage @relation(fields: [environment, ownerId, sgtDay], references: [environment, ownerId, sgtDay], onDelete: Restrict)
+  activeForGate GenerationEnvironmentGate? @relation("ActiveGenerationReservation")
+
+  @@index([environment, status, createdAt])
+  @@index([environment, status, sgtDay], map: "generation_reservation_retention_idx")
+  @@index([ownerId, environment, sgtDay])
+  @@map("generation_reservation")
+}
+
+enum RegistrationState {
+  ACTIVE
+  CANCELLED
+}
+enum RegistrationOperationKind {
+  JOIN
+  CANCEL
+  CORRECT
+}
+model Registration {
+  id String @id @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  studentId String @map("student_id") @db.Uuid
+  student User @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  state RegistrationState
+  generation Int
+  version Int
+  joinedPublicationId String @map("joined_publication_id") @db.Uuid
+  joinedPublication EventPublication @relation(fields: [joinedPublicationId], references: [id], onDelete: Restrict)
+  joinedAt DateTime @map("joined_at") @db.Timestamptz(6)
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  currentSubmissionId String? @unique @map("current_submission_id") @db.Uuid
+  currentSubmission RegistrationSubmission? @relation("CurrentSubmission", fields: [currentSubmissionId], references: [id], onDelete: Restrict)
+  submissions RegistrationSubmission[] @relation("SubmissionHistory")
+  @@unique([studentId, eventId])
+  @@index([eventId, state])
+  @@index([studentId, joinedAt])
+  @@map("registration")
+}
+model RegistrationSubmission {
+  id String @id @db.Uuid
+  registrationId String @map("registration_id") @db.Uuid
+  registration Registration @relation("SubmissionHistory", fields: [registrationId], references: [id], onDelete: Restrict)
+  currentFor Registration? @relation("CurrentSubmission")
+  generation Int
+  version Int
+  publicationId String @map("publication_id") @db.Uuid
+  publication EventPublication @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+  formRevisionId String @map("form_revision_id") @db.Uuid
+  capturedForm Json @map("captured_form")
+  profileName String? @map("profile_name")
+  profilePhone String? @map("profile_phone")
+  answers Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([registrationId, generation, version])
+  @@unique([id, registrationId, generation])
+  @@map("registration_submission")
+}
+model RegistrationOperation {
+  actorId String @map("actor_id") @db.Uuid
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  eventId String @map("event_id") @db.Uuid
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  operation RegistrationOperationKind
+  key String @db.Uuid
+  payloadDigest String @map("payload_digest") @db.Char(64)
+  result Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@id([actorId, eventId, operation, key])
+  @@index([createdAt])
+  @@map("registration_operation")
+}
+
+model StudentAiHistory {
+  userId String @map("user_id") @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+  requestId String @map("request_id") @db.VarChar(128)
+  revision String @db.VarChar(128)
+  payload Json
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@id([userId,eventId,requestId])
+  @@index([userId,eventId,revision,createdAt], map: "student_ai_history_lookup")
+  @@index([expiresAt], map: "student_ai_history_expiry")
+  @@map("student_ai_history")
 }

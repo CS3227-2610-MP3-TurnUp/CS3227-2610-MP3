@@ -51,6 +51,18 @@ function withLocalEnvironment() {
   vi.stubEnv("VERCEL_ENV", "development");
 }
 
+function withHostedEnvironment(kind: "preview" | "production", hostedEnabled: boolean) {
+  vi.stubEnv("TURNUP_ENVIRONMENT", kind);
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("DATABASE_ENVIRONMENT", kind === "preview" ? "non-production" : "production");
+  vi.stubEnv("VERCEL", "1");
+  vi.stubEnv("VERCEL_ENV", kind);
+  vi.stubEnv("DATABASE_URL", kind === "preview"
+    ? "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require"
+    : "postgresql://synthetic:synthetic@ep-production-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", String(hostedEnabled));
+}
+
 beforeEach(() => vi.unstubAllEnvs());
 
 it("enables stored clarification behavior in local non-production regardless of model opt-in", () => {
@@ -59,6 +71,30 @@ it("enables stored clarification behavior in local non-production regardless of 
   vi.stubEnv("PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC", "false");
   expect(clarificationPersistenceEnabled()).toBe(true);
   vi.stubEnv("VERCEL_ENV", "production");
+  expect(clarificationPersistenceEnabled()).toBe(false);
+});
+
+it("enables stored clarification behavior only for matching validated hosted deployments, independent of inference opt-in", () => {
+  withHostedEnvironment("preview", false);
+  expect(clarificationPersistenceEnabled()).toBe(true);
+  expect(clarificationPersistenceEnabled({
+    TURNUP_ENVIRONMENT: "preview",
+    NODE_ENV: "production",
+    DATABASE_ENVIRONMENT: "non-production",
+    VERCEL: "1",
+    VERCEL_ENV: "preview",
+    DATABASE_URL: "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require",
+  })).toBe(true);
+  expect(clarificationPersistenceEnabled({
+    TURNUP_ENVIRONMENT: "production",
+    NODE_ENV: "production",
+    DATABASE_ENVIRONMENT: "production",
+    VERCEL: "1",
+    VERCEL_ENV: "production",
+    DATABASE_URL: "postgresql://synthetic:synthetic@ep-production-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require",
+  })).toBe(false);
+
+  vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-wrong.us-east-1.aws.neon.tech/synthetic?sslmode=require");
   expect(clarificationPersistenceEnabled()).toBe(false);
 });
 

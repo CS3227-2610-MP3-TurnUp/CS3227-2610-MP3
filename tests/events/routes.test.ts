@@ -75,3 +75,10 @@ it("returns generic dependency failure and preserves deliberate safe conflict ou
   const conflict = await POST(request({ action: "delete", expectedVersion: 0 }), context);
   expect(conflict.status).toBe(409); expect(await conflict.json()).toEqual({ error: "Review the newer event." });
 });
+
+it("passes optional form and clarification changes together without mixing their contracts", async () => {
+  const form = { questions: [{ type: "short_text", label: "Dietary needs", required: false }] };
+  const clarification = { expectedPreparationRevision: 1, resolutions: [{ field: "title", method: "organiser", value: "A title" }] };
+  expect((await POST(request({ action: "save", expectedVersion: 2, fields: EMPTY_EVENT, form, ...clarification }), context)).status).toBe(200);
+  expect(service.mutate).toHaveBeenCalledWith({}, token, id, 2, "save", EMPTY_EVENT, undefined, clarification, form);
+});

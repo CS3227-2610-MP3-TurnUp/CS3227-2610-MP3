@@ -1,0 +1,84 @@
+.shell { width: min(calc(100% - 2rem), 62rem); margin: 0 auto; padding-bottom: 3rem; }
+.header { min-height: 5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--tu-line); margin-bottom: 1.5rem; }
+.previewLabel { color: var(--tu-muted); font-size: .875rem; text-align: right; }
+.panel { min-width: 0; padding: 1.5rem; border: 1px solid var(--tu-line); border-radius: .75rem; background: var(--tu-surface); }
+.panel h2 { font-size: 1.25rem; margin: 0 0 .5rem; }
+.explanation { color: var(--tu-muted); font-size: .875rem; }
+.composer { display: grid; gap: .75rem; }
+.composer textarea { width: 100%; min-height: 7rem; resize: vertical; font: inherit; line-height: 1.5; padding: .75rem; border: 1px solid #72867a; border-radius: .5rem; color: var(--tu-ink); background: var(--tu-surface); }
+.notice { margin: 0 0 1rem; padding: .75rem; border-radius: .5rem; background: var(--tu-action-soft); overflow-wrap: anywhere; }
+.controls { display: grid; gap: .75rem; }
+.controls label { display: block; margin-bottom: .5rem; }
+.controls button { width: 100%; }
+.source { margin-top: 1rem; overflow-wrap: anywhere; font-size: .875rem; }
+.source summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; color: var(--tu-action); }
+.source h3 { font-size: .875rem; margin: 1rem 0 .25rem; }
+.source p { white-space: pre-wrap; }
+.subtle { border: 0; background: transparent; color: var(--tu-action); text-decoration: underline; cursor: pointer; min-height: 2.75rem; padding: .5rem; }
+@media (max-width: 48rem) { .panel { padding: 1.25rem; } .header { align-items: center; } }
+
+.chat { min-width: 0; border: 1px solid var(--tu-line); border-radius: .75rem; background: var(--tu-surface); overflow: hidden; }
+.chatHeader { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--tu-line); }
+.chatHeader > div { min-width: 0; }
+.chatHeader h2 { font-size: 1.125rem; margin: .125rem 0 0; overflow-wrap: anywhere; }
+.eyebrow, .speaker { display: block; font-size: .75rem; font-weight: 600; }
+.eyebrow { color: var(--tu-muted); }
+.chatHeader button { flex-shrink: 0; font-size: .875rem; }
+.conversation { min-height: 22rem; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.assistantRow, .userRow { display: flex; min-width: 0; }
+.userRow { justify-content: flex-end; }
+.assistantBubble, .userBubble { max-width: 88%; border-radius: .875rem; padding: .875rem 1rem; overflow-wrap: anywhere; }
+.assistantBubble { background: var(--tu-canvas); border: 1px solid var(--tu-line); border-top-left-radius: .25rem; }
+.userBubble { background: var(--tu-action); color: white; border-bottom-right-radius: .25rem; }
+.speaker { margin-bottom: .375rem; }
+.assistantBubble .speaker { color: var(--tu-muted); }
+.assistantBubble p:last-child, .userBubble p:last-child { margin-bottom: 0; }
+.userBubble p { white-space: pre-wrap; }
+.assistantBubble h3 { font-size: 1rem; margin: 0 0 .75rem; }
+.quote { margin: 0 0 .75rem; white-space: pre-wrap; }
+.quote::before { content: '“'; }
+.quote::after { content: '”'; }
+.citations { margin: .75rem 0; font-size: .875rem; color: var(--tu-action); }
+.citations summary { cursor: pointer; padding: .5rem 0; min-height: 2.75rem; }
+.citations ul { padding-left: 1.25rem; margin: 0; color: var(--tu-muted); }
+.suggestions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.suggestions button { background: var(--tu-surface); color: var(--tu-action); border: 1px solid #72867a; border-radius: 1.25rem; padding: .5rem .875rem; min-height: 2.75rem; text-align: left; font-size: .875rem; cursor: pointer; }
+.chat .composer { border-top: 1px solid var(--tu-line); padding: 1rem 1.5rem; gap: .5rem; }
+.composer label { font-size: .875rem; }
+.inputRow { display: flex; gap: .75rem; align-items: flex-end; }
+.inputRow textarea { min-height: 4.5rem; max-height: 12rem; }
+.send { display: grid; place-items: center; flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; border: 1px solid var(--tu-action); border-radius: .5rem; background: var(--tu-action); color: white; cursor: pointer; }
+.send:hover { background: #194b3a; }
+.composerHelp { margin: 0; color: var(--tu-muted); font-size: .75rem; }
+.failure { color: var(--tu-danger); margin: 0; }
+.retry { margin-top: .75rem; min-height: 2.75rem; padding: .5rem .875rem; border: 1px solid var(--tu-action); color: var(--tu-action); background: var(--tu-surface); border-radius: .5rem; cursor: pointer; }
+.thinking { color: var(--tu-muted); }
+.devTools { margin-top: 1.25rem; border: 1px solid var(--tu-line); border-radius: .75rem; background: var(--tu-surface); padding: .5rem 1.25rem; }
+.devTools > summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; color: var(--tu-muted); font-size: .875rem; font-weight: 600; }
+.devTools .panel { padding: 1rem 0; border: 0; }
+@media (max-width: 48rem) { .chatHeader { padding: 1rem; gap: .5rem; } .conversation { padding: 1rem; min-height: 20rem; max-height: 55vh; } .chat .composer { padding: 1rem; } .assistantBubble, .userBubble { max-width: 95%; } }
+
+.eventDetails { max-width: 40rem; padding: 1.5rem; background: var(--tu-surface); border: 1px solid var(--tu-line); border-radius: .75rem; }
+.eventDetails section + section { border-top: 1px solid var(--tu-line); margin-top: 1.5rem; padding-top: 1.5rem; }
+.eventDetails h2 { font-size: 1.125rem; margin: 0 0 .75rem; }
+.eventDetails p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.launcher { position: fixed; z-index: 31; bottom: max(1.25rem, env(safe-area-inset-bottom)); right: max(1.25rem, env(safe-area-inset-right)); display: flex; align-items: center; justify-content: center; gap: .625rem; max-width: calc(100vw - 2rem); min-height: 3.25rem; padding: .75rem 1rem; border: 1px solid var(--tu-action); border-radius: 2rem; background: var(--tu-action); color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgb(32 51 45 / 15%); }
+.launcher:hover { background: #194b3a; }
+.widget { position: fixed; z-index: 30; bottom: calc(max(1.25rem, env(safe-area-inset-bottom)) + 4rem); right: max(1.25rem, env(safe-area-inset-right)); width: min(27rem, calc(100% - 2rem)); height: min(36rem, 70dvh, calc(100dvh - 7rem)); border-radius: .75rem; box-shadow: 0 8px 36px rgb(32 51 45 / 18%); }
+.widget[hidden] { display: none; }
+.widget .chat { height: 100%; display: grid; grid-template-rows: auto minmax(6rem, 1fr) auto; overflow-y: auto; }
+.widget .chatHeader { gap: .5rem; padding: .875rem 1rem; }
+.widget .chatHeader h2 { font-size: 1rem; }
+.widget .conversation { min-height: 0; max-height: none; padding: 1rem; gap: 1rem; }
+.widget .composer { padding: .875rem 1rem; }
+.widget .inputRow textarea { min-height: 3rem; max-height: 6rem; }
+.widget .assistantBubble, .widget .userBubble { max-width: 95%; font-size: .875rem; }
+.close { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: .5rem; border: 0; border-radius: .5rem; background: transparent; color: var(--tu-muted); cursor: pointer; }
+.close:hover { background: var(--tu-action-soft); }
+.shell { padding-bottom: 7rem; }
+@media (max-width: 30rem) { .launcher, .widget { right: max(1rem, env(safe-area-inset-right)); } .eventDetails { padding: 1.25rem; } }
+
+.headerActions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
+.headerActions .retry { margin-top: 0; font-size: .75rem; text-align: left; }
+.chat button:hover:not(:disabled) { filter: brightness(.96); }
+@media (max-width: 30rem) { .headerActions { max-width: 10rem; } .chatHeader { align-items: flex-start; } }

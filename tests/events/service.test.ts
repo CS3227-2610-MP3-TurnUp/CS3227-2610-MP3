@@ -1,16 +1,43 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const auth = vi.hoisted(() => ({ self: vi.fn(), commit: vi.fn() }));
-vi.mock("../../src/server/accounts/service", () => ({ requireSelf: auth.self, authenticatedAccount: auth.commit }));
+const proposalRoute = vi.hoisted(() => ({ db: undefined as unknown, complete: vi.fn(), extract: vi.fn(), process: vi.fn() }));
+vi.mock("../../src/server/accounts/service", () => ({
+  privateHeaders: { "Cache-Control": "no-store, private", Vary: "Cookie" },
+  requireSelf: auth.self,
+  authenticatedAccount: auth.commit,
+}));
+vi.mock("../../src/server/auth/request-security", () => ({
+  authConfig: () => ({ origin: "https://turnup.example", secret: "a".repeat(64), secure: true, sourceMode: "vercel" }),
+  requireOrigin: () => undefined,
+}));
+vi.mock("../../src/server/auth/session", () => ({ presentedToken: () => "token" }));
+vi.mock("../../src/server/proposal-assistance/admission", () => ({ admitProposalExtraction: vi.fn() }));
+vi.mock("../../src/server/proposal-assistance/transport", () => ({
+  proposalCompletionAvailability: () => ({ available: true }),
+  requestProposalCompletion: proposalRoute.complete,
+}));
+vi.mock("../../src/server/proposal-assistance/pdf-text", () => ({
+  MAX_PROPOSAL_PDF_BYTES: 4_000_000,
+  extractPdfPageText: proposalRoute.extract,
+}));
+vi.mock("../../src/server/proposal-assistance/processor", () => ({ processProposalExtraction: proposalRoute.process }));
+vi.mock("../../src/server/db/client", () => ({ prisma: proposalRoute.db }));
 import { createEvent, listEvents, mutateEvent, readEvent, readSavedPublicCandidateSnapshot, recordProposalExtraction } from "../../src/server/events/service";
+import { POST as proposalExtractionPost } from "../../src/app/api/organiser/events/[id]/proposal-extraction/route";
 import { currentPublication } from "../../src/server/publication/reader";
 import { EMPTY_EVENT } from "../../src/lib/event-fields";
 import type { PrivateExtraction } from "../../src/features/proposal-assistance/types";
 import type { PrismaClient } from "../../src/server/db/generated/client";
 const actor = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587", id = "8aa3c13d-d179-46bc-aec9-d24873953e32";
 const fields = { ...EMPTY_EVENT, title: "Workshop", description: "Description", location: "Hall", fee: "Free", openTo: "Anyone", preparation: "None", start: "2099-11-01T02:00:00.000Z", end: "2099-11-01T04:00:00.000Z", capacity: 10 };
+const titleExtraction: PrivateExtraction = {
+  facts: { title: { status: "known", value: "Workshop", evidence: [{ quote: "Workshop", page: 1 }] } },
+  privateFindings: [], completeness: "incomplete", incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["purpose"], technicalIssues: 0,
+};
 // Transactional test double exercises service decisions/rollback, not PostgreSQL locking.
 let dbNow: Date;
+let activeCount: number;
 let state: { events: Record<string, unknown>[], publications: Record<string, unknown>[], approvals: Record<string, unknown>[] };
 function match(record: Record<string, unknown>, where: Record<string, unknown>) { return Object.entries(where).every(([key, value]) => record[key] === value); }
 function table(name: keyof typeof state) { return {
@@ -28,8 +55,9 @@ function table(name: keyof typeof state) { return {
   deleteMany: async ({ where }: { where: Record<string, unknown> }) => { state[name] = state[name].filter((row) => !match(row, where)); },
 }; }
 const fake = {
+  registration: { count: async () => activeCount },
   event: table("events"), eventPublication: table("publications"), eventApproval: table("approvals"),
-  $queryRaw: async (parts: TemplateStringsArray, ...values: unknown[]) => parts.join("").includes("clock_timestamp") ? [{ now: new Date(dbNow) }] : state.events.filter((event) => event.id === values[0] && event.ownerId === values[1]).map(({ id }) => ({ id })),
+  $queryRaw: async (parts: TemplateStringsArray, ...values: unknown[]) => parts.join("").includes("clock_timestamp") ? [{ epochMs: dbNow.getTime() }] : state.events.filter((event) => event.id === values[0] && event.ownerId === values[1]).map(({ id }) => ({ id })),
   $transaction: async (fn: (db: unknown) => Promise<unknown>): Promise<unknown> => {
     const original = structuredClone(state);
     try { return await fn(fake); } catch (error) { state = original; throw error; }
@@ -38,9 +66,19 @@ const fake = {
 const db = fake as unknown as PrismaClient;
 beforeEach(() => {
   vi.unstubAllEnvs();
+  activeCount = 0;
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
   state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, privateActivityAt: new Date(dbNow), retentionCheckedAt: null, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  proposalRoute.db = fake;
+  proposalRoute.complete.mockResolvedValue({ ok: true, text: "synthetic completion" });
+  proposalRoute.extract.mockResolvedValue({ ok: true, pageTexts: ["Workshop"] });
+  proposalRoute.process.mockImplementation(async (_pages: readonly string[], complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>) => {
+    const completion = await complete({ system: "synthetic system", user: "synthetic user" });
+    return completion && typeof completion === "object" && "ok" in completion && completion.ok
+      ? { ok: true, value: titleExtraction }
+      : { ok: false, outcome: "unavailable" };
+  });
 });
 afterEach(() => vi.unstubAllEnvs());
 async function previewAndPublish() {
@@ -155,6 +193,7 @@ it("publishing rechecks changed-start time after an earlier future reschedule wa
   const earlier = { ...fields, start: "2099-10-31T02:00:00.000Z" };
   await mutateEvent(db, "token", id, 1, "save", earlier);
   const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  activeCount = 0;
   dbNow = new Date(earlier.start);
   await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 400 });
   expect(state.publications).toHaveLength(1);
@@ -167,6 +206,16 @@ function localPreparationEnvironment() {
   vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
   vi.stubEnv("VERCEL_ENV", "development");
   vi.stubEnv("PROPOSAL_ASSISTANCE_LOCAL_SYNTHETIC", "false");
+}
+
+function hostedPreviewEnvironment(enabled: boolean) {
+  vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("VERCEL_ENV", "preview");
+  vi.stubEnv("VERCEL", "1");
+  vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+  vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-preview-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", String(enabled));
 }
 
 function missingTitleExtraction(): PrivateExtraction {
@@ -210,6 +259,42 @@ it("records issues atomically, increments both revisions, and invalidates an ear
   expect(state.approvals).toHaveLength(0);
   expect(await readEvent(db, "token", id)).toMatchObject({ preparation: result.preparation, version: 1 });
   await expect(mutateEvent(db, "token", id, 1, "preview")).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("persists a hosted Preview extraction and keeps its saved clarification, FAQ readiness, and publishing usable when inference is disabled", async () => {
+  hostedPreviewEnvironment(true);
+  const form = new FormData();
+  form.append("file", new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" }));
+  form.append("expectedVersion", "0");
+  form.append("expectedPreparationRevision", "0");
+  form.append("revisions", JSON.stringify({ source: 0, facts: 0, editor: 0 }));
+  const response = await proposalExtractionPost(new Request(`https://turnup.example/api/organiser/events/${id}/proposal-extraction`, {
+    method: "POST", headers: { origin: "https://turnup.example" }, body: form,
+  }), { params: Promise.resolve({ id }) });
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    ok: true,
+    extraction: titleExtraction,
+    eventVersion: 1,
+    preparation: { revision: 1, issues: [] },
+  });
+  expect(state.events[0]).toMatchObject({ version: 1, preparationVersion: 1, preparation: { issues: [] } });
+
+  // The hosted inference opt-in can later be disabled without making existing
+  // private clarification data inaccessible or blocking manual publication.
+  vi.stubEnv("PROPOSAL_ASSISTANCE_HOSTED_ENABLED", "false");
+  await expect(readEvent(db, "token", id)).resolves.toMatchObject({
+    preparation: { revision: 1, issues: [] },
+    version: 1,
+  });
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, { expectedPreparationRevision: 1, resolutions: [] });
+  const snapshot = await readSavedPublicCandidateSnapshot(db, "token", id, 2, 2);
+  expect(snapshot.source.title).toBe("Workshop");
+  expect(snapshot).not.toHaveProperty("preparation");
+  const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  await mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId);
+  expect(state.events[0].state).toBe("PUBLISHED");
+  expect(proposalRoute.complete).toHaveBeenCalledOnce();
 });
 
 it("rejects stale extraction revisions without changing saved draft or clarifications", async () => {
@@ -312,4 +397,56 @@ it("rejects stale source revisions and foreign access without returning a source
   await expect(readSavedPublicCandidateSnapshot(db, "token", id, 0, 0)).rejects.toMatchObject({ status: 409 });
   state.events[0].ownerId = "foreign-owner";
   await expect(readSavedPublicCandidateSnapshot(db, "token", id, 1, 0)).rejects.toMatchObject({ status: 404 });
+});
+
+it("binds saved nonempty forms to preview/publication and preserves IDs on label edits", async () => {
+  await mutateEvent(db, "token", id, 0, "save", fields, undefined, undefined, { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  const saved = (await readEvent(db, "token", id)).form;
+  expect(saved.questions[0].id).toMatch(/^[0-9a-f-]{36}$/);
+  await previewAndPublish();
+  const original = structuredClone(state.publications[0]);
+  expect(state.publications[0]).toMatchObject({ snapshot: { form: saved } });
+  await mutateEvent(db, "token", id, 2, "save", fields, undefined, undefined, { questions: [{ ...saved.questions[0], label: "Dietary preferences" }] });
+  expect((await listEvents(db, "token"))[0].hasSavedChanges).toBe(true);
+  await previewAndPublish();
+  expect(state.publications[0]).toEqual(original);
+  expect((await readEvent(db, "token", id)).published?.form.questions[0].id).toBe(saved.questions[0].id);
+});
+it("rejects capacity below active places while preserving the current publication", async () => {
+  await previewAndPublish();
+  await mutateEvent(db, "token", id, 1, "save", { ...fields, capacity: 1 });
+  const preview = await mutateEvent(db, "token", id, 2, "preview") as { approvalId: string };
+  activeCount = 2;
+  await expect(mutateEvent(db, "token", id, 2, "publish", undefined, preview.approvalId)).rejects.toMatchObject({ status: 409, field: "capacity" });
+  expect(state.publications).toHaveLength(1);
+  expect((await readEvent(db, "token", id)).published?.fields.capacity).toBe(10);
+});
+
+it("saves form changes and clarification resolutions together and retains both on later field saves", async () => {
+  localPreparationEnvironment();
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  const clarification = { expectedPreparationRevision: 1, resolutions: [{ field: "title" as const, method: "organiser" as const, value: fields.title }] };
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, clarification,
+    { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  const saved = await readEvent(db, "token", id);
+  expect(saved.preparation?.issues[0].resolution?.value).toBe(fields.title);
+  expect(saved.form.questions[0].label).toBe("Dietary needs");
+  await mutateEvent(db, "token", id, 2, "save", fields, undefined, { expectedPreparationRevision: 2, resolutions: [] });
+  expect((await readEvent(db, "token", id)).form).toEqual(saved.form);
+  await previewAndPublish();
+  const published = await readEvent(db, "token", id);
+  expect(published.published?.form.questions).toEqual(saved.form.questions);
+});
+
+it("tracks activity and retention for form-only private changes", async () => {
+  await previewAndPublish();
+  dbNow = new Date("2026-10-24T06:30:00.000Z");
+  await mutateEvent(db, "token", id, 1, "save", fields, undefined, undefined,
+    { questions: [{ type: "short_text", label: "Dietary needs", required: false }] });
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect((await readEvent(db, "token", id)).retention).not.toBeNull();
+  expect((await listEvents(db, "token"))[0]).toMatchObject({ hasSavedChanges: true, retention: { disposition: "restore_publication" } });
+  await mutateEvent(db, "token", id, 2, "discard");
+  expect((await readEvent(db, "token", id)).form.questions).toEqual([]);
+  expect(state.events[0].privateActivityAt).toBeNull();
 });

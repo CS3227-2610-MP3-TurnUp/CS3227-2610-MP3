@@ -2,9 +2,17 @@
 
 An event sharing platform with separate Student and Organiser workflows in one Next.js + TypeScript application, targeting Vercel Hobby.
 
-Students discover events, register, and ask event questions. Organisers prepare, review, and publish event information, manage registration forms, and reply privately. Proposal assistance processes PDFs temporarily; Student AI uses only the current approved public information.
+The implemented code includes fixed-role accounts/settings, manual Organiser draft/preview/publication, Student discovery/registration/corrections/My Events and a bounded current-publication event assistant with private per-account history. PDF proposal assistance, an Organiser form-builder/roster interface and private inbox/replies remain outside this code snapshot; planned specifications are not feature-completion evidence.
 
-The repository includes a runnable Next.js foundation, synthetic-only probe persistence, a shared SoC admission gate and the Vercel deployment workflow. The Production foundation deployment succeeded at `05e1b42`; non-production migration, hosted persistence and recovery checks passed; the separately gated SoC check remains pending, as recorded in [CHG-K-006](changes/CHG-K-006-foundation-handoff/verification.md). The bounded signup/login account slice is described below; other product workflows remain unimplemented.
+## Product and documentation
+
+- [Open TurnUp](https://turnup-nine.vercel.app/) — selected Production address; Vercel access protection may precede application login.
+- [User Guide](docs/UserGuide.md) — current implemented workflows, limitations and numbered manual screenshot placeholders.
+- [Developer Guide](docs/DeveloperGuide.md) — setup, architecture/UML, security, tests and the SDD/multi-agent process.
+- [Product website sources and publishing](docs/WEBSITE.md) — MP2-style GitHub Pages site prepared under `docs/`; publication is a separate step.
+- [Workflow artifact map](workflow/README.md) — portable validation and existing workflow locations.
+
+The guides describe source revision `55d9cb7` and explicitly distinguish code inspection, tests and hosted evidence. Older setup notes below record earlier increments and may describe deferred work that is now implemented; use the guides/code for current interface behavior and each change's verification for actual results.
 
 ## Application setup
 

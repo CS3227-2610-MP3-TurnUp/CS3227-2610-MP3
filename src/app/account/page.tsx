@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { CredentialsForm } from "../../components/account/credentials-form";
 import { StudentProfileForm } from "../../components/account/student-profile-form";
-import { AccountMenu } from "../../components/account/account-menu";
+import { WorkspaceHeader } from "../../components/workspace-header";
 import { requireRole } from "../../server/auth/guards";
 import { authConfig } from "../../server/auth/request-security";
 import { cookieName } from "../../server/auth/session";
@@ -25,6 +25,6 @@ export default async function AccountPage() {
   const content = settings
     ? <><CredentialsForm username={settings.username} credentialVersion={settings.credentialVersion} />{profile && <StudentProfileForm profile={profile} />}</>
     : <section className="card"><p role="alert">Settings are unavailable. Reload or log in again.</p><Link href="/login">Go to login</Link></section>;
-  return <main className="workspace"><header className="workspace-header"><Link className="brand" href="/">TurnUp</Link><AccountMenu username={access.user.username} /></header>
-    <div className="account-shell"><Link href={access.user.role === "STUDENT" ? "/student" : "/organiser"}>Back to your account</Link><h1>Account settings</h1>{content}</div></main>;
+  return <main className="workspace"><WorkspaceHeader username={access.user.username} role={access.user.role} />
+    <div className="account-shell"><div className="page-heading"><p className="eyebrow">Your account</p><h1>Account settings</h1><p className="muted">{access.user.role === "STUDENT" ? "Manage your sign-in details and optional profile." : "Manage your sign-in details."}</p></div>{content}</div></main>;
 }

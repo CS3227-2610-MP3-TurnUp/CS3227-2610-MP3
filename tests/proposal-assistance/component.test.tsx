@@ -11,6 +11,7 @@ vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
+    useCallback: <T,>(callback: T) => callback,
     useState: <T,>(initial: T | (() => T)) => {
       const index = hooks.stateIndex++;
       if (!(index in hooks.states)) hooks.states[index] = typeof initial === "function" ? (initial as () => T)() : initial;
@@ -35,6 +36,7 @@ import type { PrivateExtraction, ProposalRevisions } from "../../src/features/pr
 import type { ProposalFeedbackMap } from "../../src/features/proposal-assistance/event-prefill";
 import type { EventPreparationResponse } from "../../src/features/proposal-assistance/clarification";
 import type { DraftRetentionStatus } from "../../src/lib/event-retention";
+import type { GenerationUsageResponse } from "../../src/lib/generation-usage";
 import { MAX_PROPOSAL_PDF_BYTES } from "../../src/features/proposal-assistance/limits";
 import { ProposalAssistance } from "../../src/components/events/proposal-assistance";
 
@@ -68,6 +70,7 @@ let onPrefill: ReturnType<typeof vi.fn<(values: Partial<EventFields>, feedback: 
 let onServerPreparation: ReturnType<typeof vi.fn<(eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void>>;
 let onGenerationPending: ReturnType<typeof vi.fn<(delta: 1 | -1) => void>>;
 let onClearFeedback: ReturnType<typeof vi.fn<() => void>>;
+let refreshGenerationUsage: ReturnType<typeof vi.fn<() => Promise<GenerationUsageResponse | null>>>;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
@@ -80,6 +83,8 @@ beforeEach(() => {
   onServerPreparation = vi.fn<(eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void>();
   onGenerationPending = vi.fn<(delta: 1 | -1) => void>();
   onClearFeedback = vi.fn<() => void>();
+  const localUsage: GenerationUsageResponse = { ok: true, status: "disabled", reason: "unsupported_environment", usage: null };
+  refreshGenerationUsage = vi.fn(async () => localUsage);
   props = {
     eventId: "event-1",
     eventVersion: 1,
@@ -92,6 +97,8 @@ beforeEach(() => {
     onServerPreparation,
     onGenerationPending,
     onClearFeedback,
+    generationUsage: { loading: false, response: localUsage },
+    refreshGenerationUsage,
   };
   fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
     const form = init?.body as FormData;
@@ -194,6 +201,89 @@ describe("ProposalAssistance component", () => {
     expect(selectedMarkup).toContain("A very long replacement proposal filename that should wrap safely.pdf (0.00 MB)");
     expect(selectedMarkup).not.toContain("synthetic.pdf (0.00 MB)");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not show the hosted daily allowance for local synthetic generation", () => {
+    const markup = renderToStaticMarkup(render());
+    expect(markup).toContain("Local synthetic generation uses separate limits");
+    expect(markup).not.toContain("10 generation attempts");
+    expect(markup).not.toContain("40,960");
+  });
+
+  it("refreshes usage after a daily-limit response and preserves event fields", async () => {
+    const resetAt = "2026-11-15T16:00:00.000Z";
+    const currentUsage: GenerationUsageResponse = {
+      ok: true,
+      status: "active",
+      usage: {
+        environment: "preview",
+        timeZone: "Asia/Singapore",
+        day: "2026-11-15",
+        resetAt,
+        attempts: { limit: 10, used: 10, remaining: 0 },
+        outputTokens: { perRequest: 4_096, limit: 40_960, reserved: 40_960, remaining: 0 },
+        inFlight: false,
+        nextAllowedAt: null,
+      },
+    };
+    refreshGenerationUsage.mockResolvedValue(currentUsage);
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({
+      ok: false,
+      outcome: "rate_or_budget_limited",
+      limitReason: "daily_attempts",
+      retryAt: null,
+      resetAt,
+    }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    selectPdf(render());
+    await generate(render());
+
+    expect(refreshGenerationUsage).toHaveBeenCalledOnce();
+    const alert = nodes(render()).find((element) => element.props.role === "alert");
+    expect(childText(alert?.props.children)).toContain("used today's 10 generation attempts");
+    expect(onPrefill).not.toHaveBeenCalled();
+    expect(onServerPreparation).not.toHaveBeenCalled();
+  });
+
+  it("settles a daily-limit response when the advisory usage refresh never resolves", async () => {
+    refreshGenerationUsage.mockImplementation(() => new Promise<GenerationUsageResponse | null>(() => {}));
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({
+      ok: false,
+      outcome: "rate_or_budget_limited",
+      limitReason: "daily_attempts",
+      retryAt: null,
+      resetAt: "2026-11-15T16:00:00.000Z",
+    }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    selectPdf(render());
+
+    await generate(render());
+
+    expect(onGenerationPending.mock.calls).toEqual([[1], [-1]]);
+    expect(nodeByText(render(), "button", "Generate Findings").props.disabled).toBe(false);
+    expect(childText(nodes(render()).find((element) => element.props.role === "alert")?.props.children)).toContain("used today's 10 generation attempts");
+  });
+
+  it("preserves a newer field value when the proposal response arrives stale", async () => {
+    const workingFields = { ...EMPTY_EVENT, title: "Original title" };
+    onPrefill.mockImplementation((values) => Object.assign(workingFields, values));
+    let resolveResponse!: (response: Response) => void;
+    fetchMock.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      return await new Promise<Response>((resolve) => {
+        resolveResponse = (response) => resolve(response);
+      });
+    });
+    selectPdf(render());
+    startGenerate(render());
+    await Promise.resolve();
+    workingFields.title = "Newer organiser edit";
+    editorRevision += 1;
+    const form = fetchMock.mock.calls[0]?.[1]?.body as FormData;
+    const revisions = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
+    resolveResponse(json({ ok: true, revisions, eventVersion: props.eventVersion + 1, preparation: null, extraction }));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(workingFields.title).toBe("Newer organiser edit");
+    expect(onPrefill).not.toHaveBeenCalled();
+    expect(childText(nodes(render()).find((element) => element.props.className === "notice")?.props.children)).toContain("proposal or event changed while findings were being generated");
   });
 
   it("preserves the current selected proposal and findings when replacement is canceled", async () => {
@@ -306,6 +396,7 @@ describe("ProposalAssistance component", () => {
   it("clears only transient evidence on source removal and preserves generated field values", async () => {
     selectPdf(render());
     await generate(render());
+    expect(refreshGenerationUsage).toHaveBeenCalledOnce();
     const remove = nodeByText(render(), "button", "Remove proposal");
     (remove.props.onClick as () => void)();
     const markup = renderToStaticMarkup(render());
