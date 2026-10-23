@@ -60,7 +60,7 @@ Commit, push and open a PR for the fix, and provide the revised role screenshot 
 
 ## Results
 
-PR 34 was confirmed merged. Fetched origin/master at 4d3165965ffb87348715cade285e13dd7f353861 and created codex/remove-recovery-notices, preserving unrelated changes. Delivery is in progress; only explicitly scoped app copy, documentation, contracts/scenario and this owner log will be staged. No deployment, database or authentication logic changes.
+PR 34 was confirmed merged. Fetched origin/master at 4d3165965ffb87348715cade285e13dd7f353861 and created codex/remove-recovery-notices, preserving unrelated changes. Committed db1c9d4 and pushed codex/remove-recovery-notices. Opened PR #36: https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/36 and attached it to the chat. The PR contains exactly 11 scoped files; local agent/skill customizations and unrelated changes are excluded. Documentation, focused auth-form ESLint, whitespace and self-review checks passed; no new behavioral tests were warranted for removing static copy. A revised role screenshot checklist is supplied in the response. No deployment, database or authentication logic changes.
 
 <!-- turnup-prompt:v1 -->
 ```json
@@ -82,8 +82,8 @@ PR 34 was confirmed merged. Fetched origin/master at 4d3165965ffb87348715cade285
       "task": "Deliver the copy cleanup",
       "reason": null,
       "dispatches": 0,
-      "outcome": "in_progress",
-      "result": "PR 34 was confirmed merged. Fetched origin/master at 4d3165965ffb87348715cade285e13dd7f353861 and created codex/remove-recovery-notices, preserving unrelated changes. Delivery is in progress; only explicitly scoped app copy, documentation, contracts/scenario and this owner log will be staged. No deployment, database or authentication logic changes.",
+      "outcome": "completed",
+      "result": "PR 34 was confirmed merged. Fetched origin/master at 4d3165965ffb87348715cade285e13dd7f353861 and created codex/remove-recovery-notices, preserving unrelated changes. Committed db1c9d4 and pushed codex/remove-recovery-notices. Opened PR #36: https://github.com/CS3227-2610-MP3-TurnUp/CS3227-2610-MP3/pull/36 and attached it to the chat. The PR contains exactly 11 scoped files; local agent/skill customizations and unrelated changes are excluded. Documentation, focused auth-form ESLint, whitespace and self-review checks passed; no new behavioral tests were warranted for removing static copy. A revised role screenshot checklist is supplied in the response. No deployment, database or authentication logic changes.",
       "settings": {
         "model": null,
         "effort": null,
