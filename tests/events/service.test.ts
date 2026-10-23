@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const auth = vi.hoisted(() => ({ self: vi.fn(), commit: vi.fn() }));
 vi.mock("../../src/server/accounts/service", () => ({ requireSelf: auth.self, authenticatedAccount: auth.commit }));
-import { createEvent, listEvents, mutateEvent, readEvent, recordProposalExtraction } from "../../src/server/events/service";
+import { createEvent, listEvents, mutateEvent, readEvent, readSavedPublicCandidateSnapshot, recordProposalExtraction } from "../../src/server/events/service";
 import { currentPublication } from "../../src/server/publication/reader";
 import { EMPTY_EVENT } from "../../src/lib/event-fields";
 import type { PrivateExtraction } from "../../src/features/proposal-assistance/types";
@@ -40,7 +40,7 @@ beforeEach(() => {
   vi.unstubAllEnvs();
   dbNow = new Date("2026-10-21T00:00:00Z");
   vi.resetAllMocks(); auth.self.mockResolvedValue({ id: actor, role: "ORGANISER" }); auth.commit.mockResolvedValue({ id: actor, role: "ORGANISER" });
-  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
+  state = { events: [{ id, ownerId: actor, state: "DRAFT", version: 0, draftVersion: 0, draft: structuredClone(fields), preparation: null, preparationVersion: 0, privateActivityAt: new Date(dbNow), retentionCheckedAt: null, currentPublicationId: null, firstPublishedAt: null, editedAt: new Date() }], publications: [], approvals: [] };
 });
 afterEach(() => vi.unstubAllEnvs());
 async function previewAndPublish() {
@@ -58,9 +58,11 @@ it("denies Students and foreign owners without disclosing or mutating events", a
 it("creates a private incomplete draft with server identity and UUID", async () => {
   const created = await createEvent(db, "token");
   expect(created.ownerId).toBe(actor); expect(created.id).toMatch(/^[0-9a-f-]{36}$/); expect(created.draft).toEqual(EMPTY_EVENT);
+  expect(created.privateActivityAt).toEqual(dbNow);
 });
 it("publishes only the exact preview, with immutable history and an empty versioned form", async () => {
   await previewAndPublish();
+  expect(state.events[0].privateActivityAt).toBeNull();
   const oldPublication = structuredClone(state.publications[0]);
   expect(state.events[0]).toMatchObject({ state: "PUBLISHED", version: 1 });
   expect(state.publications[0]).toMatchObject({ snapshot: { fields, form: { questions: [] } }, approvedBy: actor });
@@ -172,6 +174,33 @@ function missingTitleExtraction(): PrivateExtraction {
     incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["title"], technicalIssues: 0 };
 }
 
+it("exposes owner expiry metadata without touching the activity timestamp on reads or previews", async () => {
+  dbNow = new Date("2026-11-12T00:00:00.000Z");
+  const originalActivity = new Date("2026-10-21T00:00:00.000Z");
+  state.events[0].privateActivityAt = originalActivity;
+  expect((await readEvent(db, "token", id)).retention).toEqual({
+    expiresAt: "2026-11-20T00:00:00.000Z", warningAt: "2026-11-13T00:00:00.000Z",
+    warning: false, expired: false, disposition: "delete_draft",
+  });
+  await listEvents(db, "token");
+  await mutateEvent(db, "token", id, 0, "preview");
+  expect(state.events[0].privateActivityAt).toEqual(originalActivity);
+  dbNow = new Date("2026-11-20T00:00:00.000Z");
+  expect((await readEvent(db, "token", id)).retention).toMatchObject({ warning: true, expired: true });
+});
+
+it("resets expiry only on successful saves and accepted persisted extractions", async () => {
+  dbNow = new Date("2026-10-22T12:00:00.000Z");
+  await mutateEvent(db, "token", id, 0, "save", fields);
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect(state.events[0].retentionCheckedAt).toBeNull();
+  localPreparationEnvironment();
+  dbNow = new Date("2026-10-24T06:30:00.000Z");
+  const accepted = await recordProposalExtraction(db, "token", id, 1, 0, missingTitleExtraction());
+  expect(state.events[0].privateActivityAt).toEqual(dbNow);
+  expect(accepted.retention).toMatchObject({ disposition: "delete_draft", warning: false, expired: false });
+});
+
 it("records issues atomically, increments both revisions, and invalidates an earlier preview", async () => {
   localPreparationEnvironment();
   await mutateEvent(db, "token", id, 0, "preview");
@@ -246,4 +275,41 @@ it("fails closed on assisted records outside local scope while preserving the nu
   const preview = await mutateEvent(db, "token", id, 1, "preview") as { approvalId: string };
   await mutateEvent(db, "token", id, 1, "publish", undefined, preview.approvalId);
   expect(state.events[0].state).toBe("PUBLISHED");
+});
+
+it("reads a publishable saved public-candidate source with readable SGT times and no private preparation", async () => {
+  localPreparationEnvironment();
+  const snapshot = await readSavedPublicCandidateSnapshot(db, "token", id, 0, 0);
+  expect(snapshot).toMatchObject({ ownerId: actor, eventVersion: 0, preparationRevision: 0, state: "DRAFT" });
+  expect(snapshot.source).toEqual({
+    title: "Workshop",
+    description: "Description",
+    start: "01/11/2099, 10:00 AM SGT",
+    end: "01/11/2099, 12:00 PM SGT",
+    location: "Hall",
+    capacity: "10",
+    fee: "Free",
+    openTo: "Anyone",
+    preparation: "None",
+    other: "",
+  });
+  expect(snapshot).not.toHaveProperty("preparation");
+  expect(snapshot).not.toHaveProperty("fields");
+});
+
+it("blocks candidate readiness for incomplete public drafts and unresolved saved issues", async () => {
+  localPreparationEnvironment();
+  state.events[0].draft = { ...fields, description: "" };
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 0, 0)).rejects.toMatchObject({ status: 409, field: "description" });
+  state.events[0].draft = structuredClone(fields);
+  await recordProposalExtraction(db, "token", id, 0, 0, missingTitleExtraction());
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 1, 1)).rejects.toMatchObject({ status: 409, field: "title" });
+});
+
+it("rejects stale source revisions and foreign access without returning a source snapshot", async () => {
+  localPreparationEnvironment();
+  await mutateEvent(db, "token", id, 0, "save", { ...fields, title: "Changed" });
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 0, 0)).rejects.toMatchObject({ status: 409 });
+  state.events[0].ownerId = "foreign-owner";
+  await expect(readSavedPublicCandidateSnapshot(db, "token", id, 1, 0)).rejects.toMatchObject({ status: 404 });
 });

@@ -3,14 +3,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { EVENT_LIMITS, FIELD_LABELS, sameEventFields, singaporeInput, singaporeInstant, type EventFields, type TextField } from "../../lib/event-fields";
+import type { DraftRetentionStatus } from "../../lib/event-retention";
 import { formatEventAlternative, prepareEventAlternative, type ProposalFeedbackMap, type ProposalFieldFeedback } from "../../features/proposal-assistance/event-prefill";
 import { CLARIFICATION_COPY, PROPOSAL_TO_EVENT_FIELD, type ClarificationIssue, type ClarificationResolutionIntent, type EventPreparationResponse } from "../../features/proposal-assistance/clarification";
 import type { PageEvidence, ProposalField } from "../../features/proposal-assistance/types";
 import { EventContent } from "./event-content";
 import { ProposalAssistance } from "./proposal-assistance";
+import { PublicContentAssistance } from "./public-content-assistance";
+import { DraftRetentionNotice } from "./draft-retention-notice";
 
 type Snapshot = { fields: EventFields; form: { formRevisionId: string; questions: unknown[] } };
-type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; preparation: EventPreparationResponse };
+type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; preparation: EventPreparationResponse; retention?: DraftRetentionStatus | null };
 type Preview = { approvalId: string; version: number; snapshot: Snapshot; digest: string };
 type Mode = "publication" | "editor" | "preview";
 type LocalResolutionIntent = { method: "suggestion"; alternative: { value: string; evidence: PageEvidence[] } } | { method: "organiser" };
@@ -40,7 +43,9 @@ export function EventEditor({ id }: { id: string }) {
   const proposalFeedbackRevision = useRef(0);
   const assistancePendingRef = useRef(0);
   const viewRef = useRef<View | null>(null);
+  const workingRef = useRef<{ fields: EventFields | null; intents: LocalResolutionMap }>({ fields, intents: resolutionIntents });
   viewRef.current = view;
+  workingRef.current = { fields, intents: resolutionIntents };
   const renderedEditorRevision = editorRevision.current;
   const dirty = !!view && !!fields && (!sameEventFields(fields, view.fields) || Object.keys(resolutionIntents).length > 0);
 
@@ -49,11 +54,13 @@ export function EventEditor({ id }: { id: string }) {
     const result = await response.json() as View & { error?: string };
     if (!response.ok) throw new Error(result.error || "Event unavailable.");
     if (!signal?.aborted) {
+      const loaded = { ...result, retention: result.retention ?? null };
       proposalFeedbackRevision.current += 1;
-      viewRef.current = result;
-      setView(result); setFields(result.fields); setPreview(null); setApproved(false);
+      viewRef.current = loaded;
+      workingRef.current = { fields: loaded.fields, intents: {} };
+      setView(loaded); setFields(loaded.fields); setPreview(null); setApproved(false);
       setResolutionIntents({});
-      setMode(result.state === "CANCELLED" ? "publication" : preferredMode ?? defaultMode(result));
+      setMode(loaded.state === "CANCELLED" ? "publication" : preferredMode ?? defaultMode(loaded));
       setEditorEpoch((epoch) => epoch + 1);
     }
   }
@@ -82,6 +89,7 @@ export function EventEditor({ id }: { id: string }) {
     editorRevision.current += 1;
     proposalFeedbackRevision.current += 1;
     setEditorEpoch((epoch) => epoch + 1);
+    workingRef.current = { fields: view.fields, intents: {} };
     setFields(view.fields); setPreview(null); setApproved(false); setMode(defaultMode(view)); setError(""); setFieldError(""); setProposalFeedback({}); setResolutionIntents({});
     setNotice("Unsaved edits discarded. Saved draft and publication are unchanged.");
     setTimeout(() => heading.current?.focus(), 0);
@@ -89,7 +97,9 @@ export function EventEditor({ id }: { id: string }) {
   function change(key: keyof EventFields, value: string | number | null) {
     editorRevision.current += 1;
     proposalFeedbackRevision.current += 1;
-    setFields((old) => old ? { ...old, [key]: value } : null);
+    const nextFields = workingRef.current.fields ? { ...workingRef.current.fields, [key]: value } : null;
+    workingRef.current = { ...workingRef.current, fields: nextFields };
+    setFields(nextFields);
     setProposalFeedback((old) => {
       if (!old[key]) return old;
       const next = { ...old };
@@ -97,12 +107,12 @@ export function EventEditor({ id }: { id: string }) {
       return next;
     });
     const proposalField = proposalFieldForEventField(key);
-    if (proposalField) setResolutionIntents((old) => {
-      if (!old[proposalField]) return old;
-      const next = { ...old };
+    if (proposalField && workingRef.current.intents[proposalField]) {
+      const next = { ...workingRef.current.intents };
       delete next[proposalField];
-      return next;
-    });
+      workingRef.current = { ...workingRef.current, intents: next };
+      setResolutionIntents(next);
+    }
     setPreview(null); setApproved(false); setNotice("");
   }
   function applyProposalPrefill(values: Partial<EventFields>, feedback: ProposalFeedbackMap) {
@@ -110,7 +120,9 @@ export function EventEditor({ id }: { id: string }) {
     proposalFeedbackRevision.current += 1;
     if (Object.keys(values).length > 0) {
       editorRevision.current += 1;
-      setFields((old) => old ? { ...old, ...values } : null);
+      const nextFields = workingRef.current.fields ? { ...workingRef.current.fields, ...values } : null;
+      workingRef.current = { ...workingRef.current, fields: nextFields };
+      setFields(nextFields);
       setPreview(null); setApproved(false);
       setNotice("Supported proposal findings were prefilled. Review each value and its source evidence before saving.");
     } else {
@@ -127,16 +139,17 @@ export function EventEditor({ id }: { id: string }) {
     assistancePendingRef.current = count;
     setAssistancePendingCount(count);
   }
-  function acceptServerPreparation(eventVersion: number, preparation: EventPreparationResponse) {
+  function acceptServerPreparation(eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) {
     const current = viewRef.current;
     if (!current || eventVersion < current.version || (preparation?.revision ?? 0) < (current.preparation?.revision ?? 0)) return;
     proposalFeedbackRevision.current += 1;
-    const next = { ...current, version: eventVersion, preparation };
+    const next = { ...current, version: eventVersion, preparation, ...(retention === undefined ? {} : { retention }) };
     viewRef.current = next;
     setView(next);
     // A local confirmation was made against the previous source revision. It
     // must be repeated against this authoritative preparation, even when the
     // newly extracted answer happens to match the old local choice.
+    workingRef.current = { ...workingRef.current, intents: {} };
     setResolutionIntents({});
   }
   function chooseClarificationAlternative(field: ProposalField, alternative: { value: string; evidence: PageEvidence[] }, expectedRevision: number, expectedEditorRevision: number) {
@@ -147,7 +160,9 @@ export function EventEditor({ id }: { id: string }) {
     const converted = prepareEventAlternative(eventField, alternative.value);
     if (!converted.ok) return;
     change(eventField, converted.value);
-    setResolutionIntents((old) => ({ ...old, [field]: { method: "suggestion", alternative } }));
+    const nextIntents = { ...workingRef.current.intents, [field]: { method: "suggestion" as const, alternative } };
+    workingRef.current = { ...workingRef.current, intents: nextIntents };
+    setResolutionIntents(nextIntents);
     setNotice("The selected proposal value is ready to save with its evidence.");
   }
   function confirmClarification(field: ProposalField, expectedRevision: number, expectedEditorRevision: number) {
@@ -156,7 +171,9 @@ export function EventEditor({ id }: { id: string }) {
     if (!issue || isIssueResolved(issue, fields, resolutionIntents) || !isConfirmationReady(field, fields)) return;
     editorRevision.current += 1;
     proposalFeedbackRevision.current += 1;
-    setResolutionIntents((old) => ({ ...old, [field]: { method: "organiser" } }));
+    const nextIntents = { ...workingRef.current.intents, [field]: { method: "organiser" as const } };
+    workingRef.current = { ...workingRef.current, intents: nextIntents };
+    setResolutionIntents(nextIntents);
     setPreview(null); setApproved(false);
     setNotice("Your confirmation is ready to save with the draft.");
   }
@@ -220,6 +237,31 @@ export function EventEditor({ id }: { id: string }) {
   const displayedFields = mode === "publication" && published ? published.fields : mode === "preview" && preview ? preview.snapshot.fields : fields;
   const preparationRevision = view.preparation?.revision ?? 0;
   const unresolved = unresolvedClarifications(view.preparation, fields, resolutionIntents);
+  function getCurrentCandidateSnapshot() {
+    const currentView = viewRef.current;
+    const currentFields = workingRef.current.fields;
+    const currentIntents = workingRef.current.intents;
+    return {
+      eventVersion: currentView?.version ?? -1,
+      preparationRevision: currentView?.preparation?.revision ?? 0,
+      editorRevision: editorRevision.current,
+      dirty: !!currentView && !!currentFields && (!sameEventFields(currentFields, currentView.fields) || Object.keys(currentIntents).length > 0),
+      unresolvedCount: currentView && currentFields ? unresolvedClarifications(currentView.preparation, currentFields, currentIntents).length : 0,
+      editorActionPending: inFlight.current,
+      assistancePending: assistancePendingRef.current > 0,
+      state: currentView?.state ?? "DRAFT",
+      previousPublishedStart: currentView?.published?.fields.start,
+      fields: currentFields ?? fields!,
+    };
+  }
+  function applyPublicCandidate(field: "other", value: string, expectedVersion: number, expectedPreparationRevision: number, expectedEditorRevision: number, expectedFieldValue: string): boolean {
+    const current = getCurrentCandidateSnapshot();
+    if (current.editorActionPending || current.assistancePending || current.eventVersion !== expectedVersion ||
+      current.preparationRevision !== expectedPreparationRevision || current.editorRevision !== expectedEditorRevision ||
+      current.fields[field] !== expectedFieldValue) return false;
+    change(field, value);
+    return true;
+  }
   const describedBy = (key: string) => [
     key in EVENT_LIMITS ? `help-${key}` : "",
     fieldError === key ? "event-error" : "",
@@ -236,6 +278,8 @@ export function EventEditor({ id }: { id: string }) {
         <button className="secondary" disabled={pending} onClick={() => void reload()}>Reload saved values</button></div>}
       {notice && <p role="status" className="notice">{notice}</p>}
     </div>
+
+    {mode !== "preview" && <DraftRetentionNotice retention={view.retention} canExtend={!cancelled} />}
 
     {mode === "publication" && published && <section className="card event-publication">
       <h2>{view.state === "PUBLISHED" ? "Current Live Publication" : "Last Publication"}</h2>
@@ -256,6 +300,10 @@ export function EventEditor({ id }: { id: string }) {
         preserveFields={new Set(Object.keys(resolutionIntents) as ProposalField[])}
         currentEditorRevision={() => editorRevision.current} onPrefill={applyProposalPrefill} onServerPreparation={acceptServerPreparation}
         onGenerationPending={adjustAssistancePending} onClearFeedback={clearProposalFeedback} />
+      <PublicContentAssistance key={id + "-" + editorEpoch + "-" + view.version + "-" + preparationRevision}
+        eventId={id} eventVersion={view.version} preparationRevision={preparationRevision}
+        editorActionPending={pending} assistancePending={assistancePendingCount > 0}
+        getCurrentSnapshot={getCurrentCandidateSnapshot} onGenerationPending={adjustAssistancePending} onApply={applyPublicCandidate} />
       <ClarificationSummary preparation={view.preparation} fields={fields} intents={resolutionIntents} />
       <fieldset disabled={pending} className="event-fields">
         {(Object.keys(EVENT_LIMITS) as TextField[]).map((key) => <div className="field" key={key}>
@@ -291,7 +339,7 @@ export function EventEditor({ id }: { id: string }) {
       {unresolved.length > 0 && <p className="notice">Resolve the proposal clarifications below before previewing or publishing. You can save this draft while questions remain.</p>}
       <div className="event-actions">
         <button className="primary" disabled={pending || assistancePendingCount > 0} type="submit">{pending ? "Working…" : "Save Draft"}</button>
-        <button className="secondary" type="button" disabled={pending || (!dirty && !published)} onClick={cancelEditing}>Cancel Editing</button>
+        <button className="secondary" type="button" disabled={pending || assistancePendingCount > 0 || (!dirty && !published)} onClick={cancelEditing}>Cancel Editing</button>
         <button className="secondary" type="button" disabled={pending || assistancePendingCount > 0 || dirty || unresolved.length > 0} onClick={() => void action("preview")}>Preview saved draft</button>
         {!published && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("delete")}>Delete draft</button>}
         {hasSavedChanges && <button className="secondary event-danger" type="button" disabled={pending} onClick={() => void action("discard")}>Discard saved changes</button>}

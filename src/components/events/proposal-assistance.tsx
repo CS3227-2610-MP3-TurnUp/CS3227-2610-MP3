@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { EventFields } from "../../lib/event-fields";
+import type { DraftRetentionStatus } from "../../lib/event-retention";
 import { MAX_PROPOSAL_PDF_BYTES } from "../../features/proposal-assistance/limits";
 import { prepareEventPrefill, type ProposalFeedbackMap } from "../../features/proposal-assistance/event-prefill";
 import type { EventPreparationResponse } from "../../features/proposal-assistance/clarification";
@@ -16,12 +17,12 @@ type Props = {
   preserveFields: ReadonlySet<ProposalField>;
   currentEditorRevision: () => number;
   onPrefill: (values: Partial<EventFields>, feedback: ProposalFeedbackMap) => void;
-  onServerPreparation: (eventVersion: number, preparation: EventPreparationResponse) => void;
+  onServerPreparation: (eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void;
   onGenerationPending: (delta: 1 | -1) => void;
   onClearFeedback: () => void;
 };
 
-type ApiResult = { ok: true; revisions: ProposalRevisions; eventVersion: number; preparation: EventPreparationResponse; extraction: PrivateExtraction } | { ok: false; outcome: string };
+type ApiResult = { ok: true; revisions: ProposalRevisions; eventVersion: number; preparation: EventPreparationResponse; extraction: PrivateExtraction; retention?: DraftRetentionStatus | null } | { ok: false; outcome: string };
 
 export function ProposalAssistance({ eventId, eventVersion, preparationRevision, eventBusy, generationBusy, preserveFields, currentEditorRevision, onPrefill, onServerPreparation, onGenerationPending, onClearFeedback }: Props) {
   const [file, setFile] = useState<File | null>(null);
@@ -99,7 +100,7 @@ export function ProposalAssistance({ eventId, eventVersion, preparationRevision,
       // The server may have durably recorded issues even when this response is
       // stale against newer local edits. Reconcile that authoritative revision
       // without applying extracted values to those edits.
-      onServerPreparation(payload.eventVersion, payload.preparation);
+      onServerPreparation(payload.eventVersion, payload.preparation, payload.retention);
       if (requestRevision.current !== requestId || controller.signal.aborted) return;
       if (
         revisions.source !== sourceRevision.current || revisions.facts !== factsRevision.current ||

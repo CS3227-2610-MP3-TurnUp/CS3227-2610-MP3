@@ -106,6 +106,8 @@ model Event {
   draftVersion Int @default(0) @map("draft_version")
   preparation Json?
   preparationVersion Int @default(0) @map("preparation_version")
+  privateActivityAt DateTime? @map("private_activity_at") @db.Timestamptz(6)
+  retentionCheckedAt DateTime? @map("retention_checked_at") @db.Timestamptz(6)
   firstPublishedAt DateTime? @map("first_published_at") @db.Timestamptz(6)
   currentPublicationId String? @unique @map("current_publication_id") @db.Uuid
   currentPublication EventPublication? @relation("CurrentPublication", fields: [currentPublicationId], references: [id], onDelete: Restrict)
@@ -114,6 +116,7 @@ model Event {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   editedAt DateTime @default(now()) @map("edited_at") @db.Timestamptz(6)
   @@index([ownerId, editedAt])
+  @@index([privateActivityAt, retentionCheckedAt], map: "event_retention_scan_idx")
   @@map("event")
 }
 

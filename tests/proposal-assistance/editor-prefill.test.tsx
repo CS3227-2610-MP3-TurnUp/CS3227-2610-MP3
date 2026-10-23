@@ -41,12 +41,27 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { EMPTY_EVENT, type EventFields } from "../../src/lib/event-fields";
 import type { PrivateExtraction, ProposalRevisions } from "../../src/features/proposal-assistance/types";
 import type { EventPreparationResponse } from "../../src/features/proposal-assistance/clarification";
+import type { DraftRetentionStatus } from "../../src/lib/event-retention";
 import { EventEditor } from "../../src/components/events/editor";
 
 type ElementLike = { type: unknown; key?: string | null; props: Record<string, unknown> };
 
 const savedFields: EventFields = { ...EMPTY_EVENT, title: "Current title", description: "Current description", location: "Current venue", fee: "Paid", openTo: "Current audience", capacity: 50 };
-const view = { id: "event-1", version: 2, state: "DRAFT", fields: savedFields, published: null, preparation: null };
+const view = { id: "event-1", version: 2, state: "DRAFT", fields: savedFields, published: null, preparation: null, retention: null };
+const warningRetention: DraftRetentionStatus = {
+  expiresAt: "2026-10-30T04:00:00.000Z",
+  warningAt: "2026-10-23T04:00:00.000Z",
+  warning: true,
+  expired: false,
+  disposition: "delete_draft",
+};
+const renewedRetention: DraftRetentionStatus = {
+  expiresAt: "2026-11-23T04:00:00.000Z",
+  warningAt: "2026-11-16T04:00:00.000Z",
+  warning: false,
+  expired: false,
+  disposition: "delete_draft",
+};
 const preparation: EventPreparationResponse = {
   revision: 3,
   issues: [
@@ -88,7 +103,7 @@ beforeEach(() => {
   fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
     const body = init?.body as FormData;
     const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
-    return json({ ok: true, revisions, eventVersion: 3, preparation, extraction });
+    return json({ ok: true, revisions, eventVersion: 3, preparation, extraction, retention: renewedRetention });
   });
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -108,8 +123,14 @@ function nodes(root: unknown): ElementLike[] {
   if (typeof element.type === "function") {
     const stateIndex = hooks.stateIndex;
     const refIndex = hooks.refIndex;
-    hooks.stateIndex = 14;
-    hooks.refIndex = 7;
+    const componentName = (element.type as { name?: string }).name;
+    if (componentName === "ProposalAssistance") {
+      hooks.stateIndex = 14;
+      hooks.refIndex = 8;
+    } else if (componentName === "PublicContentAssistance") {
+      hooks.stateIndex = 20;
+      hooks.refIndex = 14;
+    }
     const result = nodes((element.type as (props: Record<string, unknown>) => unknown)(element.props));
     hooks.stateIndex = stateIndex;
     hooks.refIndex = refIndex;
@@ -148,6 +169,52 @@ function json(value: unknown): Response {
 }
 
 describe("EventEditor proposal prefill integration", () => {
+  it("refreshes retention after accepted extraction without replacing a newer working edit", async () => {
+    hooks.states[0] = { ...view, retention: warningRetention };
+    let resolveResponse!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body as FormData;
+      const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
+      return await new Promise<Response>((resolve) => { resolveResponse = (response) => { void revisions; resolve(response); }; });
+    });
+
+    const initial = render();
+    const fileInput = nodes(initial).find((element) => element.type === "input" && element.props.type === "file");
+    if (!fileInput) throw new Error("PDF picker missing from EventEditor");
+    const file = new File(["synthetic PDF bytes"], "proposal.pdf", { type: "application/pdf" });
+    (fileInput.props.onChange as (event: unknown) => void)({ currentTarget: { files: [file], value: "" } });
+    (byText(render(), "button", "Generate Findings").props.onClick as () => void)();
+
+    expect(renderToStaticMarkup(render())).toContain("Private draft expires soon");
+    (byId(render(), "event-title").props.onChange as (event: unknown) => void)({ target: { value: "Newer local title" } });
+    const body = fetchMock.mock.calls[0]?.[1]?.body as FormData;
+    const revisions = JSON.parse(String(body.get("revisions"))) as ProposalRevisions;
+    resolveResponse(json({ ok: true, revisions, eventVersion: 3, preparation, extraction, retention: renewedRetention }));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect((hooks.states[0] as typeof view).retention).toEqual(renewedRetention);
+    expect((hooks.states[1] as EventFields).title).toBe("Newer local title");
+    expect(byId(render(), "event-title").props.value).toBe("Newer local title");
+    expect(renderToStaticMarkup(render())).not.toContain("Private draft expires soon");
+    expect(renderToStaticMarkup(render())).toContain("saved clarifications were refreshed");
+  });
+
+  it("shows the retention warning in owner views and leaves it out of public preview", () => {
+    const published = { fields: savedFields, form: { formRevisionId: "form-1", questions: [] } };
+    hooks.states[0] = { ...view, state: "PUBLISHED", published, retention: { ...warningRetention, disposition: "restore_publication" } };
+    hooks.states[2] = "publication";
+    let markup = renderToStaticMarkup(render());
+    expect(markup).toContain("Private draft expires soon");
+    expect(markup).toContain("current publication, event state, history, and registrations remain");
+
+    hooks.states[2] = "preview";
+    hooks.states[3] = { approvalId: "approval-1", version: 2, snapshot: published, digest: "digest" };
+    markup = renderToStaticMarkup(render());
+    expect(markup).toContain("Public Preview");
+    expect(markup).not.toContain("Private draft expires soon");
+    expect(markup).not.toContain("Save Draft or successfully process a proposal PDF");
+  });
+
   it("updates all supported fields in one parent state update, keeps unresolved fields and renders evidence below their inputs", async () => {
     const initial = render();
     const fileInput = nodes(initial).find((element) => element.type === "input" && element.props.type === "file");
@@ -202,7 +269,7 @@ describe("EventEditor proposal prefill integration", () => {
   });
 
   it("keeps suggestion and manual confirmations local until Save Draft, then submits their exact intent", async () => {
-    hooks.states[0] = { ...view, preparation };
+    hooks.states[0] = { ...view, preparation, retention: warningRetention };
     const manualDescription = "  Cafe\u0301 Arts Hall  ";
     const canonicalDescription = "Café Arts Hall";
     hooks.states[1] = { ...savedFields, description: manualDescription };
@@ -224,7 +291,7 @@ describe("EventEditor proposal prefill integration", () => {
         submitted = JSON.parse(String(init.body)) as Record<string, unknown>;
         return json({ ok: true });
       }
-      return json({ ...view, version: 3, fields: savedFieldsAfterResolution, preparation: savedPreparation });
+      return json({ ...view, version: 3, fields: savedFieldsAfterResolution, preparation: savedPreparation, retention: renewedRetention });
     });
 
     const initial = render();
@@ -256,6 +323,8 @@ describe("EventEditor proposal prefill integration", () => {
     expect((submitted?.fields as EventFields).description).toBe(manualDescription);
     updated = render();
     expect((hooks.states[0] as typeof view).preparation).toEqual(savedPreparation);
+    expect((hooks.states[0] as typeof view).retention).toEqual(renewedRetention);
+    expect(renderToStaticMarkup(updated)).not.toContain("Private draft expires soon");
     expect(hooks.states[11]).toEqual({});
     expect(byText(updated, "button", "Preview saved draft").props.disabled).toBe(false);
     expect(textOf(byId(updated, "proposal-feedback-description").props.children)).toContain("Confirmed by you");

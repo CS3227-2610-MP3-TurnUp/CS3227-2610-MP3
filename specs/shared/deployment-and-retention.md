@@ -50,3 +50,12 @@ evidence in [CHG-K-008](../../changes/CHG-K-008-stable-preview-alias/verificatio
 Do not delete live publications with inactive draft cleanup or retain personal history indefinitely merely because versions are immutable. Define derived/cached/backup expiry and deletion/anonymisation relationships; do not claim erasure while recoverable backups remain under policy. See [G06/G07](../decisions.md).
 
 Verification: T14/15/26/28. Actual hosted walkthrough, deterministic suite and bounded live-model evaluation are release evidence. Local foundation/provider checks are partial evidence; documentation checks alone validate documents only.
+
+
+## Organiser private-draft retention — accepted23October2026
+
+Keith approved CHG-K-013 for all Organiser private drafts/preparation. Expiry is30days after creation or the last successful Save Draft/accepted persisted PDF extraction; reads, FAQ generation, previews and unsaved confirmations do not extend it. In-app warning is available in organiser list/editor fromday23. Existing records receive a fresh migration-time30-day window. Atday30 records become eligible for scheduled cleanup; actual removal follows a successful sweep.
+
+Delete an expired never-published draft and its dependent approvals. Previously published events retain their state, live/last publication, history and registration relationships: discard expired private changes by restoring fields from latest publication, clear private preparation and preview approvals, and invalidate stale versions. Missing/corrupt publication fails closed; never convert previously published events into hard-delete candidates. Fresh saves/extractions and concurrent sweeps must not lose newer work. Expose expiry metadata only to the owner, never through public fields/Student context. No private state means no warning; reads do not restart activity.
+
+Protected bounded cleanup must reject unauthorized/disabled invocations before database work; retries are idempotent, errors avoid raw content and cannot partially alter publication. This resolves only Organiser draft mechanics in G06. Global90-day personal/thread/account/audit relationships and provider backup expiry remain separate. Backup restores stay quarantined until retention is reapplied; no immediate recoverable-copy erasure claim. Production activation and hosted evidence remain explicit operations.

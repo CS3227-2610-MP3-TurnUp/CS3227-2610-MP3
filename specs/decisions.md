@@ -59,3 +59,17 @@ Keith requested replacing individual Apply controls and duplicate calendar confi
 ## 23 October 2026 — WP-005 clarification decisions
 
 Keith accepted and requested CHG-K-011 after extraction integration9d651e8: inline clarification/summary; explicit confirmation of manual or unchanged existing answers; supported suggestion selection resolves locally; issues recorded at Generate, answers/resolutions committed with Save Draft; unresolved required issues block before preview and again at publication. PDF removal retains issues; regeneration preserves confirmed values and reopens contradictory findings while absence alone does not invalidate them. Organiser-confirmed facts need no PDF quote or reason; editing a confirmation reopens that field. Delivery remains local synthetic/non-production, with production retention/cleanup and hosted provider activation deferred under G06/G04. This resolves the local clarification UX and resolution contract, not global retention or full ORG07 acceptance. Comprehensive model evaluation remains deferred until remaining WP-005 functionality is implemented; regression tests continue per change.
+
+
+## 23 October 2026 — ORG07 public-candidate increment
+
+Keith accepted the proposed next increment and requested CHG-K-012: editable description and FAQ/Other candidates from saved resolved intended-public facts; optional unsupported questions ask the organiser rather than inventing an answer; explicit field-specific replacement/application and normal Save/Preview/Publish; page-local unapplied candidates. Reuse existing local synthetic provider limits and privacy/revision/readiness guards. Production retention/hosted activation and comprehensive model evaluation remain deferred; no registration/thread prerequisite is introduced. The separate candidate prompt does not alter extraction prompt v6. Implementation/evidence status remains in the assigned change record.
+
+
+23 October2026 — Keith approved the CHG-K-012 FAQ-only refinement: remove redundant final description rephrasing, focus separate generation on relevant participant questions, populate supported FAQ candidates, request optional organiser answers for unsupported questions, and retain explicit Other-only Apply/Save. Empty FAQ generation is rejected rather than shown as successful; no change to private/public sources, provider policy, publication rules or G04/G06.
+
+
+23October2026 — Keith confirmed the current WP-005 browser walkthrough. He requested retention/cleanup work first, then commit and push to a Preview branch, then hosted AI verification; comprehensive labelled model evaluation is deferred to a post-WP-005 refinement. This changes scheduling, not evidence standards: model-quality and hosted/G04/G06 acceptance remain unverified until separately evidenced. Draft inactivity/notice/expiry operational choices remain pending, with no implementation-dependent policy inferred.
+
+
+23October2026 — Keith answered retention questions: successful Save Draft or accepted PDF extraction resets30days, viewing/FAQ generation do not; warningfromday23, expiryday30; apply to all inactive private drafts, delete never-published drafts and restore latest publication/clear private prep for previously published events while preserving event/publication/registrations. CHG-K-013 implements Organiser mechanics only, without inferring Darryl policy for Student personal records or closing global G06/G04.

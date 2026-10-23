@@ -1,6 +1,6 @@
 # Test proposal assistance locally
 
-Use the **WP-005 integration worktree**, not the main checkout or the old `/dev/proposal-evaluation` prototype. The [current clarification handoff](../changes/CHG-K-011-wp-005-clarification/handoff.md) records API/schema compatibility and evidence. This guide has three paths: automated tests without credentials, browser testing with inference disabled, and one bounded live extraction using a synthetic PDF. Preview/Production inference is disabled in this increment.
+Use the **WP-005 integration worktree**, not the main checkout or the old `/dev/proposal-evaluation` prototype. The [clarification handoff](../changes/CHG-K-011-wp-005-clarification/handoff.md) records prerequisite API/schema compatibility and migration evidence; [CHG-K-012](../changes/CHG-K-012-wp-005-public-candidates/change.md) adds public-content candidates without a new migration. This guide has three paths: automated tests without credentials, browser testing with inference disabled, and one bounded live extraction using a synthetic PDF. Preview/Production inference is disabled in this increment.
 
 ## 1. Open the worktree and install
 
@@ -28,7 +28,7 @@ corepack pnpm typecheck
 corepack pnpm build
 ```
 
-At the delivered snapshot the focused command has **72 passing tests across eleven files** and the full suite has **331 passing tests across 34 files**. The focused suite covers the PDF parser, evidence validation, endpoint/access/admission behavior, provider failures and actual-component handler/SSR interactions. Provider/database doubles are used where applicable: these commands make no live inference calls and do not prove browser or hosted behavior. Prisma generation/type generation may update generated files; the delivered change does not include changes to `AGENTS.md` or `next-env.d.ts`.
+At the CHG-K-012 snapshot the full suite has **378 passing tests across 40 files**. The K-011 prerequisite snapshot had 72 proposal-assistance tests across eleven files; candidate coverage is added in K-012. The focused suite covers the PDF parser, evidence validation, endpoint/access/admission behavior, provider failures and actual-component handler/SSR interactions. Provider/database doubles are used where applicable: these commands make no live inference calls and do not prove browser or hosted behavior. Prisma generation/type generation may update generated files; the delivered change does not include changes to `AGENTS.md` or `next-env.d.ts`.
 
 ## 3. Configure browser testing
 
@@ -181,7 +181,7 @@ When finished, stop the server with **Ctrl+C** and set `PROPOSAL_ASSISTANCE_LOCA
 
 ## Evidence and deferred work
 
-[Verification](../changes/CHG-K-010-wp-005-proposal-integration/verification.md) records checks actually run. Browser file-picker automation and the authenticated live-model walkthrough were not completed during implementation; the steps above are instructions, not passed results. A later single bounded synthetic guide-PDF check using prompt v3 directly exercised parser → model → validator → prefill and returned Campus Circuit Workshop with valid title evidence. That live check used v3; the current v6 field-semantics, punctuation, description-rephrasing and conflict-identification instructions have deterministic test coverage but have not been checked against the live model. This is no browser or general-accuracy guarantee. Public-content/FAQ generation (ORG07), production private-preparation retention and hosted inference remain deferred. CHG-K-011 implements local synthetic structured clarification persistence and server issue guards. Manual completion and existing Save Draft → Preview → Publish remain available without model inference.
+[Verification](../changes/CHG-K-010-wp-005-proposal-integration/verification.md) records checks actually run. Browser file-picker automation and the authenticated live-model walkthrough were not completed during implementation; the steps above are instructions, not passed results. A later single bounded synthetic guide-PDF check using prompt v3 directly exercised parser → model → validator → prefill and returned Campus Circuit Workshop with valid title evidence. That live check used v3; the current v6 field-semantics, punctuation, description-rephrasing and conflict-identification instructions have deterministic test coverage but have not been checked against the live model. This is no browser or general-accuracy guarantee. CHG-K-012 adds local synthetic public-content/FAQ candidates (ORG07); production private-preparation retention, hosted inference and comprehensive model evaluation remain deferred. CHG-K-011 implements local synthetic structured clarification persistence and server issue guards. Manual completion and existing Save Draft → Preview → Publish remain available without model inference.
 
 
 ## Targeted clarification walkthrough — local synthetic only
@@ -197,3 +197,28 @@ The automated clarification tests use controlled synthetic extraction results wi
 7. Use two tabs to check stale preparation/event saves are rejected without silently overwriting newer work. Preview/publication output must contain public fields only, never preparation questions/evidence/attribution.
 
 Production retention/cleanup and hosted activation are still deferred. No PDF/full extracted text is stored. These steps are verification instructions; actual executed checks and limits are in [CHG-K-011 verification](../changes/CHG-K-011-wp-005-clarification/verification.md).
+
+## Public-content candidates walkthrough — local synthetic only
+
+This separate action uses the same guarded local provider configuration and existing allowance as extraction. Do not refill or increase any budget merely to follow these instructions. Automated candidate tests use doubles and consume no inference allowance.
+
+1. Complete the public event fields, resolve required clarification issues and choose **Save Draft**. Generation requires the saved draft; unsaved edits must be saved or discarded first.
+2. Choose **Generate FAQ suggestions**. The server reads saved public fields itself. It must not send the PDF, private clarification notes, source evidence or participant data to this generation action.
+3. Review the editable FAQ / Other suggestion and its public-field references. Supported Q/A entries should populate that candidate; the original description stays unchanged. A missing FAQ answer appears as an optional question for the organiser. It must not appear in the event's Other field automatically or block publication. Enter an answer and explicitly add it to the candidate if appropriate. If all questions are unanswered, the empty-state message should explain this and Apply should remain disabled until you provide candidate content.
+4. Edit the FAQ candidate freely. Choose **Apply FAQ / Other to working form**. Confirm replacement of different nonblank working text. Cancelling confirmation or dismissing suggestions preserves event fields.
+5. Verify Apply changes only Other and invalidates an existing preview. Choose **Save Draft**, review **Preview**, then explicitly **Publish** through the existing flow. Candidate generation itself must not save or publish.
+6. Change a source field during generation or after receiving suggestions: stale output/application must be rejected. Check another tab's saved revision changes are rejected too. Model failure, cancellation or unavailable allowance must preserve existing fields.
+7. Refresh or leave the editor: unapplied candidates and optional answers disappear. Only explicitly applied and saved public values persist.
+
+These are manual verification instructions, not executed browser/live-model evidence. See [CHG-K-012 verification](../changes/CHG-K-012-wp-005-public-candidates/verification.md) for actual checks and limits.
+
+### If public-content generation returns 502
+
+A 502 with “The response could not be safely checked” means the completion failed response validation. Existing event fields are preserved. The server now prints only a safe event/code diagnostic such as `{"event":"proposal_candidate_generation_rejected","code":"ROOT_SHAPE"}`. `ROOT_SHAPE` means the FAQ-only object structure is invalid; `FAQ_LIST_BOUND` means zero or too many questions; `FAQ_REFERENCE_INVALID` means supporting quotes failed checks; `OUTPUT_TOKEN_LIMIT` means truncated output; `PROVIDER_INVALID_RESPONSE` means the transport could not validate the provider envelope/content. No event text or raw model response is logged. Keep the code when reporting a failure; repeated Generate clicks still consume allowance.
+
+The earlier candidate prompt v2 explicitly defined the nested description shape and included a valid synthetic example. Current prompt v3 removes duplicate description generation, requests one to six relevant FAQ questions and uses nonempty worked examples. One bounded synthetic v1 response reproduced a shape failure; one v2 response passed strict validation. This is scoped direct-pipeline evidence, not a browser or comprehensive quality test. The reported event itself was not read or regenerated during diagnosis.
+
+
+## Draft expiry
+
+Save Draft or accepted persisted PDF extraction restarts a30-day private-draft period; owner warnings startday23. Reads/FAQ generation do not extend it. The [retention guide](wp-005-draft-retention.md) explains the additive migration/client restart, default-off protected cleanup and publication protection. Existing assigned development records received a fresh window when migrated; an immediate warning is not expected on those records.

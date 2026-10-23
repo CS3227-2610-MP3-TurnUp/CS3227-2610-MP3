@@ -184,3 +184,91 @@ Keith requests updated handoff/relevant documentation, permits a commit of the d
 Orchestrator added CHG-K-011/handoff.md with exact GET/extraction/Save Draft preparation contract, canonical intent values, revision/approval behaviour, private/public separation, migration/client-restart requirements, tested snapshot and outstanding boundaries. Updated integration handoffs, WP-005 package/current implementation status, local testing guide and change records. Historical evidence remains intact; no new plan or product behaviour was introduced.
 
 Confirmed the19-file implementation/schema/test fingerprint is unchanged from independent review:6a5e1f5198a284c4094045e87984f1b310b038505238a40f50c0d2966cc5f772. Reused331tests/34files, lint/type/schema/build and scoped assigned non-production migration evidence; native-browser/live-model and skipped isolated-replay limits remain explicit. Documentation links/whitespace and final staged contents are checked before the authorized local commit. Exclude/preserve pre-existing generated next-env.d.ts and ignored private environment/usage files. No push, deployment, model/gate operation, dependency change or next-increment work.
+
+
+# 15 - Implement Public-Content and FAQ Candidates - 23 October 2026
+
+## Request
+
+Keith requests implementation of the proposed ORG07 increment: generate editable description and FAQ/Other candidates from saved resolved public facts; explicit apply/dismiss/replacement controls; optional unanswered organiser questions; temporary candidate storage; existing Save/Preview/Publish and privacy/revision/provider guards. Team configuration and scoped ownership were stated in the proposal and reiterated at dispatch.
+
+## Results
+
+Implemented CHG-K-012 from cb6179d in the existing WP-005 worktree. Configured root coordinator gpt-6.1-sol/high; backend/UI application_foundation_engineer instances gpt-6-luna/xhigh; independent implementation_verifier gpt-6.1-sol/high. Root owns docs/evidence/usage attribution. No live provider/DB/gate calls, allowance changes, commit or deployment planned; model evaluation/hosted activation/production retention remain deferred.
+
+Delivered separate revision-only public-candidate endpoint using authoritative complete resolved saved public fields, strict public-reference processor and isolated prompt version; no private proposal material or free-form model FAQ answers accepted. UI keeps description/Other editable and temporary, explicitly applies separately with replacement confirmation, supports optional organiser answers and rejects stale source/revision/busy use. Existing Save/Preview/Publish remain explicit. Updated canonical behaviour/scenarios, local test walkthrough and K-012/current integration handoffs.
+
+Final full suite355tests/37files, lint/direct types and isolated exact-source webpack build pass. Independent configured verifier reproduced355tests/static checks, source/mirror identity and harmless in-memory injection check; no unresolved actionable defects. Source fingerprint4209cc10bb452444a9d5f93752ec7147b23008cf3c405ab9e174561181fbd912 over13product/test files. Integration freshness/busy/harness fixes and actual incomplete-readiness test correction are recorded in K-012 verification, alongside browser/live-model/database/hosted limits. Private env and pre-existing next-env bytes preserved; no provider allowance change, migration, commit/push or deployment. Offline usage bound/collected under K-012 from this implementation turn, with prior boundaries and diagnostics preserved.
+
+
+# 16 - Add Ten Further Synthetic Generation Attempts - 23 October 2026
+
+## Request
+
+Keith explicitly requests ten more generation attempts, each with a4096-token output reservation, for the existing SoCLasS assistance gate.
+
+## Results
+
+Root read the assigned development/non-production gate and matching private local configuration. Baseline usage31attempts/123904reserved tokens, caps35/140288, zero in-flight/leases. Under singleton transaction lock, added exactly10to attempt cap and40960to output-token cap, now45/181248; updated only matching two numeric entries in private.env.local. Preserved usage counters, last-admission time, concurrency1, interval2100ms and zero leases. Existing4calls plus10new calls leave14calls/57344reserved-output tokens at4096each. No provider request, Codex refill, quota purchase, counter reset, lease recovery, server restart or deployment. Local server must restart before generating so older loaded settings do not ratchet caps back down. Independent readback requested from existing configured implementation_verifier (gpt-6.1-sol/high), no author writes.
+
+Independent read-only verifier confirmed fresh matching environment/DB caps, preserved usage and zero leases/in-flight, remaining14/57344, concurrency/interval unchanged and exact implementation fingerprint unchanged. Root confirmed per-call cap4096. No application tests rerun for this allowance-only operator amendment.
+
+
+# 17 - Diagnose and Correct Public-Candidate 502 Responses - 23 October 2026
+
+## Request
+
+Keith reports local POST public-candidates502 after6.3seconds and the generic response-could-not-be-safely-checked message. Diagnose and fix while preserving event fields and validation.
+
+## Results
+
+In progress as a CHG-K-012 correction. Reactivated configured backend application_foundation_engineer (gpt-6-luna/xhigh) for prompt/processor/route/tests only; root owns reproduction/evidence, independent verifier will recheck. The message maps to invalid_response, not account/database availability. Existing adapter requests a JSON object but cannot enforce the candidate schema. Two bounded synthetic v1 transport calls were made against the existing allowance: first harness completed but its console metadata was lost after environment loading; second persisted boolean/schema-only metadata. Second response finished normally, but root/description shape was invalid while FAQ entries/references were valid. No raw model output/private event was stored/read, no automatic retry, reset/refill or server restart. Prompt shape clarification/v2 and finite server-only rejection diagnostics are being implemented without relaxing strict acceptance.
+
+Candidate prompt v2 now explicitly requires nested description text/references, exact root keys and a separately labelled synthetic example. One post-fix bounded live synthetic call passed strict validation (stop,72-character description,2exact references, emptyFAQ allowed); total3diagnostic calls from existing allowance. Added finite server-only rejection-code logs, preserved generic client failure/strict acceptance, and tests cover every reason plus generated-description aggregate bound. Author full358tests/37files, focused15/2, types/lint/whitespace and root isolated webpack production build pass. Final13-file source/test fingerprintb70adcb1777088bd4b2556f7fe71493590408a3638b477ed2d2e66241b9afa35; mirror bytes match, original next-env preserved. No raw response/user event read/storage, private config change, dependency/migration, reset/refill, commit or deployment. Latest read-only gate snapshot36/144384usage under45/181248caps,0leases/inflight;9calls remained then. Other user's testing may change this. The original user's response is not retained, so its exact failed structure remains unconfirmed; synthetic repro plus v2 pass provide scoped evidence, not general reliability.
+
+Independent configured verifier reproduced358/37, full ESLint/direct types/whitespace and matching final fingerprint, plus harmless in-memory injection checks. No unresolved actionable defects; root live/build evidence was not repeated. Correction evidence/handoff/testing guide and offline K-012 usage collection/report updated.
+
+
+# 18 - Focus Public Suggestions on FAQs
+
+## Request
+
+Keith approves removing the redundant second description suggestion and focusing the action on relevant participant FAQs, supported answers in editable Other, optional unanswered questions and explicit Apply/Save.
+
+## Results
+
+Implementation in progress under CHG-K-012, same worktree from last reviewed13-file snapshotb70adcb1. Root coordinates canonical behaviour/docs/evidence; configured backend/UI application_foundation_engineer instances (gpt-6-luna/xhigh) implement disjoint paths; implementation_verifier (gpt-6.1-sol/high) independently reviews. No live provider/database/budget/config changes, migrations/dependencies, commit or deployment in this refinement.
+
+Delivered FAQ-only schema/promptv3 with nonempty1–6questions, prioritized supported participant facts, strict quotes/derived answers and unchanged public-source boundaries. Removed duplicate description candidate/control; UI fills editable Other, separates optional unanswered organiser answers and blocks blank Apply at both handler/button. Apply preserves description/all other fields and existing replacement/save/preview/stale guards. Updated current guide/handoff/specs/scenarios and change records.
+
+PinnedNode24 full360tests/37files, backend focused14/2, lint/direct types/whitespace and root sanitized webpack production build pass; UI author's Node22focused20/2 was followed by required Node24integrated checks. Independent verifier reproduced full/static/fingerprint and inert injection checks, no actionable defects. Final13-file fingerprint0445c8662aca04289dd3e6927835b0d0bc7ee593daf3b6c534b990e5b694d4fc; mirror/source byte identity and task-start next-env preserved. Currentv3 model usefulness/native-browser quality remain untested; no provider allowance consumed or config/DB/gate change, migration/dependency, user server restart, commit/push/deployment. Usage collection/report refreshed under existing K-012 boundary; evidence/limits in verification.
+
+
+# 19 - Sequence Retention, Preview Delivery and Hosted Verification
+
+## Request
+
+Keith confirms browser walkthrough item1, asks to defer labelled evaluation item2 to post-WP-005 refinement, perform hosted AI verification item3 after committing/pushing to Preview, implement retention item4 first, and commit/push item5 afterward.
+
+## Results
+
+Recorded explicit user-reported browser verification in K-012 evidence and accepted sequencing in decisions. Read current G06/retention targets, schema, event mutation timestamps, internal probe and deployment workflow. No existing private-draft retention scheduler/worker was found; current auth-throttle expiry cleanup is unrelated. Asked three operational-policy questions about inactivity reset, in-app notice lead time and expired draft versus published-event cleanup scope. Those choices are pending; no deletion implementation, migration, job run or private environment change has started. Preserve current K-012 work; commit/Preview push is deferred until retention is implemented/reviewed under the user's sequence. Hosted verification and post-WP-005 labelled evaluation are not marked passed.
+
+Keith answered all three questions: reset30days on successfulSaveDraft/acceptedpersistedPDFextraction only; seven-day in-appwarningfromday23; applyallinactiveprivateORGdrafts, deleteonlyneverpub andrestorelatestpub/clearprivateprep forpreviouspub preservingstate/history/registrations. AllocatedCHG-K-013aftercheckingallhistory/refs/activeworktrees(max012), same sequentialworktree, existingK012snapshot0445 prerequisite. Rootauthoredcanonicalpolicy/scenarios/changecontract; configuredbackend/UIauthors assigneddisjointimplementation andindependentverifier. Agents hitusageinterruptions; resumedafterusercontinue, unchangedconfiguredmodels/roles. RootpinnedNode24sanitizedPrismavalidate/generate passed andignoredclient refreshed, noDB/provideroperation. K013offlineusagebinding beginsretentionsequencingturn01a165fc-b99b-7471-8304-0de22ee5bcde; priorboundaries preserved. Implementation/review/migration/deliverystillinprogress; nodeletionjobrun orcommit/pushyet.
+
+K-013implemented andindependentlyreviewed: authoritativeprivateactivity clock,day23ownernotices,50recordfairSKIPLOCKEDcleanup, strongopt-inoperatorauth+dailyProductioncronconfig, publicationpreservingrestoration/staleinvalidation. PinnedNode24full378/40, focusedbackend38/4 andUI22/4, types/lint/schema/whitespace androotsanitizedwebpackbuildpass. Independentverifierfoundnounresolveddefects; final32-filefingerprint6391849b73ec3d60e477688faa057a7917746586ad4f9610eaf61b57081e8cb0.
+
+Applied/checksum-verified additive230100retentionmigrationonlytoassigneddevelopmentnonproduction. Safepreflightcaughtoldempty240000directory;authorrmdirremovedandverifierconfirmedbeforeapply. Rootactualworkerfixturespass dryrun/delete/restore/publicationpreservation/approvalremoval/null0versions/repeat/corruptpublication/realrow-lockskip/freshactivitybetweenclaimprocess, final1/1 withnoresidualfixtures. Initialtemporaryharnessstateconstrainterrorscorrectedandrecoveredonlygeneratedknownfixtures; noapplicationdefect. Userrecordscontentunread, noProduction/model/budget/privateenv/serverrestartoperation. Operator/recoveryguide,currenthandoffs/specs/evidenceupdated; nohostedcron/backuperasureclaim. Nowproceedingauthorisedcommit/Previewpush, thenhostedAIverification.
+
+
+# 20 - Continue Retention Verification and Preview Delivery - 23 October 2026
+
+## Request
+
+Keith requests continuation after the configured team encountered a usage-limit interruption. Preserve the agreed retention-first, commit/Preview-push, then hosted-verification sequence.
+
+## Results
+
+Resumed the same configured backend/UI engineers and independent verifier without changing their models or scope. Completed the retained policy implementation and checks recorded in CHG-K-013 verification. All 378 tests across 40 files, lint, types, schema checks and the isolated production build pass; independent review found no unresolved defects. The actual non-production worker fixture run passed deletion/restoration, approval cleanup, safe repeat, row-lock skip and refreshed-activity checks, with no residual fixtures. No model requests or production cleanup occurred.
+
+The additive migration is checksum-verified on the assigned development target. Existing user content was preserved and received a fresh inactivity window. Private environment files, existing user servers and unrelated root-checkout work remain untouched. Prepared the reviewed FAQ/retention delivery for the protected preview/wp-005 branch; the actual delivery identity is the commit containing these records. Hosted AI verification follows the push and is not claimed complete here.

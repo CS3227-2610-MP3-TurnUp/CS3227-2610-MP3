@@ -1,11 +1,16 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Event, Prisma, PrismaClient } from "../db/generated/client";
+import { draftRetentionStatus } from "../../lib/event-retention";
 import { EMPTY_EVENT, sameEventFields, type EventFields, type EventSummary } from "../../lib/event-fields";
+import { formatEventAlternative } from "../../features/proposal-assistance/event-prefill";
+import type { PublicCandidateSource } from "../../features/proposal-assistance/public-candidates";
 import { authenticatedAccount, requireSelf } from "../accounts/service";
 import type { Transaction } from "../auth/session";
 import { digest, EventError, parseFields, publicationSnapshot, validatePublication } from "./policy";
 import type { EventPreparation, ClarificationResolutionIntent } from "../../features/proposal-assistance/clarification";
+import { PROPOSAL_TO_EVENT_FIELD } from "../../features/proposal-assistance/clarification";
+import type { ProposalField } from "../../features/proposal-assistance/types";
 import type { PrivateExtraction } from "../../features/proposal-assistance/types";
 import {
   applyPreparationResolutions,
@@ -50,6 +55,21 @@ async function stamp(tx: Transaction): Promise<Date> {
   const [row] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
   return row.now;
 }
+function retentionDisposition(event: Pick<Event, "state" | "firstPublishedAt" | "currentPublicationId">) {
+  return event.firstPublishedAt || event.currentPublicationId || event.state !== "DRAFT" ? "restore_publication" : "delete_draft";
+}
+function hasPrivateEventState(
+  event: Pick<Event, "state" | "firstPublishedAt" | "currentPublicationId">,
+  fields: EventFields,
+  preparation: unknown,
+  preparationVersion: number,
+  publicationFields: unknown,
+): boolean {
+  if (retentionDisposition(event) === "delete_draft") return true;
+  if (preparation !== null || preparationVersion !== 0 || publicationFields === null || publicationFields === undefined) return true;
+  try { return !sameEventFields(fields, parseFields(publicationFields)); }
+  catch { return true; }
+}
 async function previousSnapshot(tx: Transaction, event: Event): Promise<Snapshot | null> {
   if (!event.currentPublicationId) return null;
   const publication = await tx.eventPublication.findFirst({ where: { id: event.currentPublicationId, eventId: event.id } });
@@ -59,12 +79,16 @@ async function previousSnapshot(tx: Transaction, event: Event): Promise<Snapshot
 export async function listEvents(db: Db, token: string | undefined, search = "", sort = "modified", direction = "desc") {
   return asOrganiser(db, token, async (tx, actor) => {
     const records = await tx.event.findMany({ where: { ownerId: actor }, include: { currentPublication: true } });
+    const now = await stamp(tx);
     const items: EventSummary[] = records.map((event) => {
       if (event.currentPublicationId && !event.currentPublication) throw new EventError(503, "Event publication is unavailable.");
       const draft = event.draft as unknown as EventFields;
       const publication = event.currentPublication?.snapshot as unknown as Snapshot | undefined;
+      const disposition = retentionDisposition(event);
+      const privateState = hasPrivateEventState(event, draft, event.preparation, event.preparationVersion, publication?.fields);
       return { id: event.id, state: event.state, version: event.version, fields: publication?.fields ?? draft,
-        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && !sameEventFields(draft, publication.fields) };
+        editedAt: event.editedAt.toISOString(), hasSavedChanges: event.state !== "CANCELLED" && !!publication && !sameEventFields(draft, publication.fields),
+        retention: privateState ? draftRetentionStatus(event.privateActivityAt, now, disposition) : null };
     });
     const filtered = items.filter((event) => event.fields.title.toLocaleLowerCase("en").includes(search.toLocaleLowerCase("en")));
     return filtered.sort((a, b) => {
@@ -80,17 +104,105 @@ export async function listEvents(db: Db, token: string | undefined, search = "",
   });
 }
 export async function createEvent(db: Db, token: string | undefined) {
-  return asOrganiser(db, token, async (tx, actor) => tx.event.create({ data: { id: randomUUID(), ownerId: actor, draft: { ...EMPTY_EVENT } } }));
+  return asOrganiser(db, token, async (tx, actor) => tx.event.create({ data: {
+    id: randomUUID(), ownerId: actor, draft: { ...EMPTY_EVENT }, privateActivityAt: await stamp(tx),
+  } }));
 }
 export async function readEvent(db: Db, token: string | undefined, id: string) {
   return asOrganiser(db, token, async (tx, actor) => {
     const event = await owned(tx, actor, id);
     const preparationEnabled = clarificationPersistenceEnabled();
     assertPreparationMode(event, preparationEnabled);
+    const published = await previousSnapshot(tx, event);
+    const now = await stamp(tx);
+    const privateState = hasPrivateEventState(event, event.draft as unknown as EventFields,
+      event.preparation, event.preparationVersion, published?.fields);
     return { id: event.id, state: event.state, version: event.version, draftVersion: event.draftVersion,
       fields: event.draft as unknown as EventFields,
       preparation: preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null,
-      published: await previousSnapshot(tx, event) };
+      published,
+      retention: privateState ? draftRetentionStatus(event.privateActivityAt, now, retentionDisposition(event)) : null };
+  });
+}
+
+export type SavedPublicCandidateSnapshot = {
+  ownerId: string;
+  eventVersion: number;
+  preparationRevision: number;
+  state: Event["state"];
+  source: PublicCandidateSource;
+};
+
+export class PublicCandidateNotReadyError extends EventError {
+  constructor(field?: string) {
+    super(409, "Complete and resolve the saved public draft before generating candidates.", field);
+  }
+}
+
+/**
+ * Read the saved public draft under the normal owner/event/session transaction,
+ * requiring a complete publishable snapshot and resolved private clarifications.
+ * Only display-safe public fields leave this service helper.
+ */
+export async function readSavedPublicCandidateSnapshot(
+  db: Db,
+  token: string | undefined,
+  id: string,
+  expectedVersion: number,
+  expectedPreparationRevision: number,
+): Promise<SavedPublicCandidateSnapshot> {
+  return asOrganiser(db, token, async (tx, actor) => {
+    const event = await owned(tx, actor, id);
+    currentVersion(event, expectedVersion);
+    if (event.preparationVersion !== expectedPreparationRevision) {
+      throw new EventError(409, "Proposal clarifications changed. Reload and try again.");
+    }
+    editable(event);
+
+    const preparationEnabled = clarificationPersistenceEnabled();
+    assertPreparationMode(event, preparationEnabled);
+    const preparation = preparationEnabled ? readPreparation(event.preparation, event.preparationVersion) : null;
+    let fields: EventFields;
+    try { fields = parseFields(event.draft); }
+    catch (error) {
+      if (error instanceof EventError) throw new PublicCandidateNotReadyError(error.field);
+      throw error;
+    }
+    const unresolved = unresolvedClarificationFields(preparation, fields);
+    if (unresolved.length) {
+      throw new PublicCandidateNotReadyError(PROPOSAL_TO_EVENT_FIELD[unresolved[0] as ProposalField]);
+    }
+
+    const previous = await previousSnapshot(tx, event);
+    const now = await stamp(tx);
+    try {
+      validatePublication(fields, event.state, previous?.fields.start, now);
+    } catch (error) {
+      if (error instanceof EventError) {
+        throw new PublicCandidateNotReadyError(error.field);
+      }
+      throw error;
+    }
+
+    const source: PublicCandidateSource = {
+      title: fields.title,
+      description: fields.description,
+      start: formatEventAlternative("start", fields.start),
+      end: formatEventAlternative("end", fields.end),
+      location: fields.location,
+      capacity: String(fields.capacity),
+      fee: fields.fee,
+      openTo: fields.openTo,
+      preparation: fields.preparation,
+      other: fields.other,
+    };
+    return {
+      ownerId: actor,
+      eventVersion: event.version,
+      preparationRevision: event.preparationVersion,
+      state: event.state,
+      source,
+    };
   });
 }
 export type EventAction = "save" | "preview" | "publish" | "withdraw" | "cancel" | "delete" | "discard";
@@ -109,7 +221,8 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
     if (action === "save" || action === "discard") {
       const preparationEnabled = clarificationPersistenceEnabled();
       assertPreparationMode(event, preparationEnabled);
-      const snapshot = action === "discard" ? await previousSnapshot(tx, event) : null;
+      const snapshot = action === "discard" || event.firstPublishedAt || event.currentPublicationId
+        ? await previousSnapshot(tx, event) : null;
       if (action === "discard" && !snapshot) throw new EventError(409, "Use Delete Draft for a never-published event.");
       const oldFields = parseFields(event.draft);
       const next = action === "save" ? parseFields(fields) : snapshot!.fields;
@@ -123,11 +236,15 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       const now = await stamp(tx);
       const preparation = applyPreparationResolutions(priorPreparation, oldFields, next,
         action === "save" ? clarification?.resolutions ?? [] : [], actor, now, event.preparationVersion + 1);
+      const activityRequired = hasPrivateEventState(event, next, preparation,
+        preparation ? event.preparationVersion + 1 : event.preparationVersion, snapshot?.fields);
       const data: Prisma.EventUpdateInput = {
         draft: next as unknown as Prisma.InputJsonValue,
         version: { increment: 1 },
         draftVersion: { increment: 1 },
         editedAt: now,
+        privateActivityAt: activityRequired ? (action === "save" ? now : event.privateActivityAt) : null,
+        retentionCheckedAt: activityRequired ? (action === "save" ? null : event.retentionCheckedAt) : null,
         ...(preparation ? {
           preparation: preparationJson(preparation) as unknown as Prisma.InputJsonValue,
           preparationVersion: { increment: 1 },
@@ -169,7 +286,8 @@ export async function mutateEvent(db: Db, token: string | undefined, id: string,
       const publication = await tx.eventPublication.create({ data: { id: randomUUID(), eventId: id, revision: event.version + 1,
         snapshot: snapshot as unknown as Prisma.InputJsonValue, digest: approval.digest, approvedBy: actor } });
       await tx.event.update({ where: { id }, data: { currentPublicationId: publication.id, state: "PUBLISHED",
-        firstPublishedAt: event.firstPublishedAt ?? now, version: { increment: 1 }, editedAt: now } });
+        firstPublishedAt: event.firstPublishedAt ?? now, version: { increment: 1 }, editedAt: now,
+        ...(event.preparation === null ? { privateActivityAt: null, retentionCheckedAt: null } : {}) } });
       await tx.eventApproval.deleteMany({ where: { eventId: id } });
       return { published: true };
     }
@@ -206,9 +324,12 @@ export async function recordProposalExtraction(
       preparationVersion: { increment: 1 },
       version: { increment: 1 },
       editedAt: now,
+      privateActivityAt: now,
+      retentionCheckedAt: null,
     } });
     await tx.eventApproval.deleteMany({ where: { eventId: id } });
-    return { eventVersion: nextEventVersion, preparation: next };
+    return { eventVersion: nextEventVersion, preparation: next,
+      retention: draftRetentionStatus(now, now, retentionDisposition(event)) };
   });
 }
 

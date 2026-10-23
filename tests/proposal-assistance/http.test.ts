@@ -40,6 +40,7 @@ import { POST } from "../../src/app/api/organiser/events/[id]/proposal-extractio
 const eventId = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587";
 const revisions = { source: 3, facts: 5, editor: 7 };
 const extraction = { facts: { title: { status: "known", value: "Campus Orchestra", evidence: [{ quote: "Campus Orchestra", page: 1 }] } }, privateFindings: [], completeness: "incomplete", incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["purpose"], technicalIssues: 0 };
+const retention = { expiresAt: "2026-11-23T00:00:00.000Z", warningAt: "2026-11-16T00:00:00.000Z", warning: false, expired: false, disposition: "delete_draft" };
 
 function request(expectedVersion = 4): Request {
   const form = new FormData();
@@ -65,7 +66,7 @@ beforeEach(() => {
   mocked.availability.mockReset().mockReturnValue({ available: true });
   mocked.complete.mockReset().mockResolvedValue({ ok: true, text: "{}" });
   mocked.extract.mockReset().mockResolvedValue({ ok: true, pageTexts: ["Campus Orchestra"] });
-  mocked.record.mockReset().mockResolvedValue({ eventVersion: 5, preparation: { revision: 1, issues: [] } });
+  mocked.record.mockReset().mockResolvedValue({ eventVersion: 5, preparation: { revision: 1, issues: [] }, retention });
   mocked.process.mockReset().mockImplementation(async (_pages: readonly string[], complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>, signal?: AbortSignal) => {
     await complete({ system: "system prompt", user: "user prompt", signal });
     return { ok: true, value: extraction };
@@ -79,7 +80,7 @@ describe("owner authenticated proposal extraction route", () => {
     const requestValue = request();
     const response = await POST(requestValue, { params: Promise.resolve({ id: eventId }) });
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, revisions, extraction, eventVersion: 5, preparation: { revision: 1, issues: [] } });
+    expect(await response.json()).toEqual({ ok: true, revisions, extraction, eventVersion: 5, preparation: { revision: 1, issues: [] }, retention });
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(mocked.access).toHaveBeenCalledTimes(3);
     expect(mocked.access).toHaveBeenNthCalledWith(1, {}, "presented-session-token", eventId);

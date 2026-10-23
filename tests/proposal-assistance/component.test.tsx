@@ -34,6 +34,7 @@ import { EMPTY_EVENT, type EventFields } from "../../src/lib/event-fields";
 import type { PrivateExtraction, ProposalRevisions } from "../../src/features/proposal-assistance/types";
 import type { ProposalFeedbackMap } from "../../src/features/proposal-assistance/event-prefill";
 import type { EventPreparationResponse } from "../../src/features/proposal-assistance/clarification";
+import type { DraftRetentionStatus } from "../../src/lib/event-retention";
 import { MAX_PROPOSAL_PDF_BYTES } from "../../src/features/proposal-assistance/limits";
 import { ProposalAssistance } from "../../src/components/events/proposal-assistance";
 
@@ -64,7 +65,7 @@ const extraction: PrivateExtraction = {
 let props: Props;
 let editorRevision: number;
 let onPrefill: ReturnType<typeof vi.fn<(values: Partial<EventFields>, feedback: ProposalFeedbackMap) => void>>;
-let onServerPreparation: ReturnType<typeof vi.fn<(eventVersion: number, preparation: EventPreparationResponse) => void>>;
+let onServerPreparation: ReturnType<typeof vi.fn<(eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void>>;
 let onGenerationPending: ReturnType<typeof vi.fn<(delta: 1 | -1) => void>>;
 let onClearFeedback: ReturnType<typeof vi.fn<() => void>>;
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -76,7 +77,7 @@ beforeEach(() => {
   hooks.refIndex = 0;
   editorRevision = 0;
   onPrefill = vi.fn<(values: Partial<EventFields>, feedback: ProposalFeedbackMap) => void>();
-  onServerPreparation = vi.fn<(eventVersion: number, preparation: EventPreparationResponse) => void>();
+  onServerPreparation = vi.fn<(eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void>();
   onGenerationPending = vi.fn<(delta: 1 | -1) => void>();
   onClearFeedback = vi.fn<() => void>();
   props = {
@@ -95,7 +96,13 @@ beforeEach(() => {
   fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
     const form = init?.body as FormData;
     const received = JSON.parse(String(form.get("revisions"))) as ProposalRevisions;
-    return json({ ok: true, revisions: received, eventVersion: props.eventVersion + 1, preparation: null, extraction });
+    return json({ ok: true, revisions: received, eventVersion: props.eventVersion + 1, preparation: null, extraction, retention: {
+      expiresAt: "2026-11-23T04:00:00.000Z",
+      warningAt: "2026-11-16T04:00:00.000Z",
+      warning: false,
+      expired: false,
+      disposition: "delete_draft",
+    } satisfies DraftRetentionStatus });
   });
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -229,7 +236,13 @@ describe("ProposalAssistance component", () => {
     const submitted = fetchMock.mock.calls[0]?.[1]?.body as FormData;
     expect(submitted.get("expectedPreparationRevision")).toBe("0");
     expect(onPrefill).toHaveBeenCalledOnce();
-    expect(onServerPreparation).toHaveBeenCalledWith(2, null);
+    expect(onServerPreparation).toHaveBeenCalledWith(2, null, {
+      expiresAt: "2026-11-23T04:00:00.000Z",
+      warningAt: "2026-11-16T04:00:00.000Z",
+      warning: false,
+      expired: false,
+      disposition: "delete_draft",
+    });
     expect(onGenerationPending.mock.calls).toEqual([[1], [-1]]);
     expect(onPrefill).toHaveBeenCalledWith({
       title: "Campus Arts Night",

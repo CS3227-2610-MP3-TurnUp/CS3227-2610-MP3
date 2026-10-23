@@ -63,3 +63,15 @@ Keith delivered the local synthetic clarification slice on top of `9d651e8`, con
 Additive migration `20261023000000_proposal_clarification` is applied and checksum-verified on the assigned development/non-production target. Other targets require their own migration check/application before this application revision runs, including for manual events. Restart the local server after client generation. No Production migration or hosted deployment is implied. The assisted flow remains development/non-production only; existing assisted records fail closed outside that mode, while null-preparation manual events retain their existing flow.
 
 No Student registration/thread prerequisite or public-reader expansion was introduced. ORG07 public-content/FAQ candidates, production retention/cleanup G06, hosted provider handling/activation G04 and comprehensive model evaluation remain unfinished. Native browser/live-model evidence and the timed-out independent SQL replay are explicitly limited; direct assigned-database checks are recorded separately. This is a completed-slice handoff, not full WP-005 or hosted acceptance.
+
+
+## WP-005 public-content candidates — CHG-K-012, 23 October 2026
+
+Keith implemented the local synthetic ORG07 continuation from cb6179d. The [handoff](../changes/CHG-K-012-wp-005-public-candidates/handoff.md) records the exact revision-only endpoint, saved-public source allowlist, exact-reference FAQ answer derivation, optional unanswered organiser prompts and browser-local editable candidates. Apply remains explicit and requires existing Save Draft/Preview/Publish. No schema migration, Student consumer expansion or Darryl registration/thread dependency is introduced; K-011 migration requirements remain applicable.
+
+Actual checks, independent findings/dispositions and browser/live-model limitations are recorded in [verification](../changes/CHG-K-012-wp-005-public-candidates/verification.md). Production retention/cleanup, hosted activation and comprehensive model evaluation remain separate unfinished work.
+
+
+## WP-005 private draft retention — CHG-K-013
+
+[Current handoff](../changes/CHG-K-013-wp-005-draft-retention/handoff.md) covers accepted30-day activity clock/day23owner warnings, additive migration, protected bounded cleanup and latest-publication restoration. Assigned development migration is checksum-verified; other targets need normal migrate/client restart. Actual SQL/worker fixtures and independent378-test evidence are in verification. No production cleanup/cron activation or provider backup erasure is claimed. Existing K-012 FAQ/Other explicit Apply and public/private boundaries are preserved.

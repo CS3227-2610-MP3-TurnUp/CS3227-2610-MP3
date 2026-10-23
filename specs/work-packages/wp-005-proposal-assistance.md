@@ -30,3 +30,13 @@ Keith assigned [CHG-K-010](../../changes/CHG-K-010-wp-005-proposal-integration/c
 ## Assigned clarification slice — 23 October 2026
 
 [CHG-K-011](../../changes/CHG-K-011-wp-005-clarification/handoff.md) is locally implemented and independently reviewed from source base `9d651e8`: owner-only structured clarification persistence, explicit confirmations committed with Save Draft, and server preview/publication issue enforcement. It supersedes page-local issue state for the synthetic/non-production slice. Its additive migration is applied to the assigned development target; other targets must verify/apply it separately. Full331-test/lint/type/build and direct rollback-only database evidence, plus browser/live-model/replay limitations, are in its verification record. ORG07, production retention/hosted activation and comprehensive evaluation remain unfinished; no next-increment design is implied.
+
+
+## Assigned public-candidate slice — 23 October 2026
+
+[CHG-K-012](../../changes/CHG-K-012-wp-005-public-candidates/change.md) is locally implemented from cb6179d for editable page-local FAQ/Other candidates (duplicate description suggestion removed by the accepted refinement), optional organiser questions and explicit application using the saved resolved public snapshot. Production retention/hosted activation and comprehensive model evaluation remain separate. Actual checks and independent review are recorded in its verification and handoff; local deterministic evidence is not complete ORG07/full-WP-005 model acceptance.
+
+
+## Private draft retention — CHG-K-013
+
+The [retention handoff](../../changes/CHG-K-013-wp-005-draft-retention/handoff.md) records locally implemented/independently reviewed Organiser30-day draft cleanup andday23warnings, with assigned non-production migration and actual worker fixtures. It resolves those draft mechanics only; hosted job activation, actual backup-window/erasure evidence, global90-day personal/account policy and G04 remain separate. Keith confirmed the prior assisted browser walkthrough; comprehensive labelled evaluation is deferred to post-WP-005 refinement.

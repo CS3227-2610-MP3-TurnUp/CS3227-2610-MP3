@@ -168,7 +168,7 @@ export async function proposalExtraction(request: Request, rawId: string): Promi
     // before recording any structured result; no PDF or page text is persisted.
     const saved = await recordProposalExtraction(prisma, token, id, expected, expectedPreparationRevision, result.value);
     return NextResponse.json({ ok: true, revisions, extraction: result.value,
-      eventVersion: saved.eventVersion, preparation: saved.preparation }, { headers: privateHeaders });
+      eventVersion: saved.eventVersion, preparation: saved.preparation, retention: saved.retention }, { headers: privateHeaders });
   } catch (error) {
     if (error instanceof AuthError || error instanceof EventError) {
       const status = error.status;
