@@ -11,6 +11,7 @@ vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
+    useCallback: <T,>(callback: T) => callback,
     useState: <T,>(initial: T | (() => T)) => {
       const index = hooks.stateIndex++;
       if (!(index in hooks.states)) hooks.states[index] = typeof initial === "function" ? (initial as () => T)() : initial;
@@ -30,6 +31,7 @@ vi.mock("react", async (importOriginal) => {
 });
 
 import { EMPTY_EVENT, type EventFields } from "../../src/lib/event-fields";
+import type { GenerationUsageResponse } from "../../src/lib/generation-usage";
 import type { PublicCandidatesResponse } from "../../src/features/proposal-assistance/public-candidates";
 import { PublicContentAssistance } from "../../src/components/events/public-content-assistance";
 
@@ -77,6 +79,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 type ApplyCandidate = (field: "other", value: string, version: number, prep: number, revision: number, oldValue: string) => boolean;
 let onApply: Mock<ApplyCandidate>;
 let onGenerationPending: Mock<(delta: 1 | -1) => void>;
+let refreshGenerationUsage: Mock<() => Promise<GenerationUsageResponse | null>>;
 let props: Parameters<typeof PublicContentAssistance>[0];
 
 beforeEach(() => {
@@ -105,6 +108,8 @@ beforeEach(() => {
     return true;
   });
   onGenerationPending = vi.fn<(delta: 1 | -1) => void>();
+  const localUsage: GenerationUsageResponse = { ok: true, status: "disabled", reason: "unsupported_environment", usage: null };
+  refreshGenerationUsage = vi.fn(async () => localUsage);
   props = {
     eventId: "event-7",
     eventVersion: 4,
@@ -114,6 +119,8 @@ beforeEach(() => {
     getCurrentSnapshot: () => snapshot,
     onGenerationPending,
     onApply,
+    generationUsage: { loading: false, response: localUsage },
+    refreshGenerationUsage,
   };
   vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("window", { confirm: vi.fn(() => true) });
@@ -223,6 +230,7 @@ describe("PublicContentAssistance", () => {
   it("posts only saved revisions and changes neither description nor Other before Apply", async () => {
     await generate();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(refreshGenerationUsage).toHaveBeenCalledOnce();
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/organiser/events/event-7/public-candidates");
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(init.method).toBe("POST");
@@ -390,6 +398,60 @@ describe("PublicContentAssistance", () => {
     expect(snapshot.fields).toEqual(before);
     expect(onApply).not.toHaveBeenCalled();
     expect(nodes(render()).some((node) => node.props.role === "alert")).toBe(true);
+  });
+
+  it("refreshes shared usage after an environment-busy 429 and keeps daily wording distinct", async () => {
+    const busyUsage: GenerationUsageResponse = {
+      ok: true,
+      status: "active",
+      usage: {
+        environment: "preview",
+        timeZone: "Asia/Singapore",
+        day: "2026-10-24",
+        resetAt: "2026-10-24T16:00:00.000Z",
+        attempts: { limit: 10, used: 1, remaining: 9 },
+        outputTokens: { perRequest: 4_096, limit: 40_960, reserved: 4_096, remaining: 36_864 },
+        inFlight: true,
+        nextAllowedAt: null,
+      },
+    };
+    refreshGenerationUsage.mockResolvedValue(busyUsage);
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({
+      ok: false,
+      outcome: "rate_or_budget_limited",
+      limitReason: "environment_busy",
+      retryAt: null,
+      resetAt: null,
+    }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    const before = { ...snapshot.fields };
+    await generate();
+
+    const alert = nodes(render()).find((node) => node.props.role === "alert");
+    expect(refreshGenerationUsage).toHaveBeenCalledOnce();
+    expect(textOf(alert?.props.children)).toContain("already in progress for this environment");
+    expect(textOf(alert?.props.children)).not.toContain("used today's 10 generation attempts");
+    expect(snapshot.fields).toEqual(before);
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it("settles a busy response and keeps generation controls usable when usage refresh never resolves", async () => {
+    refreshGenerationUsage.mockImplementation(() => new Promise<GenerationUsageResponse | null>(() => {}));
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({
+      ok: false,
+      outcome: "rate_or_budget_limited",
+      limitReason: "environment_busy",
+      retryAt: null,
+      resetAt: null,
+    }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    const before = { ...snapshot.fields };
+
+    await generate();
+
+    expect(onGenerationPending.mock.calls).toEqual([[1], [-1]]);
+    expect(byText(render(), "button", "Generate FAQ suggestions").props.disabled).toBe(false);
+    expect(textOf(nodes(render()).find((node) => node.props.role === "alert")?.props.children)).toContain("already in progress for this environment");
+    expect(snapshot.fields).toEqual(before);
+    expect(onApply).not.toHaveBeenCalled();
   });
 
   it("dismisses suggestions without changing original event fields", async () => {

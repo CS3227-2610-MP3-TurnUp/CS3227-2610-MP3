@@ -18,7 +18,8 @@ import {
 } from "../../src/server/proposal-assistance/transport";
 
 const reservationId = "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0";
-const input = { system: "Synthetic extraction rules", user: "Synthetic event facts" };
+const ownerId = "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0";
+const input = { system: "Synthetic extraction rules", user: "Synthetic event facts", ownerId };
 
 function setLocalSyntheticConfiguration(): void {
   const env: Record<string, string> = {
@@ -70,6 +71,9 @@ describe("proposal SoCLaaS transport", () => {
     vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+    vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-synthetic-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
     expect(proposalCompletionAvailability()).toEqual({ available: false, outcome: "disabled" });
 
     setLocalSyntheticConfiguration();
@@ -120,7 +124,7 @@ describe("proposal SoCLaaS transport", () => {
       outcome: "cancelled",
     });
     await expect(
-      requestProposalCompletion({ system: "x".repeat(65_537), user: "" }),
+      requestProposalCompletion({ ...input, system: "x".repeat(65_537), user: "" }),
     ).resolves.toEqual({ ok: false, outcome: "input_too_large" });
 
     expect(mockGate.admit).not.toHaveBeenCalled();
@@ -203,6 +207,32 @@ describe("proposal SoCLaaS transport", () => {
     expect(mockGate.release).toHaveBeenCalledOnce();
     expect(log).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toContain("provider private body marker");
+  });
+
+  it("returns only the finite provider limit discriminator for HTTP 429", async () => {
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(new Response("private provider body", { status: 429 })));
+    await expect(requestProposalCompletion(input)).resolves.toEqual({
+      ok: false,
+      outcome: "rate_or_budget_limited",
+      limitDetails: { limitReason: "provider", retryAt: null, resetAt: null },
+    });
+    expect(mockGate.release).toHaveBeenCalledOnce();
+  });
+
+  it("keeps hosted daily generation disabled even with an otherwise valid environment pair", async () => {
+    vi.stubEnv("TURNUP_ENVIRONMENT", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("DATABASE_ENVIRONMENT", "non-production");
+    vi.stubEnv("DATABASE_URL", "postgresql://synthetic:synthetic@ep-synthetic-pooler.us-east-1.aws.neon.tech/synthetic?sslmode=require");
+    vi.stubEnv("HOSTED_DAILY_GENERATION_ENABLED", "true");
+    const fetchImpl = successfulFetch();
+    vi.stubGlobal("fetch", fetchImpl);
+
+    await expect(requestProposalCompletion(input)).resolves.toEqual({ ok: false, outcome: "disabled" });
+    expect(mockGate.admit).not.toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("fails before admission when the durable budget configuration is absent or incompatible", async () => {

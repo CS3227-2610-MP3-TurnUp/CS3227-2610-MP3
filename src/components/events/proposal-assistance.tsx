@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { EventFields } from "../../lib/event-fields";
 import type { DraftRetentionStatus } from "../../lib/event-retention";
+import type { GenerationUsageResponse } from "../../lib/generation-usage";
 import { MAX_PROPOSAL_PDF_BYTES } from "../../features/proposal-assistance/limits";
 import { prepareEventPrefill, type ProposalFeedbackMap } from "../../features/proposal-assistance/event-prefill";
 import type { EventPreparationResponse } from "../../features/proposal-assistance/clarification";
 import type { PrivateExtraction, ProposalField, ProposalRevisions } from "../../features/proposal-assistance/types";
+import { GenerationUsageIndicator, generationLimitMessage, isGenerationRateLimitResponse, type GenerationUsageState } from "./generation-usage";
 
 type Props = {
   eventId: string;
@@ -20,11 +22,13 @@ type Props = {
   onServerPreparation: (eventVersion: number, preparation: EventPreparationResponse, retention?: DraftRetentionStatus | null) => void;
   onGenerationPending: (delta: 1 | -1) => void;
   onClearFeedback: () => void;
+  generationUsage: GenerationUsageState;
+  refreshGenerationUsage: () => Promise<GenerationUsageResponse | null>;
 };
 
 type ApiResult = { ok: true; revisions: ProposalRevisions; eventVersion: number; preparation: EventPreparationResponse; extraction: PrivateExtraction; retention?: DraftRetentionStatus | null } | { ok: false; outcome: string };
 
-export function ProposalAssistance({ eventId, eventVersion, preparationRevision, eventBusy, generationBusy, preserveFields, currentEditorRevision, onPrefill, onServerPreparation, onGenerationPending, onClearFeedback }: Props) {
+export function ProposalAssistance({ eventId, eventVersion, preparationRevision, eventBusy, generationBusy, preserveFields, currentEditorRevision, onPrefill, onServerPreparation, onGenerationPending, onClearFeedback, generationUsage, refreshGenerationUsage }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [extraction, setExtraction] = useState<PrivateExtraction | null>(null);
   const [pending, setPending] = useState(false);
@@ -72,6 +76,8 @@ export function ProposalAssistance({ eventId, eventVersion, preparationRevision,
       editor: currentEditorRevision(),
     };
     const fieldsToPreserve = new Set(preserveFields);
+    let usageRefresh: Promise<GenerationUsageResponse | null> | null = null;
+    const refreshUsage = () => usageRefresh ??= Promise.resolve().then(refreshGenerationUsage).catch(() => null);
     generationActive.current = true;
     setPending(true);
     onGenerationPending(1);
@@ -90,10 +96,15 @@ export function ProposalAssistance({ eventId, eventVersion, preparationRevision,
         body,
         signal: controller.signal,
       });
+      void refreshUsage();
       const payload = await response.json() as ApiResult;
       if (!response.ok || !payload.ok) {
         if (requestRevision.current === requestId && !controller.signal.aborted) {
-          setError(messageForOutcome(payload && "outcome" in payload ? payload.outcome : "unavailable"));
+          if (response.status === 429 && isGenerationRateLimitResponse(payload)) {
+            setError(generationLimitMessage(payload.limitReason, payload.retryAt, payload.resetAt, generationUsage.response));
+          } else {
+            setError(messageForOutcome(payload && "outcome" in payload ? payload.outcome : "unavailable"));
+          }
         }
         return;
       }
@@ -118,8 +129,10 @@ export function ProposalAssistance({ eventId, eventVersion, preparationRevision,
       onPrefill(prefill.values, prefill.feedback);
       setExtraction(payload.extraction);
     } catch {
+      void refreshUsage();
       if (requestRevision.current === requestId && !controller.signal.aborted) setError("Proposal assistance is unavailable. Your event fields were not changed by this request.");
     } finally {
+      void refreshUsage();
       generationActive.current = false;
       onGenerationPending(-1);
       if (requestRevision.current === requestId) {
@@ -158,6 +171,7 @@ export function ProposalAssistance({ eventId, eventVersion, preparationRevision,
         {file && <button type="button" className="secondary" disabled={pending || eventBusy || generationBusy} onClick={() => resetSource(null)}>Remove proposal</button>}
       </div>
     </div>
+    <GenerationUsageIndicator state={generationUsage} />
     {error && <p className="error-panel" role="alert">{error}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {extraction && <div className="proposal-findings" aria-live="polite">

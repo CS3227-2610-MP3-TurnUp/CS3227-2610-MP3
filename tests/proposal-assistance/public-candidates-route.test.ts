@@ -45,12 +45,13 @@ import { POST } from "../../src/app/api/organiser/events/[id]/public-candidates/
 import type { PublicCandidateSource } from "../../src/features/proposal-assistance/public-candidates";
 
 const eventId = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587";
+const ownerId = "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0";
 const source: PublicCandidateSource = {
   title: "Design Workshop", description: "You will practise design.",
   start: "14/11/2026, 09:00 PM SGT", end: "14/11/2026, 10:00 PM SGT",
   location: "Zoom", capacity: "80", fee: "Free", openTo: "NUS students", preparation: "Bring a laptop", other: "",
 };
-const snapshot = { ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 2, state: "DRAFT", source };
+const snapshot = { ownerId, eventVersion: 4, preparationRevision: 2, state: "DRAFT", source };
 const candidates = {
   answeredFaqs: [{ question: "Where?", answer: "Zoom", references: [{ field: "location", quote: "Zoom" }] }],
   unansweredQuestions: ["Will a recording be available?"],
@@ -68,7 +69,7 @@ beforeEach(() => {
     if (requestValue.headers.get("origin") !== "http://127.0.0.1:3107") throw new AuthError(403, "Origin rejected.");
   });
   mocked.token.mockReset().mockReturnValue("presented-session-token");
-  mocked.access.mockReset().mockResolvedValue({ ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 2 });
+  mocked.access.mockReset().mockResolvedValue({ ownerId, eventVersion: 4, preparationRevision: 2 });
   mocked.admission.mockReset().mockResolvedValue(undefined);
   mocked.availability.mockReset().mockReturnValue({ available: true });
   mocked.complete.mockReset().mockResolvedValue({ ok: true, text: "model JSON" });
@@ -88,15 +89,29 @@ describe("saved-public-draft candidate route", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toEqual({ ok: true, eventVersion: 4, preparationRevision: 2, candidates });
-    expect(JSON.stringify(body)).not.toContain("owner-account-id");
+    expect(JSON.stringify(body)).not.toContain(ownerId);
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(mocked.access).toHaveBeenCalledWith({}, "presented-session-token", eventId);
-    expect(mocked.admission).toHaveBeenCalledWith({}, "owner-account-id", "a".repeat(64));
+    expect(mocked.admission).toHaveBeenCalledWith({}, ownerId, "a".repeat(64));
     expect(mocked.readSnapshot).toHaveBeenCalledTimes(2);
     expect(mocked.readSnapshot).toHaveBeenNthCalledWith(1, {}, "presented-session-token", eventId, 4, 2);
     expect(mocked.readSnapshot).toHaveBeenNthCalledWith(2, {}, "presented-session-token", eventId, 4, 2);
     expect(mocked.process).toHaveBeenCalledWith(source, expect.any(Function), requestValue.signal);
-    expect(mocked.complete).toHaveBeenCalledWith({ system: "candidate system", user: "public-only input" });
+    expect(mocked.complete).toHaveBeenCalledWith({ system: "candidate system", user: "public-only input", ownerId });
+  });
+
+  it("returns finite daily-limit metadata without exposing provider or owner details", async () => {
+    const limitDetails = { limitReason: "daily_tokens", retryAt: null, resetAt: "2026-10-24T16:00:00.000Z" } as const;
+    mocked.complete.mockResolvedValueOnce({ ok: false, outcome: "rate_or_budget_limited", limitDetails });
+    mocked.process.mockImplementationOnce(async (_publicSource: PublicCandidateSource, complete: (input: { system: string; user: string; signal?: AbortSignal }) => Promise<unknown>) => {
+      const result = await complete({ system: "candidate system", user: "public-only input" });
+      return { ok: false, outcome: (result as { outcome: string }).outcome };
+    });
+
+    const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ ok: false, outcome: "rate_or_budget_limited", ...limitDetails });
+    expect(mocked.complete).toHaveBeenCalledWith({ system: "candidate system", user: "public-only input", ownerId });
   });
 
   it("checks owner/session before parsing, admission, or reading caller data", async () => {

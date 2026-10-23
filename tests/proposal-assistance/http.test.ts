@@ -38,6 +38,7 @@ import { EventError } from "../../src/server/events/policy";
 import { POST } from "../../src/app/api/organiser/events/[id]/proposal-extraction/route";
 
 const eventId = "a3c1fedd-1bdf-4e70-9fa0-4e8a074c2587";
+const ownerId = "8f8a6b85-0f7e-4bf5-b468-90c8a249a2a0";
 const revisions = { source: 3, facts: 5, editor: 7 };
 const extraction = { facts: { title: { status: "known", value: "Campus Orchestra", evidence: [{ quote: "Campus Orchestra", page: 1 }] } }, privateFindings: [], completeness: "incomplete", incompleteReasons: ["unprocessed_fields"], unprocessedFields: ["purpose"], technicalIssues: 0 };
 const retention = { expiresAt: "2026-11-23T00:00:00.000Z", warningAt: "2026-11-16T00:00:00.000Z", warning: false, expired: false, disposition: "delete_draft" };
@@ -61,7 +62,7 @@ beforeEach(() => {
     if (requestValue.headers.get("origin") !== "http://127.0.0.1:3107") throw new AuthError(403, "Origin rejected.");
   });
   mocked.token.mockReset().mockReturnValue("presented-session-token");
-  mocked.access.mockReset().mockResolvedValue({ ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 0 });
+  mocked.access.mockReset().mockResolvedValue({ ownerId, eventVersion: 4, preparationRevision: 0 });
   mocked.admission.mockReset().mockResolvedValue(undefined);
   mocked.availability.mockReset().mockReturnValue({ available: true });
   mocked.complete.mockReset().mockResolvedValue({ ok: true, text: "{}" });
@@ -86,10 +87,10 @@ describe("owner authenticated proposal extraction route", () => {
     expect(mocked.access).toHaveBeenNthCalledWith(1, {}, "presented-session-token", eventId);
     expect(mocked.access).toHaveBeenNthCalledWith(2, {}, "presented-session-token", eventId, 4, 0);
     expect(mocked.access).toHaveBeenNthCalledWith(3, {}, "presented-session-token", eventId, 4, 0);
-    expect(mocked.admission).toHaveBeenCalledWith({}, "owner-account-id", "a".repeat(64));
+    expect(mocked.admission).toHaveBeenCalledWith({}, ownerId, "a".repeat(64));
     expect(mocked.extract).toHaveBeenCalledOnce();
     expect(mocked.record).toHaveBeenCalledWith({}, "presented-session-token", eventId, 4, 0, extraction);
-    expect(mocked.complete).toHaveBeenCalledWith({ system: "system prompt", user: "user prompt", signal: requestValue.signal });
+    expect(mocked.complete).toHaveBeenCalledWith({ system: "system prompt", user: "user prompt", ownerId, signal: requestValue.signal });
   });
 
   it("fails closed before multipart parsing when provider configuration is unavailable", async () => {
@@ -136,7 +137,7 @@ describe("owner authenticated proposal extraction route", () => {
   });
 
   it("rejects a stale preparation revision before PDF extraction", async () => {
-    mocked.access.mockResolvedValueOnce({ ownerId: "owner-account-id", eventVersion: 4, preparationRevision: 1 });
+    mocked.access.mockResolvedValueOnce({ ownerId, eventVersion: 4, preparationRevision: 1 });
     const response = await POST(request(), { params: Promise.resolve({ id: eventId }) });
     expect(response.status).toBe(409);
     expect(mocked.extract).not.toHaveBeenCalled();

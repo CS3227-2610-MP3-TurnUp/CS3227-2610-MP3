@@ -21,3 +21,16 @@ Extractive replies use verified quotes/sections in a fixed display template. Use
 Local PDF selection alone transmits nothing. Generate starts temporary authenticated processing; release bytes/fulltext and clean temporary files on all exits. Necessary structured facts/short evidence/page references/clarifications/drafts may be retained privately. Verify provider handling before claiming deletion outside application control. Sensitivity detection can miss secrets; owner review remains required. Previously delivered information cannot be retracted; historical-message suppression is G07.
 
 Verification: T04/06/09–14/18/21/26/27; [retention](deployment-and-retention.md), [gates](../decisions.md).
+
+
+## Organiser daily hosted generation allowance — accepted 23 October 2026
+
+Under SEC05/06, each authenticated Organiser has 10 dispatched generation attempts per Asia/Singapore calendar day per environment (Preview and Production independently). PDF extraction and public FAQ generation share this allowance across all owned events and sessions. Every dispatched attempt reserves 4,096 output tokens, up to 40,960 reserved output tokens per Organiser/day/environment; shorter output does not refund the difference. This is application accounting, not provider credit or a bound on input-token cost.
+
+Authentication, ownership, configuration and invalid-input failures before dispatch consume no daily allowance. Atomically reserve before dispatch; definitively unused reservations refund idempotently. Persist a dispatch marker immediately before contacting the provider. Once dispatched, provider failures, invalid output, cancellation and timeout consume the attempt/full reservation; a crash where dispatch is uncertain is counted conservatively. No automatic retries. Manual completion and existing saved/newer working fields remain available.
+
+Database time at admission determines the reservation’s SGT day and reset timestamp. Dispatch/completion/refund after midnight still belongs to that original admission day. A new daily record begins at midnight without a scheduler; redeploy/restart does not reset usage. Enforce one in-flight generation per environment and a minimum 2,100ms admission interval across all Organisers. Pending/uncertain work survives midnight and blocks overlapping requests until completion or guarded operator recovery. Timeout/transport ambiguity never automatically releases the shared slot. Recovery of dispatched reservations releases the slot only, without refunds.
+
+Identity comes from the authoritative session and environment from validated server configuration. Owner-only, private/no-store usage reporting reveals remaining attempts/reserved allowance and reset time, never another Organiser's usage or proposal/model text. UI distinguishes daily exhaustion from temporary busy/spacing limits; enforcement remains server-side.
+
+CHG-K-014 is policy-first. Hosted activation remains disabled pending a separately reviewed hosted profile and G04/G08 evidence; this policy does not select a hosted model, provider timeout or course permission. The existing local synthetic cumulative allowance and protected Preview foundation probe remain separate and unchanged. Student chat accounting is outside this Organiser increment.

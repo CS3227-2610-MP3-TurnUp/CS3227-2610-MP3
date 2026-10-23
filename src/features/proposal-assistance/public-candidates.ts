@@ -1,3 +1,5 @@
+import type { GenerationLimitDetails } from "../../lib/generation-usage";
+
 export const PUBLIC_CANDIDATE_PROMPT_VERSION = "CHG-K-012-public-candidates-v3";
 
 export const PUBLIC_CANDIDATE_SOURCE_FIELDS = [
@@ -66,7 +68,7 @@ export type PublicCandidatesOutcome =
 export type PublicCandidatesFailure = {
   ok: false;
   outcome: PublicCandidatesOutcome;
-};
+} & Partial<GenerationLimitDetails>;
 
 export type PublicCandidatesResponse = PublicCandidatesSuccess | PublicCandidatesFailure;
 

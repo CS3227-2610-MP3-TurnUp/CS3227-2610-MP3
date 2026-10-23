@@ -75,3 +75,8 @@ Actual checks, independent findings/dispositions and browser/live-model limitati
 ## WP-005 private draft retention — CHG-K-013
 
 [Current handoff](../changes/CHG-K-013-wp-005-draft-retention/handoff.md) covers accepted30-day activity clock/day23owner warnings, additive migration, protected bounded cleanup and latest-publication restoration. Assigned development migration is checksum-verified; other targets need normal migrate/client restart. Actual SQL/worker fixtures and independent378-test evidence are in verification. No production cleanup/cron activation or provider backup erasure is claimed. Existing K-012 FAQ/Other explicit Apply and public/private boundaries are preserved.
+
+
+## Organiser daily generation policy — CHG-K-014
+
+The [K-014 handoff](../changes/CHG-K-014-wp-005-daily-generation/handoff.md) defines the separate per-Organiser/SGT-day/environment PDF+FAQ allowance and authenticated usage reporting, from1c3785d. Hosted generation remains disabled; no Student chat allowance or dependency is inferred. Local synthetic/probe allowances remain unchanged. Verification records migration/accounting/UI checks separately from future hosted activation and provider evidence.

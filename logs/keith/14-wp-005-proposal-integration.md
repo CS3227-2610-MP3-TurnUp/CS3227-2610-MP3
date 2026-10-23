@@ -277,3 +277,38 @@ The additive migration is checksum-verified on the assigned development target. 
 Delivered commit295a58d to preview/wp-005; workflow39887132422 passed checks/build/migration/upload/alias, noProduction jobs. Hosted-readiness specialist (hosting_soc_engineer, gpt-6-luna/xhigh) found missing Preview probe token/four admission caps; normal PDF/FAQ adapter remains local-only. No model/provider call or quota operation. Hosted AI remains pending configuration/profile/provider-policy decisions.
 
 An unsupported CLI env-run invocation unexpectedly created an empty Vercel project and attempted upload before failing. Root stopped CLI use, verified exact new-project identity/no deployments/no env/no Git/custom domains via REST, deleted only that project (204 then404), restored the appended gitignore line and removed only new local CLI metadata. Intended Preview remains READY; private env and pre-existing next-env preserved. Upload contents cannot be established from a manifest; no successful accidental deployment or cache-erasure claim. Detailed incident/disposition in K-013 verification.
+
+
+# 21 - Implement Per-Organiser Daily Generation Policy - 23 October 2026
+
+## Request
+
+Keith requests implementation of the approved per-Organiser/day/environment allowance plan:10shared PDF/FAQ attempts,4096outputtokens/request,40960dailyreservedtokens, midnightSGT, counteddispatchedfailures, oneenvironment-widein-flightcall, operatorrecovery, policy-firstwithhosteddisabled.
+
+## Results
+
+In progress under CHG-K-014 in new wp-005-daily-generation worktree/branch from1c3785d. Checked allocation across refs/history/worktrees(maxK013). Root configured sdd_coordinator(gpt-6.1-sol/high) owns policy/docs/evidence; resumed backend application_foundation_engineer(gpt-6-luna/xhigh) and spawned disjoint UI application_foundation_engineer(same model/reasoning); independent implementation_verifier(gpt-6.1-sol/high) will review completed implementation. Updated canonicalSEC05policy/decision/scenarios and change contract before dependent implementation. Linked existing dependencies/copied ignored client only; no privateenv copied, model/provider/DB/configactivation/commit/push/deployment operation. Existing user root/previousworktreechanges preserved.
+
+
+Completed CHG-K-014 with per-Organiser/environment/SGT-admission-day counters, exact dispatch/refund/uncertain/recovery lifecycle, hard-disabled hosted coordinator, authenticated usage endpoint and shared UI feedback. Existing local/probe allowances unchanged. Author and independent reviewer passed407tests/44files plus lint/types/whitespace; root separately passed actual checked-inSQL3/3 in temporary non-production schemas and isolated production build. UI reviewer P2 hangingrefresh fixed/rechecked; root closed missingcoordinator/ambiguity/no-marker boundaries; SQL fixture and mirror setup errors corrected, final checks pass. Final27-path fingerprint d4a17f6f3225f32e674ebbdd988767d01668fca0c4c77a65807c0ba0e755171b. No residual schema, model call, application migration, remote activation or commit/push/deployment. Guide/handoff/evidence updated; hosted policy/provider/metadata-cleanup prerequisites remain explicit.
+
+# 22 - Continue Daily Allowance Verification - 23 October 2026
+
+## Request
+
+Keith requests continuation of the approved CHG-K-014 implementation while final fixes and review are ongoing.
+
+## Results
+
+Continued the same configured backend/UI/verifier team and preserved scope/model/reasoning. Rechecked UI pending-state correction, conservative provider uncertainty and no-marker rejection; completed independent407-test/static review, separate final3-test realSQL run via repository-owned config, sanitized build and final fingerprint/byte checks. Updated existing change evidence, canonical admission-day clarification and reproducible operator/test guide. No provider allowance change, active hosted generation, Production access, application migration, commit or deployment. Detailed checks and limitations are in CHG-K-014 verification.
+
+
+# 23 - Implement Hosted Adapter and Preview Activation - 23 October 2026
+
+## Request
+
+Keith approves the hosted-generation plan: checkpoint reviewed K-014, implement the9B JSON/no-thinking/60s adapter and controlled Preview activation, usage-history cleanup90days after SGT day with unresolved reservations protected, daily operator-invoked Preview maintenance, then deploy and perform at most two synthetic inference calls. Leave Preview enabled only after success; Production generation stays disabled. Provider permissions/host limits must be verified before activation.
+
+## Results
+
+Checkpointing the previously independently reviewed27-path K-014 snapshot before a separate activation worktree/change. Root uses coordination/commit/hosting skills. Existing user work and private configuration are preserved. The activation implementation, remote changes and two bounded hosted calls have not started at this checkpoint; its later results will be appended in the new worktree under this same entry.

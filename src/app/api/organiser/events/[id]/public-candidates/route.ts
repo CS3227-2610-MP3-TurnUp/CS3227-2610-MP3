@@ -9,6 +9,7 @@ import { admitProposalExtraction } from "../../../../../../server/proposal-assis
 import { processPublicCandidates } from "../../../../../../server/proposal-assistance/public-candidates/processor";
 import { proposalCompletionAvailability, requestProposalCompletion } from "../../../../../../server/proposal-assistance/transport";
 import { PublicCandidateNotReadyError, readSavedPublicCandidateSnapshot } from "../../../../../../server/events/service";
+import type { GenerationLimitDetails } from "../../../../../../lib/generation-usage";
 
 const maxBodyBytes = 1_024;
 const bodyReadTimeoutMs = 5_000;
@@ -40,9 +41,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const before = await readSavedPublicCandidateSnapshot(prisma, token, id, expectedVersion, expectedPreparationRevision);
     if (before.ownerId !== initialAccess.ownerId) return outcomeResponse("stale_event");
 
+    let limitDetails: GenerationLimitDetails | undefined;
     const processed = await processPublicCandidates(
       before.source,
-      (input) => requestProposalCompletion(input),
+      async (input) => {
+        const completion = await requestProposalCompletion({ ...input, ownerId: before.ownerId });
+        if (!completion.ok && completion.limitDetails) limitDetails = completion.limitDetails;
+        return completion;
+      },
       request.signal,
     );
     if (!processed.ok) {
@@ -51,7 +57,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         // model output, account/event identifiers, or provider error details.
         console.warn(JSON.stringify({ event: "proposal_candidate_generation_rejected", code: processed.rejectionCode }));
       }
-      return outcomeResponse(processed.outcome);
+      return outcomeResponse(processed.outcome, limitDetails);
     }
 
     // Re-read under the same ownership/session/event locks; deliver only if the
@@ -142,7 +148,7 @@ async function readBoundedJson(request: Request): Promise<Record<string, unknown
   }
 }
 
-function outcomeResponse(outcome: string): NextResponse {
+function outcomeResponse(outcome: string, limitDetails?: GenerationLimitDetails): NextResponse {
   const status = outcome === "unauthenticated" ? 401
     : outcome === "forbidden" ? 403
       : outcome === "rate_or_budget_limited" ? 429
@@ -151,5 +157,6 @@ function outcomeResponse(outcome: string): NextResponse {
             : outcome === "invalid_response" || outcome === "input_too_large" ? 502
               : outcome === "timeout" || outcome === "cancelled" ? 504
                 : 503;
-  return NextResponse.json({ ok: false, outcome }, { status, headers: privateHeaders });
+  return NextResponse.json({ ok: false, outcome,
+    ...(status === 429 && limitDetails ? limitDetails : {}) }, { status, headers: privateHeaders });
 }

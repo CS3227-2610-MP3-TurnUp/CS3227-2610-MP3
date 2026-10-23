@@ -73,3 +73,8 @@ Keith accepted the proposed next increment and requested CHG-K-012: editable des
 
 
 23October2026 — Keith answered retention questions: successful Save Draft or accepted PDF extraction resets30days, viewing/FAQ generation do not; warningfromday23, expiryday30; apply to all inactive private drafts, delete never-published drafts and restore latest publication/clear private prep for previously published events while preserving event/publication/registrations. CHG-K-013 implements Organiser mechanics only, without inferring Darryl policy for Student personal records or closing global G06/G04.
+
+
+### Per-Organiser daily generation — 23 October 2026
+
+Keith explicitly selected 10 attempts per Organiser per day per environment, 4,096 output tokens/request and 40,960 reserved output tokens/Organiser/day/environment. Follow-up answers selected a shared PDF/FAQ allowance resetting at midnight SGT, dispatched failures counting, one in-flight call per environment, operator recovery for uncertain calls, and policy-first delivery with hosted generation disabled. CHG-K-014 implements this SEC05 policy; it neither closes G04/G08 nor activates Preview/Production inference. See [canonical policy](shared/ai-and-privacy.md#organiser-daily-hosted-generation-allowance--accepted-23-october-2026).

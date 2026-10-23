@@ -222,3 +222,8 @@ The earlier candidate prompt v2 explicitly defined the nested description shape 
 ## Draft expiry
 
 Save Draft or accepted persisted PDF extraction restarts a30-day private-draft period; owner warnings startday23. Reads/FAQ generation do not extend it. The [retention guide](wp-005-draft-retention.md) explains the additive migration/client restart, default-off protected cleanup and publication protection. Existing assigned development records received a fresh window when migrated; an immediate warning is not expected on those records.
+
+
+## Hosted daily allowance
+
+CHG-K-014 prepares a separate [per-Organiser daily hosted allowance](wp-005-daily-generation.md). It does not change this guide's local synthetic cumulative budget, refill procedure or model profile, and does not enable Preview/Production generation. The daily policy and local probes must not be combined or reported as the same allowance.

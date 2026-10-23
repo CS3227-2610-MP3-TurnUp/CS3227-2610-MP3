@@ -11,6 +11,7 @@ import { EventContent } from "./event-content";
 import { ProposalAssistance } from "./proposal-assistance";
 import { PublicContentAssistance } from "./public-content-assistance";
 import { DraftRetentionNotice } from "./draft-retention-notice";
+import { useGenerationUsage } from "./generation-usage";
 
 type Snapshot = { fields: EventFields; form: { formRevisionId: string; questions: unknown[] } };
 type View = { id: string; version: number; state: string; fields: EventFields; published: Snapshot | null; preparation: EventPreparationResponse; retention?: DraftRetentionStatus | null };
@@ -28,6 +29,7 @@ export function EventEditor({ id }: { id: string }) {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [approved, setApproved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const generationUsage = useGenerationUsage(mode === "editor" && !loading);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -299,11 +301,13 @@ export function EventEditor({ id }: { id: string }) {
       <ProposalAssistance key={`${id}-${editorEpoch}`} eventId={id} eventVersion={view.version} preparationRevision={preparationRevision} eventBusy={pending} generationBusy={assistancePendingCount > 0}
         preserveFields={new Set(Object.keys(resolutionIntents) as ProposalField[])}
         currentEditorRevision={() => editorRevision.current} onPrefill={applyProposalPrefill} onServerPreparation={acceptServerPreparation}
-        onGenerationPending={adjustAssistancePending} onClearFeedback={clearProposalFeedback} />
+        onGenerationPending={adjustAssistancePending} onClearFeedback={clearProposalFeedback}
+        generationUsage={generationUsage} refreshGenerationUsage={generationUsage.refresh} />
       <PublicContentAssistance key={id + "-" + editorEpoch + "-" + view.version + "-" + preparationRevision}
         eventId={id} eventVersion={view.version} preparationRevision={preparationRevision}
         editorActionPending={pending} assistancePending={assistancePendingCount > 0}
-        getCurrentSnapshot={getCurrentCandidateSnapshot} onGenerationPending={adjustAssistancePending} onApply={applyPublicCandidate} />
+        getCurrentSnapshot={getCurrentCandidateSnapshot} onGenerationPending={adjustAssistancePending} onApply={applyPublicCandidate}
+        generationUsage={generationUsage} refreshGenerationUsage={generationUsage.refresh} />
       <ClarificationSummary preparation={view.preparation} fields={fields} intents={resolutionIntents} />
       <fieldset disabled={pending} className="event-fields">
         {(Object.keys(EVENT_LIMITS) as TextField[]).map((key) => <div className="field" key={key}>
