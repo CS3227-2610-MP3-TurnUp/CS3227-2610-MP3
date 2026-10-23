@@ -13,10 +13,10 @@ This guide describes the code at **55d9cb7, 23 October 2026**. Availability on a
 deployment also depends on its deployed revision and configuration. Planned features
 are listed separately at the end; they are not instructions for working controls.
 
-> **Screenshots awaiting capture:** numbered screenshot boxes below are editorial
-> placeholders, not images of the running app. Replace them using the supplied capture
-> instructions before distributing a final illustrated guide. Use synthetic demonstration
-> accounts and event data; do not include real contact details, passwords or private keys.
+> **Screenshots:** account and Student captures were supplied by the project team on
+> 23 October 2026. The four Organiser figures (UG-10 to UG-13) remain marked placeholders.
+> Screenshots illustrate the displayed interface; they do not establish the deployed
+> source revision or replace acceptance-test evidence.
 
 ## Contents
 
@@ -58,10 +58,9 @@ Signup requires only username, password and role. A Student's optional global pr
 can be filled in later.
 The eye control shows or hides the password while you enter it.
 
-> **Screenshot UG-01 — Account creation**
->
-> Capture `/signup` with both role choices, Username, Password and
-> Create account visible. Use a blank password field. Suggested desktop width: 1280 px.
+![Account creation with Student and Organiser role choices and blank credential fields](assets/images/ug-01-signup.png)
+
+*Figure UG-01. Create an account by choosing a role and entering your credentials.*
 
 ### Log in and out
 
@@ -74,10 +73,13 @@ out ends the current session. Sessions also expire after 30 minutes of inactivit
 eight hours from issue. If a protected operation asks you to log in again, do so before
 continuing. A password change signs you out on all devices.
 
-> **Screenshot UG-02 — Login and account menu**
->
-> Capture `/login` with no entered password. Add a second image of an authenticated
-> account menu expanded to show Profile and Log out, using a demonstration username.
+![Login form with username and password fields](assets/images/ug-02-login.png)
+
+*Figure UG-02. Enter your credentials to log in.*
+
+![Expanded account menu with Profile and Log out](assets/images/ug-02-account-menu.png)
+
+*Figure UG-02. Open the account menu to access settings or log out.*
 
 ## Finding your way around
 
@@ -110,11 +112,9 @@ the search or change the event filter. **Refresh list** fetches current results.
 show the title, start, location, fee text and organiser; remaining places and your own
 registration status appear when available.
 
-> **Screenshot UG-03 — Discover events**
->
-> Capture `/student` with two synthetic published events, the search/filter controls,
-> dates, remaining places and primary navigation. Also capture a 375 px-wide view to
-> illustrate the stacked cards/navigation. Do not fabricate event cards in an editor.
+![Discover events page with title search, Upcoming filter and an event card](assets/images/ug-03-discovery.png)
+
+*Figure UG-03. Search and filter published events. This capture shows the top of an upcoming event card.*
 
 ### Review an event
 
@@ -130,11 +130,13 @@ own status. Use **Refresh event** to check current information.
 - A withdrawn or cancelled event is unavailable through Student details/discovery.
 - Fees are information supplied by the Organiser. TurnUp does not take payments.
 
-> **Screenshot UG-04 — Published event and registration panel**
->
-> Capture an upcoming demonstration event before registration, with the title, schedule,
-> capacity, remaining places and Continue to registration visible. Use a second capture
-> or crop for the registered state showing Manage your registration.
+![Published jog event with schedule and Continue to registration beside 30 remaining places](assets/images/ug-04-event-details.png)
+
+*Figure UG-04. Review the event and available places before registration.*
+
+![Registration panel confirming a place with Manage your registration](assets/images/ug-04-registered-event.png)
+
+*Figure UG-04. After registering, the panel confirms your place and provides registration management.*
 
 ### Register for an event
 
@@ -160,17 +162,13 @@ return to current event information and review again. Repeated clicks are disabl
 while submitting. If the response is uncertain, check My Events before starting a new
 registration attempt.
 
-> **Screenshot UG-05 — Event registration**
->
-> Capture the form with synthetic contact values and the sharing confirmation in view.
-> If the real published event has custom questions, include their required/optional
-> labels. Otherwise capture the genuine zero-question form; do not imply a form-builder
-> UI exists. Never use an actual attendee's details.
+![Event registration form with name, contact, sharing confirmation and Confirm and register](assets/images/ug-05-registration.png)
 
-> **Screenshot UG-06 — Committed registration**
->
-> After a real successful demonstration submission, capture Registration saved and
-> View My Events. Do not use a pre-submit screen as proof of a confirmed registration.
+*Figure UG-05. Review your event-specific contact details and confirm sharing before registering.*
+
+![Registration saved confirmation with View My Events](assets/images/ug-06-registration-saved.png)
+
+*Figure UG-06. A successful submission displays Registration saved. Open My Events to check current status.*
 
 ### My Events: check, correct, cancel and re-register
 
@@ -195,16 +193,13 @@ Re-registration depends on current availability. Registration, cancellation,
 re-registration and correction all stop when the event starts. Editing your optional
 profile does not update these captured event submissions.
 
-> **Screenshot UG-07 — My Events**
->
-> Capture a synthetic active registration with View current event, Correct submission
-> and Cancel registration. If possible, include a separate cancelled record showing
-> Register again, and a changed-event notice. Keep registration references synthetic.
+![My Events active registration with View current event, Cancel registration and Correct submission](assets/images/ug-07-my-events.png)
 
-> **Screenshot UG-08 — Correct submission**
->
-> Capture the captured form with demonstration values, the event title, sharing
-> confirmation and Save corrected submission. Do not submit a correction to real data.
+*Figure UG-07. Manage an active registration from My Events.*
+
+![Correct your submission form with contact fields, sharing confirmation and Save corrected submission](assets/images/ug-08-correction.png)
+
+*Figure UG-08. Update the captured submission for this event.*
 
 ### Ask the event assistant
 
@@ -236,12 +231,9 @@ per rolling 15 minutes, with shared spacing and a finite deployment-wide allowan
 Failures may consume allowance. A busy or unavailable assistant is not evidence that
 an event fact is absent. You can still read public event information.
 
-> **Screenshot UG-09 — Event assistant**
->
-> Capture the open panel beside an upcoming synthetic event, showing a question and a
-> genuine supported reply. Keep model responses labelled as actual or simulated in the
-> caption. A development simulation must never be presented as Production/live-model
-> evidence. Also capture the closed launcher or a narrow-screen panel if practical.
+![Event assistant answering a reporting-time question using the published start time and acknowledging uncertainty](assets/images/ug-09-assistant.png)
+
+*Figure UG-09. The supplied capture is labelled Live AI in the interface. The reply gives the published start time and asks the Student to check with the organiser about a separate reporting time.*
 
 ## Organiser features
 
@@ -355,11 +347,9 @@ Students additionally see **Student profile**.
 - **Cancel** closes the inline editor. Conflict feedback may offer **Reload saved
   values for review** or **Reload settings** before saving again.
 
-> **Screenshot UG-14 — Account settings**
->
-> Capture a demonstration Student's Account settings, credential summaries and optional
-> profile fields. Add a crop of an expanded inline editor with all password fields
-> blank. Never include a password, session cookie or real personal contact details.
+![Account settings with username Edit, password Change and the start of the optional Student profile](assets/images/ug-14-settings.png)
+
+*Figure UG-14. Account settings provides credential controls and optional profile editing. This capture shows the upper portion of the page.*
 
 ## Troubleshooting
 

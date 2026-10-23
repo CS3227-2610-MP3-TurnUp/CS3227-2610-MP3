@@ -1,8 +1,14 @@
 # User Guide screenshot capture checklist
 
-The built-in browser remained disabled despite consent and reconnect. The user
-explicitly requested clear manual placeholders instead. No screenshot file exists
-until a real capture is supplied; no broken image or synthetic UI render is substituted.
+The built-in browser was unavailable during guide preparation, so manual captures
+were requested. On 23 October 2026 the user supplied 12 original PNG screenshots,
+now embedded in the User Guide without image edits. These cover UG-01 to UG-09 and
+UG-14. **Still required: UG-10, UG-11, UG-12 and UG-13 (Organiser).**
+
+UG-03 shows the top of one event card, and UG-14 shows only the upper settings page.
+Full-card/full-profile captures and mobile views are optional supplements. The assistant
+image displays the Live AI label; no separate provider or deployed-revision verification
+was performed when adding these images.
 
 Use an assigned demonstration environment with synthetic accounts/events. Obtain
 Vercel access separately if required. The current application address is

@@ -722,8 +722,8 @@ server-side diagram image is fabricated as a substitute for rendered verificatio
   submissions, logs, backups and derived stores. History-specific pruning is narrower.
 - Contact-action producer shape and broader historical/retention
   policies must not be filled in by documentation guesses.
-- Screenshots are explicit placeholders pending manual capture because the built-in
-  browser remains disabled in this task. Website visual rendering, full hosted flows
+- Account and Student screenshots were supplied manually on 23 October 2026; the four
+  Organiser figures remain placeholders. Website visual rendering, full hosted flows
   and live-model semantic quality need their own actual evidence.
 
 ### 8.2 Glossary
