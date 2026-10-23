@@ -10,8 +10,8 @@ Full-card/full-profile captures and mobile views are optional supplements. The a
 image displays the Live AI label; no separate provider or deployed-revision verification
 was performed when adding these images.
 
-Use an assigned demonstration environment with synthetic accounts/events. Obtain
-Vercel access separately if required. The current application address is
+Use an assigned demonstration environment with synthetic accounts/events. The current
+public Production application address is
 `https://turnup-nine.vercel.app/`, but a different test deployment may be appropriate
 for mutations. Record the deployed revision and date with the final captures. Do not
 include passwords, cookies, API keys, real contact details or private participant data.

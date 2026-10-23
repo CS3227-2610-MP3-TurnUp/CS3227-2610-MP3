@@ -161,3 +161,57 @@ Sources checked: https://vercel.com/kb/guide/troubleshooting-connectivity-issues
   "usage_updates": []
 }
 ```
+
+# 04 - Document public Production access - 23 October 2026
+
+## Request
+
+The user changed Vercel security so the sign-in screen should no longer appear; update the documentation and push.
+
+## Results
+
+User confirmed updating Vercel security. A fresh unauthenticated HTTPS check returned HTTP200 at https://turnup-nine.vercel.app/ with title TurnUp and no redirect. Removed obsolete deployment-access/sign-in instructions from the homepage, User Guide, Developer Guide and screenshot checklist; documented public Production access with normal TurnUp authentication for role features. Preserved conditional school-network troubleshooting. Documentation validator and whitespace checks passed; four Organiser screenshot placeholders remain. No authenticated full workflow, hosted setting mutation, model call or new application behavior is claimed. Delivery is authorized to existing PR #37; unrelated local evaluation/log changes and agent customizations remain excluded.
+
+<!-- turnup-prompt:v1 -->
+```json
+{
+  "version": 1,
+  "entry": 4,
+  "root_thread_id": null,
+  "root_turn_id": null,
+  "revision": "1febf48816811d73bed075592145c13782dac35d",
+  "captured_at": "2026-10-23T13:20:01.261541+08:00",
+  "delegation": "Main agent only; documentation and read-only HTTP verification.",
+  "agents": [
+    {
+      "id": "/root",
+      "parent": null,
+      "thread_id": null,
+      "action": "root",
+      "role": "main",
+      "task": "Verify public Production access, remove obsolete sign-in guidance and push to PR 37.",
+      "reason": null,
+      "dispatches": 0,
+      "outcome": "completed",
+      "result": "User confirmed updating Vercel security. A fresh unauthenticated HTTPS check returned HTTP200 at https://turnup-nine.vercel.app/ with title TurnUp and no redirect. Removed obsolete deployment-access/sign-in instructions from the homepage, User Guide, Developer Guide and screenshot checklist; documented public Production access with normal TurnUp authentication for role features. Preserved conditional school-network troubleshooting. Documentation validator and whitespace checks passed; four Organiser screenshot placeholders remain. No authenticated full workflow, hosted setting mutation, model call or new application behavior is claimed. Delivery is authorized to existing PR #37; unrelated local evaluation/log changes and agent customizations remain excluded.",
+      "settings": {
+        "model": null,
+        "effort": null,
+        "basis": "unknown"
+      },
+      "tokens": {
+        "status": "unavailable",
+        "responses": null,
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning_output": null,
+        "total": null,
+        "source": null,
+        "note": "Exact prompt-scoped agent usage unavailable."
+      }
+    }
+  ],
+  "usage_updates": []
+}
+```

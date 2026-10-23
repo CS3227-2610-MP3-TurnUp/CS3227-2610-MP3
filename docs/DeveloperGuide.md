@@ -671,17 +671,17 @@ instructions; do not replace them with outdated MP2 sub-skills.
 
 The application runs on Vercel with environment-specific Neon resources. The selected
 Production entry point is **[turnup-nine.vercel.app](https://turnup-nine.vercel.app/)**;
-Vercel protection may precede app access. A read-only URL check during preparation
-redirected to Vercel sign-in, so unauthenticated HTTP 200 at the final redirect does
-not establish a working TurnUp session or public peer access.
+the Production site is publicly accessible following the project's protection-setting
+update. On 23 October 2026, an unauthenticated HTTP check returned 200 at this exact
+address with the TurnUp page and no authentication redirect. Role features still
+require application authentication; this URL check does not establish a full workflow.
 
 For school/managed-network loading failures, compare the same URL on another permitted
 network and record the browser error and time. DNS, local-network and upstream filtering
 are possible causes; do not attribute a failure to a particular school policy or Vercel
 firewall rule without diagnostics. See [Vercel connectivity troubleshooting](https://vercel.com/kb/guide/troubleshooting-connectivity-issues).
-A Vercel sign-in redirect indicates deployment authentication and should be handled
-separately from a connection failure. The website and User Guide give conditional
-network advice rather than claiming that every school network is blocked.
+The website and User Guide give conditional network advice rather than claiming that
+every school network is blocked.
 
 The existing deployment workflow runs PR checks separately from privileged releases.
 Protected `master` is the Production source; protected `preview/<one-segment>` branches

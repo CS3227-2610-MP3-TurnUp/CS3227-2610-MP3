@@ -44,10 +44,9 @@ different accounts and event data.
 > network administrator. Availability depends on the network; this is not a blanket
 > restriction on school networks.
 
-If a **Vercel sign-in or deployment-protection** screen appears, obtain deployment access
-from the project team first. Vercel access and a TurnUp account are separate. Creating a
-TurnUp account does not grant Vercel project access. The documentation website is also
-separate from the application: it does not store registrations or sign users in.
+The Production site is publicly accessible. Create a TurnUp account or log in to use
+your role's features. The documentation website is separate from the application:
+it does not store registrations or sign users in.
 
 ### Create an account
 
@@ -362,7 +361,6 @@ Students additionally see **Student profile**.
 | What you see | What to do |
 | --- | --- |
 | Page will not load on school Wi-Fi / connection timeout | Try mobile data or another permitted network. If it works there, report the affected network, URL and exact error to the project team or network administrator. A network-specific failure does not identify its cause by itself. |
-| Vercel sign-in instead of TurnUp | Request deployment access or the correct testing address from the project team. |
 | Account access is unavailable | Retry later and report the page/time to the team. It is a service/configuration failure, not proof of invalid credentials or database quota exhaustion. |
 | Invalid login / duplicate username | Recheck credentials or choose a different username. |
 | Too many attempts | Wait for the relevant limit window; repeatedly clicking does not reset it. |
@@ -376,7 +374,7 @@ Students additionally see **Student profile**.
 ## A short tester walkthrough
 
 Use two **synthetic** accounts, one per role, and a demonstration event on the team's
-designated test deployment. Obtain any Vercel access first. There are no built-in demo
+designated test deployment. There are no built-in demo
 credentials. Do not enter real attendee details or use Production destructive actions
 to test error cases.
 
